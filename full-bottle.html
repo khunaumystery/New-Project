@@ -450,10 +450,10 @@
       <h1>FULL BOTTLE</h1>
       <span>KHUN AU MYSTERY</span>
     </div>
-    <div class="cart-icon" id="cartBtn">
+    <a href="cart.html" class="cart-icon" id="cartBtn" aria-label="ดูตะกร้าสินค้า" style="text-decoration:none;">
       <i class="ph ph-shopping-cart"></i>
       <span class="badge" id="cartBadge">2</span>
-    </div>
+    </a>
   </header>
 
   <!-- Hero Banner Mini -->
@@ -847,21 +847,57 @@
   <script>
     let cartCount = 2;
 
-    function addToCart(name, price) {
-      cartCount++;
+    function getCart() {
+      const saved = localStorage.getItem('mkCart');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      const initialCart = [
+        { id: 'b001', name: 'Full Bottle B01', price: 129, image: 'full%20bottle/b001.jpg', quantity: 1 },
+        { id: 'b002', name: 'Full Bottle B02', price: 139, image: 'full%20bottle/b002.jpg', quantity: 1 }
+      ];
+      localStorage.setItem('mkCart', JSON.stringify(initialCart));
+      return initialCart;
+    }
+
+    function updateBadge() {
+      const cart = getCart();
+      const total = cart.reduce((sum, item) => sum + item.quantity, 0);
       const badge = document.getElementById('cartBadge');
-      badge.textContent = cartCount;
-      
+      if (badge) badge.textContent = total;
+    }
+
+    function addToCart(name, price) {
+      const cart = getCart();
+      const existing = cart.find(item => item.name === name);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        // Find matching image
+        const num = name.replace(/[^0-9]/g, '');
+        const imgName = `b0${num.padStart(2, '0')}.jpg`;
+        cart.push({
+          id: `b${num}`,
+          name: name,
+          price: price,
+          image: `full%20bottle/${imgName}`,
+          quantity: 1
+        });
+      }
+      localStorage.setItem('mkCart', JSON.stringify(cart));
+      updateBadge();
+
       // Animate badge
-      badge.style.transform = 'scale(1.4)';
-      setTimeout(() => {
-        badge.style.transform = 'scale(1)';
-      }, 200);
+      const badge = document.getElementById('cartBadge');
+      if (badge) {
+        badge.style.transform = 'scale(1.4)';
+        setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
+      }
 
       // Show Toast
       const toast = document.getElementById('toastMsg');
       const toastText = document.getElementById('toastText');
-      toastText.textContent = `เพิ่ม "${name}" (฿${price}) แล้ว!`;
+      toastText.textContent = `เพิ่ม "${name}" (฿${price}) ลงตะกร้าแล้ว!`;
       toast.classList.add('show');
 
       setTimeout(() => {
@@ -870,7 +906,6 @@
     }
 
     function filterItems(category, btn) {
-      // Update active button
       document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
@@ -889,6 +924,11 @@
 
       document.getElementById('itemCountText').textContent = `แสดง ${visibleCount} รายการ`;
     }
+
+    // Initialize badge count on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateBadge();
+    });
   </script>
 </body>
 </html>
