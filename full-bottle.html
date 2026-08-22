@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Full Bottle Collection | KHUN AU Mystery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --mk-red: #D3222A;
+      --mk-red-dark: #A51A20;
+      --mk-light-red: #FFF2F2;
+      --gold: #F5C842;
+      --gold-dark: #D4A017;
+      --bg-color: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --text-main: #222222;
+      --text-muted: #777777;
+      --border-color: #EEEEEE;
+      --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+      --shadow-md: 0 6px 18px rgba(211, 34, 42, 0.12);
+      --border-radius: 16px;
+      --nav-height: 60px;
+      --bottom-nav-height: 70px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-top: var(--nav-height);
+      padding-bottom: calc(var(--bottom-nav-height) + 30px);
+      min-height: 100vh;
+    }
+
+    /* Top Navigation */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 20px;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .back-btn:active {
+      background: #E5E7EB;
+      transform: scale(0.92);
+    }
+
+    .logo-title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-title h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--mk-red);
+      letter-spacing: 0.5px;
+    }
+
+    .logo-title span {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .cart-icon {
+      font-size: 24px;
+      color: var(--text-main);
+      cursor: pointer;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-icon .badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: var(--mk-red);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+      transition: transform 0.2s ease;
+    }
+
+    /* Hero Banner Mini */
+    .hero-banner-mini {
+      background: linear-gradient(135deg, #3D0F12 0%, #1A0A0B 100%);
+      color: white;
+      padding: 24px 20px 20px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner-mini::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(245, 200, 66, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(245, 200, 66, 0.2);
+      border: 1px solid rgba(245, 200, 66, 0.4);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .hero-banner-mini h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #FFFFFF, #FFF5E0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-banner-mini p {
+      font-size: 13px;
+      color: #E2C2C2;
+    }
+
+    /* Category / Filter Pills */
+    .filter-bar {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 0 16px 16px;
+      scrollbar-width: none;
+    }
+
+    .filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .filter-pill.active {
+      background: var(--mk-red);
+      color: white;
+      border-color: var(--mk-red);
+      box-shadow: 0 3px 10px rgba(211, 34, 42, 0.25);
+    }
+
+    /* Product Grid */
+    .products-container {
+      padding: 0 16px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .section-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .item-count {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .product-card:active {
+      transform: scale(0.98);
+    }
+
+    .product-img-box {
+      position: relative;
+      width: 100%;
+      padding-top: 100%; /* 1:1 Aspect ratio */
+      background: #F3F4F6;
+      overflow: hidden;
+    }
+
+    .product-img-box img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-img-box img {
+      transform: scale(1.04);
+    }
+
+    .badge-pill {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: var(--mk-red);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      z-index: 2;
+    }
+
+    .badge-pill.gold {
+      background: linear-gradient(135deg, #F5C842, #D4A017);
+      color: #3A2000;
+    }
+
+    .badge-pill.green {
+      background: #10B981;
+    }
+
+    .product-info {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      justify-content: space-between;
+    }
+
+    .product-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .price-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .price-main {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--mk-red);
+    }
+
+    .price-old {
+      font-size: 11px;
+      color: #9CA3AF;
+      text-decoration: line-through;
+    }
+
+    .add-cart-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--mk-red);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(211, 34, 42, 0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .add-cart-btn:active {
+      transform: scale(0.85);
+      background: var(--mk-red-dark);
+    }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(26, 10, 11, 0.95);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 999;
+      border: 1px solid rgba(245, 200, 66, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      white-space: nowrap;
+    }
+
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--bottom-nav-height);
+      background: var(--card-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 100;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-item i {
+      font-size: 22px;
+    }
+
+    .nav-item.active {
+      color: var(--mk-red);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <a href="index.html" class="back-btn" aria-label="กลับหน้าหลัก">
+      <i class="ph ph-arrow-left"></i>
+    </a>
+    <div class="logo-title">
+      <h1>FULL BOTTLE</h1>
+      <span>KHUN AU MYSTERY</span>
+    </div>
+    <a href="cart.html" class="cart-icon" id="cartBtn" aria-label="ดูตะกร้าสินค้า" style="text-decoration:none;">
+      <i class="ph ph-shopping-cart"></i>
+      <span class="badge" id="cartBadge">2</span>
+    </a>
+  </header>
+
+  <!-- Hero Banner Mini -->
+  <section class="hero-banner-mini">
+    <span class="hero-tag">✨ Special Collection</span>
+    <h2>สินค้า Full Bottle ทั้งหมด</h2>
+    <p>คอลเลกชันขวดพรีเมียม ราคาพิเศษเริ่มต้นเพียง 109.- เท่านั้น</p>
+  </section>
+
+  <!-- Filter Category Pills -->
+  <section class="filter-bar">
+    <button class="filter-pill active" onclick="filterItems('all', this)">ทั้งหมด (16)</button>
+    <button class="filter-pill" onclick="filterItems('hot', this)">🔥 ยอดนิยม</button>
+    <button class="filter-pill" onclick="filterItems('new', this)">✨ มาใหม่</button>
+    <button class="filter-pill" onclick="filterItems('promo', this)">🏷️ โปรโมชั่น</button>
+  </section>
+
+  <!-- Products Section -->
+  <main class="products-container">
+    <div class="section-header">
+      <h3>รายการสินค้า Full Bottle</h3>
+      <span class="item-count" id="itemCountText">แสดงทั้งหมด 16 รายการ</span>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+      <!-- Product 1 -->
+      <div class="product-card" data-category="hot promo">
+        <div class="product-img-box">
+          <span class="badge-pill">HOT -25%</span>
+          <img src="full%20bottle/b001.jpg" alt="Full Bottle B01" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B01</h4>
+          <p class="product-desc">กลิ่น Signature สุดพรีเมียม</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿129</span>
+              <span class="price-old">฿179</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B01', 129)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 2 -->
+      <div class="product-card" data-category="hot">
+        <div class="product-img-box">
+          <span class="badge-pill gold">BEST</span>
+          <img src="full%20bottle/b002.jpg" alt="Full Bottle B02" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B02</h4>
+          <p class="product-desc">กลิ่น Velvet Mystery ลึกลับน่าค้นหา</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿139</span>
+              <span class="price-old">฿189</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B02', 139)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 3 -->
+      <div class="product-card" data-category="new promo">
+        <div class="product-img-box">
+          <span class="badge-pill green">NEW</span>
+          <img src="full%20bottle/b003.jpg" alt="Full Bottle B03" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B03</h4>
+          <p class="product-desc">กลิ่น Golden Hour หอมละมุน</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿149</span>
+              <span class="price-old">฿199</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B03', 149)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 4 -->
+      <div class="product-card" data-category="promo">
+        <div class="product-img-box">
+          <span class="badge-pill">-30%</span>
+          <img src="full%20bottle/b004.jpg" alt="Full Bottle B04" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B04</h4>
+          <p class="product-desc">กลิ่น Midnight Secret สดชื่นตลอดวัน</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿119</span>
+              <span class="price-old">฿169</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B04', 119)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 5 -->
+      <div class="product-card" data-category="hot">
+        <div class="product-img-box">
+          <span class="badge-pill">HOT</span>
+          <img src="full%20bottle/b005.jpg" alt="Full Bottle B05" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B05</h4>
+          <p class="product-desc">กลิ่น Rose Elegance หรูหรามีเสน่ห์</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿125</span>
+              <span class="price-old">฿175</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B05', 125)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 6 -->
+      <div class="product-card" data-category="new">
+        <div class="product-img-box">
+          <span class="badge-pill green">NEW</span>
+          <img src="full%20bottle/b006.jpg" alt="Full Bottle B06" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B06</h4>
+          <p class="product-desc">กลิ่น Ocean Breeze เย็นสบาย สดชื่น</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿135</span>
+              <span class="price-old">฿185</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B06', 135)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 7 -->
+      <div class="product-card" data-category="promo">
+        <div class="product-img-box">
+          <span class="badge-pill">-25%</span>
+          <img src="full%20bottle/b007.jpg" alt="Full Bottle B07" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B07</h4>
+          <p class="product-desc">กลิ่น Sweet Vanilla หอมหวานละมุน</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿145</span>
+              <span class="price-old">฿195</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B07', 145)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 8 -->
+      <div class="product-card" data-category="promo">
+        <div class="product-img-box">
+          <span class="badge-pill gold">SALE</span>
+          <img src="full%20bottle/b008.jpg" alt="Full Bottle B08" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B08</h4>
+          <p class="product-desc">กลิ่น Citrus Fresh เติมพลังความสดใส</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿109</span>
+              <span class="price-old">฿159</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B08', 109)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 9 -->
+      <div class="product-card" data-category="hot">
+        <div class="product-img-box">
+          <span class="badge-pill">HOT</span>
+          <img src="full%20bottle/b009.jpg" alt="Full Bottle B09" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B09</h4>
+          <p class="product-desc">กลิ่น Dark Amber อบอุ่น นุ่มลึก</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿139</span>
+              <span class="price-old">฿189</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B09', 139)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 10 -->
+      <div class="product-card" data-category="new">
+        <div class="product-img-box">
+          <span class="badge-pill green">NEW</span>
+          <img src="full%20bottle/b010.jpg" alt="Full Bottle B10" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B10</h4>
+          <p class="product-desc">กลิ่น Lavender Dream ผ่อนคลายสบายอารมณ์</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿129</span>
+              <span class="price-old">฿179</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B10', 129)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 11 -->
+      <div class="product-card" data-category="hot promo">
+        <div class="product-img-box">
+          <span class="badge-pill gold">BEST</span>
+          <img src="full%20bottle/b011.jpg" alt="Full Bottle B11" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B11</h4>
+          <p class="product-desc">กลิ่น Wild Cherry เปรี้ยวหวานลงตัว</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿149</span>
+              <span class="price-old">฿199</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B11', 149)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 12 -->
+      <div class="product-card" data-category="promo">
+        <div class="product-img-box">
+          <span class="badge-pill">-25%</span>
+          <img src="full%20bottle/b012.jpg" alt="Full Bottle B12" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B12</h4>
+          <p class="product-desc">กลิ่น Woody Scent คลาสสิก มีระดับ</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿119</span>
+              <span class="price-old">฿169</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B12', 119)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 13 -->
+      <div class="product-card" data-category="new">
+        <div class="product-img-box">
+          <span class="badge-pill green">NEW</span>
+          <img src="full%20bottle/b013.jpg" alt="Full Bottle B13" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B13</h4>
+          <p class="product-desc">กลิ่น White Blossom ดอกไม้สีขาวบริสุทธิ์</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿125</span>
+              <span class="price-old">฿175</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B13', 125)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 14 -->
+      <div class="product-card" data-category="hot">
+        <div class="product-img-box">
+          <span class="badge-pill">HOT</span>
+          <img src="full%20bottle/b014.jpg" alt="Full Bottle B14" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B14</h4>
+          <p class="product-desc">กลิ่น Mystic Pearl เสน่ห์อันน่าหลงใหล</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿135</span>
+              <span class="price-old">฿185</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B14', 135)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 15 -->
+      <div class="product-card" data-category="promo">
+        <div class="product-img-box">
+          <span class="badge-pill gold">POPULAR</span>
+          <img src="full%20bottle/b015.jpg" alt="Full Bottle B15" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B15</h4>
+          <p class="product-desc">กลิ่น Royal Musk มนต์เสน่ห์แห่งความเย้ายวน</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿145</span>
+              <span class="price-old">฿195</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B15', 145)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 16 -->
+      <div class="product-card" data-category="hot new promo">
+        <div class="product-img-box">
+          <span class="badge-pill gold">VIP</span>
+          <img src="full%20bottle/b016.jpg" alt="Full Bottle B16" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h4 class="product-title">Full Bottle B16</h4>
+          <p class="product-desc">กลิ่น Golden Glow หอมเปล่งประกายดั่งทองคำ</p>
+          <div class="price-row">
+            <div class="price-group">
+              <span class="price-main">฿150</span>
+              <span class="price-old">฿200</span>
+            </div>
+            <button class="add-cart-btn" onclick="addToCart('Full Bottle B16', 150)" aria-label="เพิ่มลงตะกร้า">
+              <i class="ph ph-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast-msg" id="toastMsg">
+    <i class="ph ph-check-circle" style="color:#10B981; font-size: 18px;"></i>
+    <span id="toastText">เพิ่มลงตะกร้าแล้ว</span>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <i class="ph ph-house"></i>
+      <span>หน้าหลัก</span>
+    </a>
+    <a href="index.html" class="nav-item">
+      <i class="ph ph-tag"></i>
+      <span>โปรโมชั่น</span>
+    </a>
+    <a href="full-bottle.html" class="nav-item active">
+      <i class="ph ph-bottle"></i>
+      <span>Full Bottle</span>
+    </a>
+    <a href="lucky.html" class="nav-item">
+      <i class="ph ph-gift"></i>
+      <span>สุ่มโค้ด</span>
+    </a>
+  </nav>
+
+  <script>
+    let cartCount = 2;
+
+    function getCart() {
+      const saved = localStorage.getItem('mkCart');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      const initialCart = [
+        { id: 'b001', name: 'Full Bottle B01', price: 129, image: 'full%20bottle/b001.jpg', quantity: 1 },
+        { id: 'b002', name: 'Full Bottle B02', price: 139, image: 'full%20bottle/b002.jpg', quantity: 1 }
+      ];
+      localStorage.setItem('mkCart', JSON.stringify(initialCart));
+      return initialCart;
+    }
+
+    function updateBadge() {
+      const cart = getCart();
+      const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const badge = document.getElementById('cartBadge');
+      if (badge) badge.textContent = total;
+    }
+
+    function addToCart(name, price) {
+      const cart = getCart();
+      const existing = cart.find(item => item.name === name);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        // Find matching image
+        const num = name.replace(/[^0-9]/g, '');
+        const imgName = `b0${num.padStart(2, '0')}.jpg`;
+        cart.push({
+          id: `b${num}`,
+          name: name,
+          price: price,
+          image: `full%20bottle/${imgName}`,
+          quantity: 1
+        });
+      }
+      localStorage.setItem('mkCart', JSON.stringify(cart));
+      updateBadge();
+
+      // Animate badge
+      const badge = document.getElementById('cartBadge');
+      if (badge) {
+        badge.style.transform = 'scale(1.4)';
+        setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
+      }
+
+      // Show Toast
+      const toast = document.getElementById('toastMsg');
+      const toastText = document.getElementById('toastText');
+      toastText.textContent = `เพิ่ม "${name}" (฿${price}) ลงตะกร้าแล้ว!`;
+      toast.classList.add('show');
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+
+    function filterItems(category, btn) {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cards = document.querySelectorAll('.product-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const catData = card.getAttribute('data-category') || '';
+        if (category === 'all' || catData.includes(category)) {
+          card.style.display = 'flex';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      document.getElementById('itemCountText').textContent = `แสดง ${visibleCount} รายการ`;
+    }
+
+    // Initialize badge count on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateBadge();
+    });
+  </script>
+</body>
+</html>
