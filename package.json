@@ -1,0 +1,21 @@
+{
+  "name": "khunau-mystery-webapp",
+  "version": "1.0.0",
+  "description": "KHUN AU Mystery Mobile Web App with Firebase Auth and Promotions",
+  "main": "js/firebase-config.js",
+  "type": "module",
+  "scripts": {
+    "start": "serve ."
+  },
+  "dependencies": {
+    "firebase": "^10.12.0"
+  },
+  "keywords": [
+    "khunaumystery",
+    "firebase",
+    "auth",
+    "ecommerce"
+  ],
+  "author": "KHUN AU Mystery",
+  "license": "ISC"
+}

@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | KHUN AU Mystery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --mk-red: #D3222A; --mk-red-dark: #A51A20;
+      --gold: #F5C842; --gold-dark: #D4A017;
+      --bg: #F0F2F5; --card: #FFFFFF;
+      --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Prompt',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    #loginGate {
+      display:flex; align-items:center; justify-content:center; min-height:100vh;
+      background: linear-gradient(135deg, #1A0505, #3D0A0C, #1A0505);
+    }
+    .login-box {
+      background:rgba(255,255,255,0.05); border:1px solid rgba(245,200,66,0.2);
+      border-radius:20px; padding:40px 32px; width:100%; max-width:380px;
+      backdrop-filter:blur(12px); text-align:center;
+    }
+    .login-box h1 { color:var(--gold); font-size:22px; font-weight:800; margin-bottom:4px; }
+    .login-box p { color:rgba(255,255,255,0.5); font-size:13px; margin-bottom:28px; }
+    .login-field { text-align:left; margin-bottom:14px; }
+    .login-field label { font-size:12px; color:rgba(255,255,255,0.6); font-weight:600; display:block; margin-bottom:6px; }
+    .login-field input {
+      width:100%; padding:12px 16px;
+      background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.15);
+      border-radius:10px; color:white; font-family:'Prompt',sans-serif; font-size:14px; outline:none;
+    }
+    .login-field input:focus { border-color:var(--gold); }
+    .login-btn {
+      width:100%; padding:14px;
+      background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      color:white; border:none; border-radius:12px;
+      font-family:'Prompt',sans-serif; font-size:15px; font-weight:700; cursor:pointer; margin-top:8px;
+    }
+    .login-error { color:#F87171; font-size:13px; margin-top:12px; display:none; }
+    #dashboard { display:none; }
+    .top-bar {
+      background:linear-gradient(135deg, var(--mk-red-dark), var(--mk-red));
+      color:white; padding:0 24px; height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(211,34,42,0.3);
+    }
+    .top-bar h1 { font-size:16px; font-weight:800; }
+    .top-bar-sub { font-size:12px; opacity:0.75; }
+    .logout-btn {
+      background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+      color:white; padding:6px 14px; border-radius:8px;
+      font-family:'Prompt',sans-serif; font-size:13px; cursor:pointer;
+    }
+    .main { padding:20px 16px; max-width:1200px; margin:0 auto; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+    .stat-card {
+      background:var(--card); border-radius:14px; padding:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:4px solid var(--mk-red);
+    }
+    .stat-card.gold  { border-left-color:#D97706; }
+    .stat-card.green { border-left-color:#10B981; }
+    .stat-card.blue  { border-left-color:#3B82F6; }
+    .stat-label { font-size:12px; color:var(--muted); font-weight:500; margin-bottom:6px; }
+    .stat-value { font-size:26px; font-weight:800; }
+    .stat-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .toolbar {
+      background:var(--card); border-radius:14px; padding:14px 16px;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+    .search-box {
+      flex:1; min-width:180px; padding:9px 14px;
+      border:1.5px solid var(--border); border-radius:10px;
+      font-family:'Prompt',sans-serif; font-size:14px; outline:none;
+    }
+    .search-box:focus { border-color:var(--mk-red); }
+    .filter-select {
+      padding:9px 12px; border:1.5px solid var(--border); border-radius:10px;
+      font-family:'Prompt',sans-serif; font-size:13px; outline:none; background:white;
+    }
+    .refresh-btn {
+      padding:9px 16px; background:var(--mk-red); color:white; border:none;
+      border-radius:10px; font-family:'Prompt',sans-serif; font-size:13px; cursor:pointer; font-weight:600;
+    }
+    .orders-card { background:var(--card); border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden; }
+    .orders-header {
+      padding:16px 20px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .orders-header h2 { font-size:15px; font-weight:700; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead th {
+      padding:12px 14px; text-align:left; background:#F9FAFB;
+      color:var(--muted); font-weight:600; border-bottom:1px solid var(--border); white-space:nowrap;
+    }
+    tbody tr { border-bottom:1px solid var(--border); }
+    tbody tr:hover { background:#FFF8F8; }
+    tbody td { padding:12px 14px; vertical-align:top; }
+    .status-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap;
+    }
+    .status-badge.pending   { background:#FEF3C7; color:#92400E; }
+    .status-badge.paid      { background:#D1FAE5; color:#065F46; }
+    .status-badge.shipped   { background:#DBEAFE; color:#1E40AF; }
+    .status-badge.cancelled { background:#FEE2E2; color:#991B1B; }
+    .action-btn {
+      padding:5px 10px; border:none; border-radius:7px;
+      font-family:'Prompt',sans-serif; font-size:11px; font-weight:600;
+      cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin:2px; white-space:nowrap;
+    }
+    .btn-paid    { background:#D1FAE5; color:#065F46; }
+    .btn-shipped { background:#DBEAFE; color:#1E40AF; }
+    .btn-delete  { background:#FEE2E2; color:#991B1B; }
+    .btn-cancel  { background:#F3F4F6; color:#374151; }
+    .btn-detail  { background:#F3F4F6; color:#374151; }
+    .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
+    .cus-name  { font-weight:600; }
+    .cus-phone { font-size:12px; color:var(--muted); }
+    .item-list { font-size:11px; color:var(--muted); max-width:160px; }
+    .prize-chip { display:inline-block; font-size:10px; padding:2px 7px; border-radius:10px; background:#EDE9FE; color:#6D28D9; font-weight:600; margin-top:3px; }
+    .total-amt { font-weight:700; color:var(--mk-red); }
+    .date-txt  { font-size:11px; color:var(--muted); }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+    .empty-state i { font-size:48px; margin-bottom:12px; display:block; }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:white; border-radius:20px; padding:24px; width:100%; max-width:500px; max-height:85vh; overflow-y:auto; }
+    .modal-box h3 { font-size:16px; font-weight:800; margin-bottom:16px; color:var(--mk-red); }
+    .detail-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; gap:12px; }
+    .detail-row:last-child { border:none; }
+    .detail-label { color:var(--muted); font-weight:500; flex-shrink:0; }
+    .detail-value { font-weight:600; text-align:right; }
+    .close-modal-btn { width:100%; margin-top:16px; padding:12px; background:var(--mk-red); color:white; border:none; border-radius:12px; font-family:'Prompt',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:#1A1A2E; color:white; padding:10px 20px; border-radius:30px; font-size:13px; z-index:2000; transition:transform 0.3s; white-space:nowrap; border:1px solid rgba(245,200,66,0.3); }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div id="loginGate">
+  <div class="login-box">
+    <h1>🛡️ KHUN AU Admin</h1>
+    <p>กรุณาเข้าสู่ระบบเพื่อดูหลังบ้าน</p>
+    <div class="login-field">
+      <label>อีเมล</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com">
+    </div>
+    <div class="login-field">
+      <label>รหัสผ่าน</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') adminLogin()">
+    </div>
+    <button class="login-btn" onclick="adminLogin()"><i class="ph ph-sign-in"></i> เข้าสู่ระบบ</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<div id="dashboard">
+  <header class="top-bar">
+    <div>
+      <h1>🛒 KHUN AU Admin Dashboard</h1>
+      <div class="top-bar-sub" id="adminEmailDisplay"></div>
+    </div>
+    <button class="logout-btn" onclick="adminLogout()"><i class="ph ph-sign-out"></i> ออกจากระบบ</button>
+  </header>
+  <div class="main">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">📦 ออเดอร์ทั้งหมด</div><div class="stat-value" id="statTotal">0</div><div class="stat-sub">รายการ</div></div>
+      <div class="stat-card gold"><div class="stat-label">⏳ รอดำเนินการ</div><div class="stat-value" id="statPending">0</div><div class="stat-sub">รายการ</div></div>
+      <div class="stat-card green"><div class="stat-label">✅ ชำระแล้ว</div><div class="stat-value" id="statPaid">0</div><div class="stat-sub">รายการ</div></div>
+      <div class="stat-card blue"><div class="stat-label">💰 ยอดรวม</div><div class="stat-value" id="statRevenue">0</div><div class="stat-sub">บาท</div></div>
+    </div>
+    <div class="toolbar">
+      <input type="text" class="search-box" id="searchBox" placeholder="🔍 ค้นหา ชื่อ, หมายเลขออเดอร์, เบอร์โทร..." oninput="filterOrders()">
+      <select class="filter-select" id="statusFilter" onchange="filterOrders()">
+        <option value="">ทุกสถานะ</option>
+        <option value="pending">⏳ รอดำเนินการ</option>
+        <option value="paid">✅ ชำระแล้ว</option>
+        <option value="shipped">🚚 จัดส่งแล้ว</option>
+        <option value="cancelled">❌ ยกเลิก</option>
+      </select>
+      <button class="refresh-btn" onclick="loadOrders()"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
+    </div>
+    <div class="orders-card">
+      <div class="orders-header">
+        <h2>รายการออเดอร์</h2>
+        <span style="font-size:12px;color:var(--muted);" id="ordersCount">0 รายการ</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>หมายเลขออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th>
+              <th>ยอดรวม</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลด...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box" id="detailModalContent"></div>
+</div>
+<div class="toast" id="adminToast"></div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
+    authDomain: "khunaumystery-f0b63.firebaseapp.com",
+    projectId: "khunaumystery-f0b63",
+    storageBucket: "khunaumystery-f0b63.firebasestorage.app",
+    messagingSenderId: "508588235711",
+    appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
+  };
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  let allOrders = [];
+  let unsubscribe = null;
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      document.getElementById('loginGate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('adminEmailDisplay').textContent = user.email;
+      loadOrders();
+    } else {
+      document.getElementById('loginGate').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    }
+  });
+
+  window.adminLogin = async function() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass  = document.getElementById('adminPassword').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+      errEl.textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+      errEl.style.display = 'block';
+    }
+  };
+
+  window.adminLogout = async function() {
+    await signOut(auth);
+    showToast('ออกจากระบบแล้ว');
+  };
+
+  window.loadOrders = function() {
+    if (unsubscribe) unsubscribe();
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    unsubscribe = onSnapshot(q, snap => {
+      allOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      renderStats(allOrders);
+      filterOrders();
+    }, err => showToast('โหลดข้อมูลไม่สำเร็จ: ' + err.message));
+  };
+
+  function renderStats(orders) {
+    document.getElementById('statTotal').textContent   = orders.length;
+    document.getElementById('statPending').textContent = orders.filter(o => o.status === 'pending').length;
+    document.getElementById('statPaid').textContent    = orders.filter(o => o.status === 'paid').length;
+    const rev = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.grandTotal || 0), 0);
+    document.getElementById('statRevenue').textContent = rev.toLocaleString();
+  }
+
+  window.filterOrders = function() {
+    const search = document.getElementById('searchBox').value.toLowerCase().trim();
+    const status = document.getElementById('statusFilter').value;
+    let f = allOrders;
+    if (status) f = f.filter(o => o.status === status);
+    if (search) f = f.filter(o =>
+      (o.customerName || '').toLowerCase().includes(search) ||
+      (o.orderId || '').toLowerCase().includes(search) ||
+      (o.phone || '').includes(search)
+    );
+    document.getElementById('ordersCount').textContent = f.length + ' รายการ';
+    renderTable(f);
+  };
+
+  function renderTable(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบออเดอร์</div></td></tr>';
+      return;
+    }
+    const statusMap = {
+      pending:   '<span class="status-badge pending">⏳ รอดำเนินการ</span>',
+      paid:      '<span class="status-badge paid">✅ ชำระแล้ว</span>',
+      shipped:   '<span class="status-badge shipped">🚚 จัดส่งแล้ว</span>',
+      cancelled: '<span class="status-badge cancelled">❌ ยกเลิก</span>',
+    };
+    tbody.innerHTML = orders.map(o => {
+      const items   = (o.items || []).map(i => i.name + ' x' + i.qty).join(', ');
+      const prize   = o.prizeType && o.prizeType !== 'freeship' && o.prizeType !== 'no_code'
+                      ? '<span class="prize-chip">🎁 ' + o.prizeType + '</span>' : '';
+      const date    = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+      const badge   = statusMap[o.status] || '<span class="status-badge">' + o.status + '</span>';
+      let btns = '<button class="action-btn btn-detail" onclick="showDetail(\'' + o._id + '\')"><i class="ph ph-eye"></i> ดู</button>';
+      if (o.status === 'pending')  btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + o._id + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
+      if (o.status === 'paid')     btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + o._id + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
+      if (o.status !== 'cancelled') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + o._id + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
+      btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + o._id + '\')"><i class="ph ph-trash"></i> ลบ</button>';
+      return '<tr><td><div class="order-id">' + (o.orderId || '-') + '</div></td>' +
+             '<td><div class="cus-name">' + (o.customerName || '-') + '</div><div class="cus-phone">' + (o.phone || '') + '</div></td>' +
+             '<td><div class="item-list">' + items + '</div>' + prize + '</td>' +
+             '<td><span class="total-amt">฿' + (o.grandTotal || 0).toLocaleString() + '</span></td>' +
+             '<td>' + badge + '</td>' +
+             '<td><span class="date-txt">' + date + '</span></td>' +
+             '<td>' + btns + '</td></tr>';
+    }).join('');
+  }
+
+  window.changeStatus = async function(id, status) {
+    try {
+      await updateDoc(doc(db, 'orders', id), { status });
+      const lbl = {paid:'ชำระแล้ว', shipped:'จัดส่งแล้ว', cancelled:'ยกเลิก'}[status] || status;
+      showToast('อัปเดตสถานะเป็น: ' + lbl);
+    } catch(e) { showToast('อัปเดตไม่สำเร็จ'); }
+  };
+
+  window.deleteOrder = async function(id) {
+    if (!confirm('ยืนยันการลบออเดอร์นี้? ไม่สามารถกู้คืนได้')) return;
+    try {
+      await deleteDoc(doc(db, 'orders', id));
+      showToast('ลบออเดอร์แล้ว');
+    } catch(e) { showToast('ลบไม่สำเร็จ'); }
+  };
+
+  window.showDetail = function(id) {
+    const o = allOrders.find(x => x._id === id);
+    if (!o) return;
+    const addr = o.address || {};
+    const full = [addr.street, addr.subdistrict, addr.district, addr.province, addr.postcode].filter(Boolean).join(' ');
+    const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH') : '-';
+    const pl = { freeship:'ส่งฟรี', wonderbook:'ส่งฟรี + DX Wonderside Book', kiramai:'ส่งฟรี + DX Kiramai Changer', geartlinger:'ส่งฟรี + DX Geartlinger', no_code:'ไม่ได้รับโค้ด' };
+    const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + i.name + ' x' + i.qty + '</span><span>฿' + (i.price * i.qty).toLocaleString() + '</span></div>').join('');
+    document.getElementById('detailModalContent').innerHTML =
+      '<h3>รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +
+      '<div class="detail-row"><span class="detail-label">ชื่อลูกค้า</span><span class="detail-value">' + (o.customerName || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">เบอร์โทร</span><span class="detail-value">' + (o.phone || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">ที่อยู่</span><span class="detail-value" style="max-width:260px;">' + (full || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">หมายเหตุ</span><span class="detail-value">' + (o.note || '-') + '</span></div>' +
+      '<div style="margin:12px 0;font-size:12px;font-weight:700;color:var(--muted);">รายการสินค้า</div>' + items +
+      '<div class="detail-row" style="margin-top:8px;"><span class="detail-label">ยอดสินค้า</span><span class="detail-value">฿' + (o.subtotal || 0).toLocaleString() + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">ค่าส่ง</span><span class="detail-value">฿' + (o.shipping || 0).toLocaleString() + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">ส่วนลด</span><span class="detail-value">-฿' + (o.discount || 0).toLocaleString() + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label" style="font-weight:800;">ยอดรวมสุทธิ</span><span class="detail-value" style="color:var(--mk-red);font-size:16px;">฿' + (o.grandTotal || 0).toLocaleString() + '</span></div>' +
+      (o.couponCode ? '<div class="detail-row"><span class="detail-label">โค้ดที่ใช้</span><span class="detail-value">' + o.couponCode + ' — ' + (pl[o.prizeType] || o.prizeType || '') + '</span></div>' : '') +
+      '<div class="detail-row"><span class="detail-label">สถานะ</span><span class="detail-value">' + (o.status || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">วันที่สั่ง</span><span class="detail-value">' + date + '</span></div>' +
+      '<button class="close-modal-btn" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')">ปิด</button>';
+    document.getElementById('detailModal').classList.add('active');
+  };
+
+  document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+  });
+
+  function showToast(text) {
+    const t = document.getElementById('adminToast');
+    t.textContent = text; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
