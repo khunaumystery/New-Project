@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -56,18 +56,43 @@
       color:white; padding:6px 14px; border-radius:8px;
       font-family:'Prompt',sans-serif; font-size:13px; cursor:pointer;
     }
+    /* Tabs Navigation */
+    .nav-tabs {
+      display:flex; gap:8px; background:var(--card); padding:10px 16px;
+      border-bottom:1px solid var(--border); overflow-x:auto;
+    }
+    .tab-btn {
+      padding:8px 16px; border:none; border-radius:10px;
+      background:transparent; color:var(--muted);
+      font-family:'Prompt',sans-serif; font-size:14px; font-weight:600;
+      cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+      transition: all 0.2s; white-space:nowrap;
+    }
+    .tab-btn.active {
+      background:var(--mk-red); color:white;
+      box-shadow: 0 2px 8px rgba(211,34,42,0.25);
+    }
+    .tab-btn:hover:not(.active) { background:#F3F4F6; color:var(--text); }
+
     .main { padding:20px 16px; max-width:1200px; margin:0 auto; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Stats Grid */
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
     .stat-card {
       background:var(--card); border-radius:14px; padding:16px;
       box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:4px solid var(--mk-red);
     }
-    .stat-card.gold  { border-left-color:#D97706; }
-    .stat-card.green { border-left-color:#10B981; }
-    .stat-card.blue  { border-left-color:#3B82F6; }
+    .stat-card.gold   { border-left-color:#D97706; }
+    .stat-card.green  { border-left-color:#10B981; }
+    .stat-card.blue   { border-left-color:#3B82F6; }
+    .stat-card.purple { border-left-color:#8B5CF6; }
     .stat-label { font-size:12px; color:var(--muted); font-weight:500; margin-bottom:6px; }
     .stat-value { font-size:26px; font-weight:800; }
     .stat-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+    /* Toolbars & Forms */
     .toolbar {
       background:var(--card); border-radius:14px; padding:14px 16px;
       display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;
@@ -83,16 +108,22 @@
       padding:9px 12px; border:1.5px solid var(--border); border-radius:10px;
       font-family:'Prompt',sans-serif; font-size:13px; outline:none; background:white;
     }
-    .refresh-btn {
+    .btn-primary {
       padding:9px 16px; background:var(--mk-red); color:white; border:none;
       border-radius:10px; font-family:'Prompt',sans-serif; font-size:13px; cursor:pointer; font-weight:600;
+      display:inline-flex; align-items:center; gap:6px;
     }
-    .orders-card { background:var(--card); border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden; }
-    .orders-header {
+    .btn-primary:hover { opacity:0.9; }
+
+    /* Content Cards */
+    .content-card { background:var(--card); border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden; margin-bottom:20px; }
+    .card-header {
       padding:16px 20px; border-bottom:1px solid var(--border);
       display:flex; align-items:center; justify-content:space-between;
     }
-    .orders-header h2 { font-size:15px; font-weight:700; }
+    .card-header h2 { font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px; }
+
+    /* Tables */
     .table-wrap { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; font-size:13px; }
     thead th {
@@ -102,6 +133,8 @@
     tbody tr { border-bottom:1px solid var(--border); }
     tbody tr:hover { background:#FFF8F8; }
     tbody td { padding:12px 14px; vertical-align:top; }
+
+    /* Badges & Buttons */
     .status-badge {
       display:inline-flex; align-items:center; gap:4px;
       padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap;
@@ -110,6 +143,9 @@
     .status-badge.paid      { background:#D1FAE5; color:#065F46; }
     .status-badge.shipped   { background:#DBEAFE; color:#1E40AF; }
     .status-badge.cancelled { background:#FEE2E2; color:#991B1B; }
+    .status-badge.active    { background:#D1FAE5; color:#065F46; }
+    .status-badge.out       { background:#FEE2E2; color:#991B1B; }
+
     .action-btn {
       padding:5px 10px; border:none; border-radius:7px;
       font-family:'Prompt',sans-serif; font-size:11px; font-weight:600;
@@ -120,6 +156,7 @@
     .btn-delete  { background:#FEE2E2; color:#991B1B; }
     .btn-cancel  { background:#F3F4F6; color:#374151; }
     .btn-detail  { background:#F3F4F6; color:#374151; }
+    
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
     .cus-phone { font-size:12px; color:var(--muted); }
@@ -127,17 +164,44 @@
     .prize-chip { display:inline-block; font-size:10px; padding:2px 7px; border-radius:10px; background:#EDE9FE; color:#6D28D9; font-weight:600; margin-top:3px; }
     .total-amt { font-weight:700; color:var(--mk-red); }
     .date-txt  { font-size:11px; color:var(--muted); }
-    .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
-    .empty-state i { font-size:48px; margin-bottom:12px; display:block; }
+    .empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
+    .empty-state i { font-size:42px; margin-bottom:8px; display:block; }
+
+    /* Modals & Forms */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; }
     .modal-overlay.active { display:flex; }
-    .modal-box { background:white; border-radius:20px; padding:24px; width:100%; max-width:500px; max-height:85vh; overflow-y:auto; }
-    .modal-box h3 { font-size:16px; font-weight:800; margin-bottom:16px; color:var(--mk-red); }
+    .modal-box { background:white; border-radius:20px; padding:24px; width:100%; max-width:520px; max-height:85vh; overflow-y:auto; }
+    .modal-box h3 { font-size:16px; font-weight:800; margin-bottom:16px; color:var(--mk-red); display:flex; align-items:center; gap:6px; }
+    .form-group { margin-bottom:12px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text); margin-bottom:4px; }
+    .form-control {
+      width:100%; padding:10px 14px; border:1.5px solid var(--border);
+      border-radius:10px; font-family:'Prompt',sans-serif; font-size:13px; outline:none;
+    }
+    .form-control:focus { border-color:var(--mk-red); }
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    
     .detail-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; gap:12px; }
     .detail-row:last-child { border:none; }
     .detail-label { color:var(--muted); font-weight:500; flex-shrink:0; }
     .detail-value { font-weight:600; text-align:right; }
-    .close-modal-btn { width:100%; margin-top:16px; padding:12px; background:var(--mk-red); color:white; border:none; border-radius:12px; font-family:'Prompt',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+    
+    .btn-submit {
+      width:100%; padding:12px; background:var(--mk-red); color:white; border:none;
+      border-radius:12px; font-family:'Prompt',sans-serif; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px;
+    }
+    .btn-submit:hover { opacity:0.9; }
+    .btn-close-modal {
+      width:100%; padding:10px; background:#F3F4F6; color:var(--text); border:none;
+      border-radius:12px; font-family:'Prompt',sans-serif; font-size:13px; font-weight:600; cursor:pointer; margin-top:8px;
+    }
+
+    /* Thumbnail in Table */
+    .table-thumb {
+      width:42px; height:42px; border-radius:8px; object-fit:cover; background:#F3F4F6;
+      border:1px solid var(--border);
+    }
+
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:#1A1A2E; color:white; padding:10px 20px; border-radius:30px; font-size:13px; z-index:2000; transition:transform 0.3s; white-space:nowrap; border:1px solid rgba(245,200,66,0.3); }
     .toast.show { transform:translateX(-50%) translateY(0); }
   </style>
@@ -169,55 +233,224 @@
     </div>
     <button class="logout-btn" onclick="adminLogout()"><i class="ph ph-sign-out"></i> ออกจากระบบ</button>
   </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('ordersTab', this)">
+      <i class="ph ph-shopping-bag"></i> จัดการออเดอร์
+    </button>
+    <button class="tab-btn" onclick="switchTab('categoriesTab', this)">
+      <i class="ph ph-folder"></i> จัดการหมวดหมู่
+    </button>
+    <button class="tab-btn" onclick="switchTab('productsTab', this)">
+      <i class="ph ph-package"></i> จัดการสินค้า
+    </button>
+  </nav>
+
   <div class="main">
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">📦 ออเดอร์ทั้งหมด</div><div class="stat-value" id="statTotal">0</div><div class="stat-sub">รายการ</div></div>
-      <div class="stat-card gold"><div class="stat-label">⏳ รอดำเนินการ</div><div class="stat-value" id="statPending">0</div><div class="stat-sub">รายการ</div></div>
-      <div class="stat-card green"><div class="stat-label">✅ ชำระแล้ว</div><div class="stat-value" id="statPaid">0</div><div class="stat-sub">รายการ</div></div>
-      <div class="stat-card blue"><div class="stat-label">💰 ยอดรวม</div><div class="stat-value" id="statRevenue">0</div><div class="stat-sub">บาท</div></div>
-    </div>
-    <div class="toolbar">
-      <input type="text" class="search-box" id="searchBox" placeholder="🔍 ค้นหา ชื่อ, หมายเลขออเดอร์, เบอร์โทร..." oninput="filterOrders()">
-      <select class="filter-select" id="statusFilter" onchange="filterOrders()">
-        <option value="">ทุกสถานะ</option>
-        <option value="pending">⏳ รอดำเนินการ</option>
-        <option value="paid">✅ ชำระแล้ว</option>
-        <option value="shipped">🚚 จัดส่งแล้ว</option>
-        <option value="cancelled">❌ ยกเลิก</option>
-      </select>
-      <button class="refresh-btn" onclick="loadOrders()"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
-    </div>
-    <div class="orders-card">
-      <div class="orders-header">
-        <h2>รายการออเดอร์</h2>
-        <span style="font-size:12px;color:var(--muted);" id="ordersCount">0 รายการ</span>
+    
+    <!-- ================= TAB 1: ORDERS ================= -->
+    <div id="ordersTab" class="tab-content active">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">📦 ออเดอร์ทั้งหมด</div><div class="stat-value" id="statTotal">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card gold"><div class="stat-label">⏳ รอดำเนินการ</div><div class="stat-value" id="statPending">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card green"><div class="stat-label">✅ ชำระแล้ว</div><div class="stat-value" id="statPaid">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card blue"><div class="stat-label">💰 ยอดรวม</div><div class="stat-value" id="statRevenue">0</div><div class="stat-sub">บาท</div></div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>หมายเลขออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th>
-              <th>ยอดรวม</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="ordersTableBody">
-            <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลด...</div></td></tr>
-          </tbody>
-        </table>
+
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchOrdersBox" placeholder="🔍 ค้นหา ชื่อลูกค้า, หมายเลขออเดอร์, เบอร์โทร..." oninput="filterOrders()">
+        <select class="filter-select" id="statusFilter" onchange="filterOrders()">
+          <option value="">ทุกสถานะ</option>
+          <option value="pending">⏳ รอดำเนินการ</option>
+          <option value="paid">✅ ชำระแล้ว</option>
+          <option value="shipped">🚚 จัดส่งแล้ว</option>
+          <option value="cancelled">❌ ยกเลิก</option>
+        </select>
+        <button class="btn-primary" onclick="loadOrders()"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-list-bullets"></i> รายการออเดอร์</h2>
+          <span style="font-size:12px;color:var(--muted);" id="ordersCount">0 รายการ</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>หมายเลขออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th>
+                <th>ยอดรวม</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลด...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!-- ================= TAB 2: CATEGORIES ================= -->
+    <div id="categoriesTab" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card purple"><div class="stat-label">📁 หมวดหมู่ทั้งหมด</div><div class="stat-value" id="statCategoriesTotal">0</div><div class="stat-sub">หมวดหมู่</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchCategoriesBox" placeholder="🔍 ค้นหาหมวดหมู่..." oninput="filterCategories()">
+        <button class="btn-primary" onclick="openAddCategoryModal()"><i class="ph ph-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-folder"></i> รายการหมวดหมู่สินค้า</h2>
+          <span style="font-size:12px;color:var(--muted);" id="categoriesCount">0 หมวดหมู่</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>รูป / ไอคอน</th><th>ชื่อหมวดหมู่</th><th>รหัส (Slug)</th><th>ลิงก์หน้าเว็บ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="categoriesTableBody">
+              <tr><td colspan="6"><div class="empty-state"><i class="ph ph-folder"></i>กำลังโหลดหมวดหมู่...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: PRODUCTS ================= -->
+    <div id="productsTab" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-label">🛍️ สินค้าทั้งหมด</div><div class="stat-value" id="statProductsTotal">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card green"><div class="stat-label">✅ พร้อมจำหน่าย</div><div class="stat-value" id="statProductsInStock">0</div><div class="stat-sub">รายการ</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchProductsBox" placeholder="🔍 ค้นหา ชื่อสินค้า, รหัส..." oninput="filterProducts()">
+        <select class="filter-select" id="productCategoryFilter" onchange="filterProducts()">
+          <option value="">ทุกหมวดหมู่</option>
+        </select>
+        <button class="btn-primary" onclick="openAddProductModal()"><i class="ph ph-plus-circle"></i> + เพิ่มสินค้าใหม่</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-package"></i> รายการสินค้า</h2>
+          <span style="font-size:12px;color:var(--muted);" id="productsCount">0 รายการ</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
+<!-- ===== MODAL: ADD CATEGORY ===== -->
+<div class="modal-overlay" id="addCategoryModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-folder-plus"></i> เพิ่มหมวดหมู่ใหม่</h3>
+    <form id="addCategoryForm" onsubmit="event.preventDefault(); submitAddCategory();">
+      <div class="form-group">
+        <label>ชื่อหมวดหมู่ *</label>
+        <input type="text" id="catName" class="form-control" placeholder="เช่น DX Full Bottle, Wonder Ride Book" required>
+      </div>
+      <div class="form-group">
+        <label>รหัสหมวดหมู่ (Slug / ID) *</label>
+        <input type="text" id="catSlug" class="form-control" placeholder="เช่น full-bottle, saberbook" required>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพปก / ไอคอน (URL หรือ Path ไฟล์) *</label>
+        <input type="text" id="catImage" class="form-control" placeholder="เช่น full-bottle.jpg หรือ URL รูป" required>
+      </div>
+      <div class="form-group">
+        <label>ลิงก์หน้าเว็บ (ถ้ามี)</label>
+        <input type="text" id="catPageLink" class="form-control" placeholder="เช่น full-bottle.html หรือ SaberbookSG.html">
+      </div>
+      <div class="form-group">
+        <label>คำอธิบายหมวดหมู่</label>
+        <input type="text" id="catDesc" class="form-control" placeholder="คำอธิบายสั้นๆ">
+      </div>
+      <button type="submit" class="btn-submit"><i class="ph ph-check-circle"></i> บันทึกหมวดหมู่</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('addCategoryModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: ADD PRODUCT ===== -->
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-package"></i> เพิ่มสินค้าใหม่</h3>
+    <form id="addProductForm" onsubmit="event.preventDefault(); submitAddProduct();">
+      <div class="form-group">
+        <label>ชื่อสินค้า *</label>
+        <input type="text" id="prodName" class="form-control" placeholder="เช่น Full Bottle B01, Brave Dragon" required>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>หมวดหมู่ *</label>
+          <select id="prodCategory" class="form-control" required>
+            <option value="">-- เลือกหมวดหมู่ --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>สถานะสต็อก *</label>
+          <select id="prodInStock" class="form-control" required>
+            <option value="true">✅ พร้อมจำหน่าย</option>
+            <option value="false">❌ สินค้าหมด</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>ราคาขาย (บาท) *</label>
+          <input type="number" id="prodPrice" class="form-control" placeholder="เช่น 129" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>ราคาเดิม / ราคาเต็ม (บาท)</label>
+          <input type="number" id="prodOriginalPrice" class="form-control" placeholder="เช่น 159 (ไม่ใส่ก็ได้)" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพสินค้า (URL หรือ Path) *</label>
+        <input type="text" id="prodImage" class="form-control" placeholder="เช่น full bottle/b001.jpg หรือ wondersidebookSG/wb001.jpg" required>
+      </div>
+      <div class="form-group">
+        <label>รายละเอียดสินค้า</label>
+        <textarea id="prodDesc" class="form-control" rows="2" placeholder="รายละเอียดสภาพสินค้า/ของแถม..."></textarea>
+      </div>
+      <button type="submit" class="btn-submit"><i class="ph ph-check-circle"></i> บันทึกสินค้า</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('addProductModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: ORDER DETAIL ===== -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box" id="detailModalContent"></div>
 </div>
+
+<!-- Toast -->
 <div class="toast" id="adminToast"></div>
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -230,22 +463,64 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
-  let allOrders = [];
-  let unsubscribe = null;
 
+  let allOrders = [];
+  let allCategories = [];
+  let allProducts = [];
+
+  let unsubsOrders = null;
+  let unsubsCategories = null;
+  let unsubsProducts = null;
+
+  // ===== AUTH STATE =====
   onAuthStateChanged(auth, user => {
     if (user) {
       document.getElementById('loginGate').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       document.getElementById('adminEmailDisplay').textContent = user.email;
-      loadOrders();
+      initDataListeners();
     } else {
       document.getElementById('loginGate').style.display = 'flex';
       document.getElementById('dashboard').style.display = 'none';
-      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+      cleanUpListeners();
     }
   });
 
+  function cleanUpListeners() {
+    if (unsubsOrders) { unsubsOrders(); unsubsOrders = null; }
+    if (unsubsCategories) { unsubsCategories(); unsubsCategories = null; }
+    if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
+  }
+
+  function initDataListeners() {
+    loadOrders();
+    loadCategories();
+    loadProducts();
+  }
+
+  // ===== TAB SWITCHING =====
+  window.switchTab = function(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+  };
+
+  // ===== MODAL UTILITIES =====
+  window.openAddCategoryModal = function() {
+    document.getElementById('addCategoryForm').reset();
+    document.getElementById('addCategoryModal').classList.add('active');
+  };
+  window.openAddProductModal = function() {
+    document.getElementById('addProductForm').reset();
+    updateCategorySelectOptions();
+    document.getElementById('addProductModal').classList.add('active');
+  };
+  window.closeModal = function(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+  };
+
+  // ===== LOGIN / LOGOUT =====
   window.adminLogin = async function() {
     const email = document.getElementById('adminEmail').value.trim();
     const pass  = document.getElementById('adminPassword').value;
@@ -264,17 +539,18 @@
     showToast('ออกจากระบบแล้ว');
   };
 
+  // ================= 1. ORDERS MODULE =================
   window.loadOrders = function() {
-    if (unsubscribe) unsubscribe();
+    if (unsubsOrders) unsubsOrders();
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    unsubscribe = onSnapshot(q, snap => {
+    unsubsOrders = onSnapshot(q, snap => {
       allOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      renderStats(allOrders);
+      renderOrderStats(allOrders);
       filterOrders();
-    }, err => showToast('โหลดข้อมูลไม่สำเร็จ: ' + err.message));
+    }, err => showToast('โหลดออเดอร์ไม่สำเร็จ: ' + err.message));
   };
 
-  function renderStats(orders) {
+  function renderOrderStats(orders) {
     document.getElementById('statTotal').textContent   = orders.length;
     document.getElementById('statPending').textContent = orders.filter(o => o.status === 'pending').length;
     document.getElementById('statPaid').textContent    = orders.filter(o => o.status === 'paid').length;
@@ -283,7 +559,7 @@
   }
 
   window.filterOrders = function() {
-    const search = document.getElementById('searchBox').value.toLowerCase().trim();
+    const search = document.getElementById('searchOrdersBox').value.toLowerCase().trim();
     const status = document.getElementById('statusFilter').value;
     let f = allOrders;
     if (status) f = f.filter(o => o.status === status);
@@ -293,10 +569,10 @@
       (o.phone || '').includes(search)
     );
     document.getElementById('ordersCount').textContent = f.length + ' รายการ';
-    renderTable(f);
+    renderOrdersTable(f);
   };
 
-  function renderTable(orders) {
+  function renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTableBody');
     if (!orders.length) {
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบออเดอร์</div></td></tr>';
@@ -315,8 +591,8 @@
       const date    = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
       const badge   = statusMap[o.status] || '<span class="status-badge">' + o.status + '</span>';
       let btns = '<button class="action-btn btn-detail" onclick="showDetail(\'' + o._id + '\')"><i class="ph ph-eye"></i> ดู</button>';
-      if (o.status === 'pending')  btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + o._id + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
-      if (o.status === 'paid')     btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + o._id + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
+      if (o.status === 'pending')   btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + o._id + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
+      if (o.status === 'paid')      btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + o._id + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
       if (o.status !== 'cancelled') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + o._id + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
       btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + o._id + '\')"><i class="ph ph-trash"></i> ลบ</button>';
       return '<tr><td><div class="order-id">' + (o.orderId || '-') + '</div></td>' +
@@ -338,11 +614,11 @@
   };
 
   window.deleteOrder = async function(id) {
-    if (!confirm('ยืนยันการลบออเดอร์นี้? ไม่สามารถกู้คืนได้')) return;
+    if (!confirm('⚠️ ยืนยันการลบออเดอร์นี้? ไม่สามารถกู้คืนได้')) return;
     try {
       await deleteDoc(doc(db, 'orders', id));
-      showToast('ลบออเดอร์แล้ว');
-    } catch(e) { showToast('ลบไม่สำเร็จ'); }
+      showToast('🗑️ ลบออเดอร์แล้ว');
+    } catch(e) { showToast('❌ ลบไม่สำเร็จ: ' + e.message); }
   };
 
   window.showDetail = function(id) {
@@ -354,7 +630,7 @@
     const pl = { freeship:'ส่งฟรี', wonderbook:'ส่งฟรี + DX Wonderside Book', kiramai:'ส่งฟรี + DX Kiramai Changer', geartlinger:'ส่งฟรี + DX Geartlinger', no_code:'ไม่ได้รับโค้ด' };
     const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + i.name + ' x' + i.qty + '</span><span>฿' + (i.price * i.qty).toLocaleString() + '</span></div>').join('');
     document.getElementById('detailModalContent').innerHTML =
-      '<h3>รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +
+      '<h3>📋 รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +
       '<div class="detail-row"><span class="detail-label">ชื่อลูกค้า</span><span class="detail-value">' + (o.customerName || '-') + '</span></div>' +
       '<div class="detail-row"><span class="detail-label">เบอร์โทร</span><span class="detail-value">' + (o.phone || '-') + '</span></div>' +
       '<div class="detail-row"><span class="detail-label">ที่อยู่</span><span class="detail-value" style="max-width:260px;">' + (full || '-') + '</span></div>' +
@@ -367,12 +643,206 @@
       (o.couponCode ? '<div class="detail-row"><span class="detail-label">โค้ดที่ใช้</span><span class="detail-value">' + o.couponCode + ' — ' + (pl[o.prizeType] || o.prizeType || '') + '</span></div>' : '') +
       '<div class="detail-row"><span class="detail-label">สถานะ</span><span class="detail-value">' + (o.status || '-') + '</span></div>' +
       '<div class="detail-row"><span class="detail-label">วันที่สั่ง</span><span class="detail-value">' + date + '</span></div>' +
-      '<button class="close-modal-btn" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')">ปิด</button>';
+      '<button class="btn-submit" style="margin-top:16px;" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')">ปิด</button>';
     document.getElementById('detailModal').classList.add('active');
   };
 
-  document.getElementById('detailModal').addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('active');
+  // ================= 2. CATEGORIES MODULE =================
+  window.loadCategories = function() {
+    if (unsubsCategories) unsubsCategories();
+    const q = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
+    unsubsCategories = onSnapshot(q, snap => {
+      allCategories = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      document.getElementById('statCategoriesTotal').textContent = allCategories.length;
+      updateCategorySelectOptions();
+      filterCategories();
+    }, err => showToast('โหลดหมวดหมู่ไม่สำเร็จ: ' + err.message));
+  };
+
+  function updateCategorySelectOptions() {
+    const filterEl = document.getElementById('productCategoryFilter');
+    const formEl = document.getElementById('prodCategory');
+    
+    let filterOptions = '<option value="">ทุกหมวดหมู่</option>';
+    let formOptions = '<option value="">-- เลือกหมวดหมู่ --</option>';
+
+    allCategories.forEach(cat => {
+      filterOptions += `<option value="${cat.name}">${cat.name}</option>`;
+      formOptions += `<option value="${cat.name}">${cat.name}</option>`;
+    });
+
+    filterEl.innerHTML = filterOptions;
+    formEl.innerHTML = formOptions;
+  }
+
+  window.filterCategories = function() {
+    const search = document.getElementById('searchCategoriesBox').value.toLowerCase().trim();
+    let f = allCategories;
+    if (search) {
+      f = f.filter(c => 
+        (c.name || '').toLowerCase().includes(search) ||
+        (c.slug || '').toLowerCase().includes(search) ||
+        (c.desc || '').toLowerCase().includes(search)
+      );
+    }
+    document.getElementById('categoriesCount').textContent = f.length + ' หมวดหมู่';
+    renderCategoriesTable(f);
+  };
+
+  function renderCategoriesTable(categories) {
+    const tbody = document.getElementById('categoriesTableBody');
+    if (!categories.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = categories.map(c => {
+      const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
+      const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
+      const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
+      return `
+        <tr>
+          <td>${imgTag}</td>
+          <td><strong>${c.name || '-'}</strong><div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
+          <td><code>${c.slug || '-'}</code></td>
+          <td>${pageLink}</td>
+          <td><span class="date-txt">${date}</span></td>
+          <td>
+            <button class="action-btn btn-delete" onclick="deleteCategory('${c._id}', '${c.name}')"><i class="ph ph-trash"></i> ลบ</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.submitAddCategory = async function() {
+    const name     = document.getElementById('catName').value.trim();
+    const slug     = document.getElementById('catSlug').value.trim();
+    const image    = document.getElementById('catImage').value.trim();
+    const pageLink = document.getElementById('catPageLink').value.trim();
+    const desc     = document.getElementById('catDesc').value.trim();
+
+    try {
+      await addDoc(collection(db, 'categories'), {
+        name, slug, image, pageLink, desc,
+        createdAt: new Date().toISOString()
+      });
+      closeModal('addCategoryModal');
+      showToast('✅ เพิ่มหมวดหมู่ "' + name + '" สำเร็จ');
+    } catch(e) {
+      showToast('❌ ไม่สามารถเพิ่มหมวดหมู่ได้: ' + e.message);
+    }
+  };
+
+  window.deleteCategory = async function(id, name) {
+    if (!confirm(`⚠️ ยืนยันการลบหมวดหมู่ "${name}"?\n(สินค้าในหมวดหมู่นี้จะไม่ถูกลบอัตโนมัติ)`)) return;
+    try {
+      await deleteDoc(doc(db, 'categories', id));
+      showToast(`🗑️ ลบหมวดหมู่ "${name}" เรียบร้อยแล้ว`);
+    } catch(e) {
+      showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= 3. PRODUCTS MODULE =================
+  window.loadProducts = function() {
+    if (unsubsProducts) unsubsProducts();
+    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+    unsubsProducts = onSnapshot(q, snap => {
+      allProducts = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      document.getElementById('statProductsTotal').textContent = allProducts.length;
+      document.getElementById('statProductsInStock').textContent = allProducts.filter(p => p.inStock === true || p.inStock === 'true').length;
+      filterProducts();
+    }, err => showToast('โหลดสินค้าไม่สำเร็จ: ' + err.message));
+  };
+
+  window.filterProducts = function() {
+    const search   = document.getElementById('searchProductsBox').value.toLowerCase().trim();
+    const category = document.getElementById('productCategoryFilter').value;
+    let f = allProducts;
+    if (category) f = f.filter(p => p.category === category);
+    if (search) {
+      f = f.filter(p =>
+        (p.name || '').toLowerCase().includes(search) ||
+        (p.desc || '').toLowerCase().includes(search)
+      );
+    }
+    document.getElementById('productsCount').textContent = f.length + ' รายการ';
+    renderProductsTable(f);
+  };
+
+  function renderProductsTable(products) {
+    const tbody = document.getElementById('productsTableBody');
+    if (!products.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = products.map(p => {
+      const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
+      const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
+      const inStock = (p.inStock === true || p.inStock === 'true');
+      const statusBadge = inStock 
+        ? '<span class="status-badge active">✅ พร้อมขาย</span>' 
+        : '<span class="status-badge out">❌ หมด</span>';
+      const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
+
+      return `
+        <tr>
+          <td>${imgTag}</td>
+          <td>
+            <strong>${p.name || '-'}</strong>
+            <div style="font-size:11px;color:var(--muted);">${p.desc || ''}</div>
+          </td>
+          <td><span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${p.category || '-'}</span></td>
+          <td>
+            ${origPriceTxt}
+            <span class="total-amt">฿${Number(p.price || 0).toLocaleString()}</span>
+          </td>
+          <td>${statusBadge}</td>
+          <td><span class="date-txt">${date}</span></td>
+          <td>
+            <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}', '${p.name}')"><i class="ph ph-trash"></i> ลบ</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.submitAddProduct = async function() {
+    const name          = document.getElementById('prodName').value.trim();
+    const category      = document.getElementById('prodCategory').value;
+    const price         = Number(document.getElementById('prodPrice').value);
+    const originalPrice = document.getElementById('prodOriginalPrice').value ? Number(document.getElementById('prodOriginalPrice').value) : null;
+    const image         = document.getElementById('prodImage').value.trim();
+    const desc          = document.getElementById('prodDesc').value.trim();
+    const inStock       = document.getElementById('prodInStock').value === 'true';
+
+    try {
+      await addDoc(collection(db, 'products'), {
+        name, category, price, originalPrice, image, desc, inStock,
+        createdAt: new Date().toISOString()
+      });
+      closeModal('addProductModal');
+      showToast('✅ เพิ่มสินค้า "' + name + '" สำเร็จ');
+    } catch(e) {
+      showToast('❌ ไม่สามารถเพิ่มสินค้าได้: ' + e.message);
+    }
+  };
+
+  window.deleteProduct = async function(id, name) {
+    if (!confirm(`⚠️ ยืนยันการลบสินค้า "${name}"?\nไม่สามารถกู้คืนได้`)) return;
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      showToast(`🗑️ ลบสินค้า "${name}" เรียบร้อยแล้ว`);
+    } catch(e) {
+      showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
   });
 
   function showToast(text) {
@@ -380,6 +850,7 @@
     t.textContent = text; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3000);
   }
+  window.showToast = showToast;
 </script>
 </body>
 </html>
