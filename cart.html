@@ -690,6 +690,23 @@
 
   </div>
 
+  <!-- Modal Login Required -->
+  <div class="modal-overlay" id="loginRequiredModal">
+    <div class="modal-content">
+      <div class="modal-icon" style="background:#FFF2F2; color:var(--mk-red);">
+        <i class="ph ph-lock-key"></i>
+      </div>
+      <h3 class="modal-title">กรุณาเข้าสู่ระบบก่อน</h3>
+      <p class="modal-desc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถยืนยันการสั่งซื้อสินค้าได้ครับ 🔒</p>
+      <a href="login.html" class="modal-close-btn" style="display:block; text-decoration:none; margin-bottom:8px; line-height:44px; padding:0;">
+        <i class="ph ph-sign-in"></i> เข้าสู่ระบบ / สมัครสมาชิก
+      </a>
+      <button class="modal-close-btn" onclick="document.getElementById('loginRequiredModal').classList.remove('active')" style="background:#F3F4F6; color:var(--text-muted);">
+        ไว้คราวหลัง
+      </button>
+    </div>
+  </div>
+
   <!-- Modal Success -->
   <div class="modal-overlay" id="successModal">
     <div class="modal-content">
@@ -991,6 +1008,12 @@
     }
 
     function confirmOrder() {
+      // Check Auth
+      if (!window.currentUser) {
+        document.getElementById('loginRequiredModal').classList.add('active');
+        return;
+      }
+
       const cart = getCart();
       if (cart.length === 0) {
         showToast('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อ');
@@ -1031,6 +1054,8 @@
       const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const orderData = {
         orderId,
+        userId:       window.currentUser ? window.currentUser.uid : null,
+        userEmail:    window.currentUser ? window.currentUser.email : null,
         customerName: document.getElementById('cusFirstName').value.trim() + ' ' + document.getElementById('cusLastName').value.trim(),
         phone:        document.getElementById('cusPhone').value.trim(),
         address: {
@@ -1105,9 +1130,10 @@
     });
   </script>
 
-  <!-- Firebase Firestore (ESM CDN) -->
+  <!-- Firebase Firestore & Auth (ESM CDN) -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -1118,8 +1144,15 @@
       messagingSenderId: "508588235711",
       appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
     };
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    window.currentUser = null;
+
+    onAuthStateChanged(auth, user => {
+      window.currentUser = user;
+    });
 
     // Expose saveOrderToFirestore globally so confirmOrder() can call it
     window.saveOrderToFirestore = async function(orderData) {

@@ -767,8 +767,22 @@
       });
     }
 
+    // --- Login Required Helper ---
+    window.showLoginRequiredModal = function(action) {
+      const modal = document.getElementById('loginRequiredModal');
+      const desc = document.getElementById('loginRequiredDesc');
+      if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
+      if (modal) modal.style.display = 'flex';
+    };
+
     // --- Main Spin Action ---
     function doSpin() {
+      // Check Auth
+      if (!window.currentUser) {
+        showLoginRequiredModal('สุ่มโค้ดส่วนลด');
+        return;
+      }
+
       const spinBtn = document.getElementById('spinBtn');
       const giftBox = document.getElementById('giftBox');
 
@@ -1009,9 +1023,27 @@
     </a>
   </nav>
 
+  <!-- Modal: Login Required -->
+  <div class="modal-overlay" id="loginRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px;">
+    <div style="background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+      <div style="width:60px;height:60px;border-radius:50%;background:#FFF2F2;color:var(--mk-red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;">
+        <i class="ph ph-lock-key"></i>
+      </div>
+      <h3 style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:8px;">กรุณาเข้าสู่ระบบก่อน</h3>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;" id="loginRequiredDesc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถใช้งานได้ครับ</p>
+      <a href="login.html" style="display:block;width:100%;padding:13px;background:var(--mk-red);color:#fff;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;margin-bottom:10px;">
+        <i class="ph ph-sign-in"></i> เข้าสู่ระบบ / สมัครสมาชิก
+      </a>
+      <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="width:100%;padding:11px;background:#F3F4F6;color:var(--text-muted);border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">
+        ไว้คราวหลัง
+      </button>
+    </div>
+  </div>
+
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getFirestore, collection, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -1022,8 +1054,16 @@
       messagingSenderId: "508588235711",
       appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
     };
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    window.currentUser = null;
+
+    // Listen to Firebase Auth state
+    onAuthStateChanged(auth, user => {
+      window.currentUser = user;
+    });
 
     let storeCategories = [];
     let storeProducts = [];
@@ -1175,6 +1215,11 @@
 
     // ===== ADD TO CART =====
     window.addToCart = function(id, name, price, image) {
+      if (!window.currentUser) {
+        showLoginRequiredModal('สั่งซื้อสินค้า');
+        return;
+      }
+
       let cart = [];
       try {
         cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
