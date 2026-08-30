@@ -573,344 +573,6 @@
       color: var(--mk-red);
       font-weight: 600;
     }
-
-    /* Orders Modal Styles */
-    .orders-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 3, 6, 0.78);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 3500;
-      padding: 16px;
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-
-    .orders-modal-overlay.active {
-      display: flex;
-      opacity: 1;
-    }
-
-    .orders-modal-box {
-      background: #FFFFFF;
-      width: 100%;
-      max-width: 520px;
-      max-height: 88vh;
-      border-radius: 24px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(245, 200, 66, 0.35);
-      overflow: hidden;
-      transform: translateY(20px) scale(0.97);
-      transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .orders-modal-overlay.active .orders-modal-box {
-      transform: translateY(0) scale(1);
-    }
-
-    .orders-modal-header {
-      padding: 18px 20px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #F3F4F6;
-      background: #FFFDFC;
-    }
-
-    .orders-modal-header h3 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #1F2937;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0;
-    }
-
-    .orders-modal-close {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: none;
-      background: #F3F4F6;
-      color: #6B7280;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .orders-modal-close:hover {
-      background: #E5E7EB;
-      color: #111827;
-    }
-
-    /* Modal Navigation Tabs */
-    .orders-modal-nav {
-      display: flex;
-      padding: 8px 16px;
-      background: #F9FAFB;
-      border-bottom: 1px solid #E5E7EB;
-      gap: 6px;
-    }
-
-    .orders-tab-btn {
-      flex: 1;
-      padding: 9px 4px;
-      border: none;
-      background: transparent;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: #6B7280;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      transition: all 0.2s ease;
-    }
-
-    .orders-tab-btn i {
-      font-size: 15px;
-    }
-
-    .orders-tab-btn.active {
-      background: #FFFFFF;
-      color: var(--mk-red);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      border: 1px solid rgba(211, 34, 42, 0.15);
-      font-weight: 700;
-    }
-
-    .orders-modal-body {
-      padding: 16px;
-      overflow-y: auto;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: #FDFBFB;
-    }
-
-    /* Order Card Item */
-    .user-order-card {
-      background: #FFFFFF;
-      border: 1px solid #E5E7EB;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .user-order-card:hover {
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-    }
-
-    .order-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px dashed #E5E7EB;
-    }
-
-    .order-id-badge {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--mk-red);
-      letter-spacing: 0.5px;
-    }
-
-    .order-date-text {
-      font-size: 11px;
-      color: #9CA3AF;
-    }
-
-    /* Status Pills */
-    .order-status-pill {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .order-status-pill.pending { background: #FEF3C7; color: #D97706; }
-    .order-status-pill.paid { background: #E0E7FF; color: #4338CA; }
-    .order-status-pill.shipped { background: #D1FAE5; color: #065F46; }
-    .order-status-pill.cancelled { background: #FEE2E2; color: #DC2626; }
-
-    /* Timeline Stepper */
-    .order-timeline-stepper {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
-      margin: 14px 6px 12px;
-    }
-
-    .order-timeline-stepper::before {
-      content: '';
-      position: absolute;
-      top: 14px;
-      left: 20px;
-      right: 20px;
-      height: 3px;
-      background: #E5E7EB;
-      z-index: 1;
-    }
-
-    .stepper-step {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .stepper-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #F3F4F6;
-      border: 2px solid #E5E7EB;
-      color: #9CA3AF;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      transition: all 0.3s;
-    }
-
-    .stepper-label {
-      font-size: 10px;
-      color: #9CA3AF;
-      font-weight: 600;
-    }
-
-    .stepper-step.active .stepper-icon {
-      background: #FEF3C7;
-      border-color: #F59E0B;
-      color: #D97706;
-    }
-
-    .stepper-step.active .stepper-label {
-      color: #D97706;
-      font-weight: 700;
-    }
-
-    .stepper-step.completed .stepper-icon {
-      background: #10B981;
-      border-color: #10B981;
-      color: #FFFFFF;
-    }
-
-    .stepper-step.completed .stepper-label {
-      color: #10B981;
-      font-weight: 700;
-    }
-
-    /* Tracking Box */
-    .order-tracking-banner {
-      background: linear-gradient(135deg, #ECFDF5, #F0FDF4);
-      border: 1.5px solid #6EE7B7;
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .tracking-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .tracking-courier-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: #065F46;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .tracking-number-code {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 14px;
-      font-weight: 800;
-      color: #047857;
-      letter-spacing: 1px;
-    }
-
-    .tracking-actions-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
-    .btn-tracking-action {
-      flex: 1;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border: none;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-
-    .btn-tracking-copy {
-      background: #FFFFFF;
-      color: #065F46;
-      border: 1px solid #A7F3D0;
-    }
-
-    .btn-tracking-copy:hover { background: #D1FAE5; }
-
-    .btn-tracking-link {
-      background: #059669;
-      color: #FFFFFF;
-      text-decoration: none;
-    }
-
-    .btn-tracking-link:hover { background: #047857; }
-
-    /* Empty state */
-    .user-orders-empty {
-      text-align: center;
-      padding: 36px 16px;
-      color: #9CA3AF;
-    }
-
-    .user-orders-empty i {
-      font-size: 48px;
-      color: #D1D5DB;
-      margin-bottom: 10px;
-      display: block;
-    }
   </style>
 </head>
 <body>
@@ -1019,29 +681,7 @@
       
       <div class="profile-avatar-box">
         <img src="logo%20khunau.png" alt="Profile" class="profile-avatar" id="profileImg" onerror="this.src='logo khunau.png'">
-        <span class="profile-badge-vip">👑 VIP</span>
-      </div>
-
-      <h3 class="profile-name" id="profileName">ผู้ใช้งาน</h3>
-      <p class="profile-email" id="profileEmail">user@email.com</p>
-
-      <!-- Stats -->
-      <div class="profile-stats-grid">
-        <div class="stat-box">
-          <div class="stat-number" id="statCartCount">2</div>
-          <div class="stat-label">ในตะกร้า</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number" id="statCodeCount">1</div>
-          <div class="stat-label">โค้ดส่วนลด</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">0</div>
-          <div class="stat-label">คะแนนสะสม</div>
-        </div>
-      </div>
-
-      <!-- Quick Action Links -->
+        <span class="profile-bad      <!-- Quick Action Links -->
       <div class="profile-links-list">
         <a href="cart.html" class="profile-link-item">
           <div class="profile-link-left">
@@ -1050,27 +690,21 @@
           </div>
           <i class="ph ph-caret-right" style="color: #9CA3AF;"></i>
         </a>
-        <a href="javascript:void(0)" class="profile-link-item" onclick="openOrdersModal('status')">
+        <a href="#" class="profile-link-item">
           <div class="profile-link-left">
             <i class="ph ph-package"></i>
             <span>สถานะคำสั่งซื้อสินค้า</span>
           </div>
-          <div style="display:flex; align-items:center;">
-            <span id="userPendingCountBadge" style="display:none; background:#FEF3C7; color:#D97706; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; margin-right:6px;">0</span>
-            <i class="ph ph-caret-right" style="color: #9CA3AF;"></i>
-          </div>
+          <i class="ph ph-caret-right" style="color: #9CA3AF;"></i>
         </a>
-        <a href="javascript:void(0)" class="profile-link-item" onclick="openOrdersModal('tracking')">
+        <a href="#" class="profile-link-item">
           <div class="profile-link-left">
             <i class="ph ph-truck"></i>
             <span>เลขพัสดุ</span>
           </div>
-          <div style="display:flex; align-items:center;">
-            <span id="userShippedCountBadge" style="display:none; background:#D1FAE5; color:#065F46; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; margin-right:6px;">0</span>
-            <i class="ph ph-caret-right" style="color: #9CA3AF;"></i>
-          </div>
+          <i class="ph ph-caret-right" style="color: #9CA3AF;"></i>
         </a>
-        <a href="javascript:void(0)" class="profile-link-item" onclick="openOrdersModal('history')">
+        <a href="#" class="profile-link-item">
           <div class="profile-link-left">
             <i class="ph ph-clock-counter-clockwise"></i>
             <span>ประวัติการสั่งซื้อสินค้า</span>
@@ -1087,39 +721,6 @@
 
     </div>
 
-  </div>
-
-  <!-- Modal: User Orders / Tracking / History -->
-  <div class="orders-modal-overlay" id="userOrdersModal">
-    <div class="orders-modal-box">
-      <div class="orders-modal-header">
-        <h3 id="ordersModalTitle"><i class="ph ph-package"></i> คำสั่งซื้อของฉัน</h3>
-        <button class="orders-modal-close" onclick="closeOrdersModal()" aria-label="ปิด">
-          <i class="ph ph-x"></i>
-        </button>
-      </div>
-
-      <!-- Tab Buttons -->
-      <div class="orders-modal-nav">
-        <button class="orders-tab-btn active" id="tabBtnStatus" onclick="switchOrdersTab('status')">
-          <i class="ph ph-package"></i> สถานะออเดอร์
-        </button>
-        <button class="orders-tab-btn" id="tabBtnTracking" onclick="switchOrdersTab('tracking')">
-          <i class="ph ph-truck"></i> เลขพัสดุ
-        </button>
-        <button class="orders-tab-btn" id="tabBtnHistory" onclick="switchOrdersTab('history')">
-          <i class="ph ph-clock-counter-clockwise"></i> ประวัติคำสั่งซื้อ
-        </button>
-      </div>
-
-      <!-- Orders List Container -->
-      <div class="orders-modal-body" id="ordersListContainer">
-        <div class="user-orders-empty">
-          <i class="ph ph-spinner ph-spin"></i>
-          <p>กำลังโหลดข้อมูลคำสั่งซื้อ...</p>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Toast Notification -->
@@ -1141,7 +742,7 @@
   </nav>
 
   <!-- Modal: In-App Browser Guide -->
-<div class="modal-overlay" id="inAppGuideModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+  <div class="modal-overlay" id="inAppGuideModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
     <div style="background:#FFFFFF;border-radius:22px;padding:26px 20px;width:100%;max-width:380px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5);font-family:'Prompt',sans-serif;">
       <div style="width:58px;height:58px;border-radius:50%;background:#FEF3C7;color:#D97706;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;">
         <i class="ph ph-browsers"></i>
@@ -1165,11 +766,6 @@
     import { 
       auth, 
       googleProvider, 
-      db,
-      collection,
-      query,
-      orderBy,
-      onSnapshot,
       signInWithPopup, 
       signInWithEmailAndPassword, 
       createUserWithEmailAndPassword, 
@@ -1204,9 +800,6 @@
     initParticles();
 
     let currentMode = 'login'; // 'login' | 'register'
-    let myOrders = [];
-    let currentOrdersTab = 'status'; // 'status' | 'tracking' | 'history'
-    let unsubsOrders = null;
 
     window.switchAuthTab = function(mode) {
       currentMode = mode;
@@ -1247,8 +840,8 @@
       toastText.textContent = text;
       toast.classList.add('show');
       if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove('show');
+      toastTimeout = setTimeout(() => { 
+        toast.classList.remove('show'); 
       }, 3000); // 3 วินาที
     }
 
@@ -1323,7 +916,6 @@
     // 3. Sign Out
     document.getElementById('btnSignOut').addEventListener('click', async () => {
       try {
-        if (unsubsOrders) unsubsOrders();
         await signOut(auth);
         showToast('ออกจากระบบเรียบร้อยแล้ว');
       } catch (error) {
@@ -1352,320 +944,7 @@
       } catch(e) {}
     }
 
-    // ================= 5. REAL-TIME USER ORDERS & TRACKING =================
-    function initUserOrdersListener(user) {
-      if (unsubsOrders) unsubsOrders();
-      try {
-        const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-        unsubsOrders = onSnapshot(q, snap => {
-          const all = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-          // Filter by this user's UID or Email
-          myOrders = all.filter(o => 
-            (o.userId && o.userId === user.uid) || 
-            (user.email && o.userEmail && o.userEmail.toLowerCase() === user.email.toLowerCase())
-          );
-
-          // Update badges
-          const pendingCount = myOrders.filter(o => o.status === 'pending' || o.status === 'paid').length;
-          const shippedCount = myOrders.filter(o => o.status === 'shipped' || o.trackingNumber).length;
-
-          const pendingBadge = document.getElementById('userPendingCountBadge');
-          if (pendingBadge) {
-            if (pendingCount > 0) {
-              pendingBadge.textContent = `${pendingCount} รายการ`;
-              pendingBadge.style.display = 'inline-block';
-            } else {
-              pendingBadge.style.display = 'none';
-            }
-          }
-
-          const shippedBadge = document.getElementById('userShippedCountBadge');
-          if (shippedBadge) {
-            if (shippedCount > 0) {
-              shippedBadge.textContent = `${shippedCount} ชิ้น`;
-              shippedBadge.style.display = 'inline-block';
-            } else {
-              shippedBadge.style.display = 'none';
-            }
-          }
-
-          // If modal is currently open, re-render
-          const modal = document.getElementById('userOrdersModal');
-          if (modal && modal.classList.contains('active')) {
-            renderOrdersList();
-          }
-        }, err => {
-          console.warn('Orders listener notice:', err);
-        });
-      } catch(e) {
-        console.error('Orders init error:', e);
-      }
-    }
-
-    window.openOrdersModal = function(tab) {
-      currentOrdersTab = tab || 'status';
-      updateTabButtons();
-      renderOrdersList();
-      document.getElementById('userOrdersModal').classList.add('active');
-    };
-
-    window.closeOrdersModal = function() {
-      document.getElementById('userOrdersModal').classList.remove('active');
-    };
-
-    window.switchOrdersTab = function(tab) {
-      currentOrdersTab = tab;
-      updateTabButtons();
-      renderOrdersList();
-    };
-
-    function updateTabButtons() {
-      const titles = {
-        status: '<i class="ph ph-package"></i> สถานะคำสั่งซื้อ',
-        tracking: '<i class="ph ph-truck"></i> เลขพัสดุจัดส่ง',
-        history: '<i class="ph ph-clock-counter-clockwise"></i> ประวัติการสั่งซื้อ'
-      };
-      document.getElementById('ordersModalTitle').innerHTML = titles[currentOrdersTab] || titles.status;
-
-      document.getElementById('tabBtnStatus').className = 'orders-tab-btn' + (currentOrdersTab === 'status' ? ' active' : '');
-      document.getElementById('tabBtnTracking').className = 'orders-tab-btn' + (currentOrdersTab === 'tracking' ? ' active' : '');
-      document.getElementById('tabBtnHistory').className = 'orders-tab-btn' + (currentOrdersTab === 'history' ? ' active' : '');
-    }
-
-    function renderOrdersList() {
-      const container = document.getElementById('ordersListContainer');
-      if (!container) return;
-
-      if (!myOrders || myOrders.length === 0) {
-        container.innerHTML = `
-          <div class="user-orders-empty">
-            <i class="ph ph-shopping-bag-open"></i>
-            <h4 style="color:#374151; margin-bottom:4px;">ยังไม่มีรายการสั่งซื้อ</h4>
-            <p style="font-size:12px; margin-bottom:14px;">คุณยังไม่มีรายการสั่งซื้อในระบบขณะนี้</p>
-            <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; background:var(--mk-red); color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none; font-size:12px; font-weight:700;">
-              <i class="ph ph-arrow-left"></i> ไปเลือกซื้อสินค้า
-            </a>
-          </div>
-        `;
-        return;
-      }
-
-      const statusMap = {
-        pending:   { label: '⏳ รอดำเนินการ', cls: 'pending' },
-        paid:      { label: '✅ ชำระแล้ว', cls: 'paid' },
-        shipped:   { label: '🚚 จัดส่งแล้ว', cls: 'shipped' },
-        cancelled: { label: '❌ ยกเลิก', cls: 'cancelled' },
-      };
-
-      if (currentOrdersTab === 'status') {
-        // Active orders status timeline
-        const activeOrders = myOrders;
-        container.innerHTML = activeOrders.map(o => {
-          const st = statusMap[o.status] || { label: o.status, cls: 'pending' };
-          const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH', { year:'2-digit', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
-          
-          // Determine step active state
-          const step1 = true;
-          const step2 = (o.status === 'paid' || o.status === 'shipped');
-          const step3 = (o.status === 'shipped');
-          const step4 = (o.status === 'completed');
-
-          const itemsText = (o.items || []).map(i => `${i.name} (${i.qty} ชิ้น)`).join(', ');
-
-          let trackingSection = '';
-          if (o.trackingNumber) {
-            trackingSection = `
-              <div class="order-tracking-banner">
-                <div class="tracking-top-row">
-                  <span class="tracking-courier-tag"><i class="ph ph-truck"></i> ${o.courier || 'พัสดุจัดส่ง'}</span>
-                  <span class="tracking-number-code">${o.trackingNumber}</span>
-                </div>
-                <div class="tracking-actions-row">
-                  <button class="btn-tracking-action btn-tracking-copy" onclick="copyTrackingCode('${o.trackingNumber}')">
-                    <i class="ph ph-copy"></i> คัดลอกเลขพัสดุ
-                  </button>
-                  <a href="${getTrackingUrl(o.courier, o.trackingNumber)}" target="_blank" rel="noopener" class="btn-tracking-action btn-tracking-link">
-                    <i class="ph ph-arrow-square-out"></i> ตรวจสอบพัสดุ
-                  </a>
-                </div>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="user-order-card">
-              <div class="order-card-top">
-                <div>
-                  <div class="order-id-badge">${o.orderId || 'MK-ORDER'}</div>
-                  <div class="order-date-text"><i class="ph ph-calendar"></i> ${date}</div>
-                </div>
-                <span class="order-status-pill ${st.cls}">${st.label}</span>
-              </div>
-
-              <!-- Stepper Timeline -->
-              <div class="order-timeline-stepper">
-                <div class="stepper-step ${step1 ? (step2 ? 'completed' : 'active') : ''}">
-                  <div class="stepper-icon">${step2 ? '✓' : '1'}</div>
-                  <span class="stepper-label">สั่งซื้อสำเร็จ</span>
-                </div>
-                <div class="stepper-step ${step2 ? (step3 ? 'completed' : 'active') : ''}">
-                  <div class="stepper-icon">${step3 ? '✓' : '2'}</div>
-                  <span class="stepper-label">ชำระเงินแล้ว</span>
-                </div>
-                <div class="stepper-step ${step3 ? (step4 ? 'completed' : 'active') : ''}">
-                  <div class="stepper-icon">${step4 ? '✓' : '3'}</div>
-                  <span class="stepper-label">จัดส่งแล้ว</span>
-                </div>
-                <div class="stepper-step ${step4 ? 'completed' : ''}">
-                  <div class="stepper-icon">4</div>
-                  <span class="stepper-label">สำเร็จ</span>
-                </div>
-              </div>
-
-              <div style="font-size:12px; color:#4B5563; margin-top:8px; line-height:1.5;">
-                <strong>สินค้า:</strong> ${itemsText}
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid #F3F4F6;">
-                <span style="font-size:12px; color:#6B7280;">ยอดสุทธิ:</span>
-                <span style="font-size:15px; font-weight:800; color:var(--mk-red);">฿${(o.grandTotal || 0).toLocaleString()}</span>
-              </div>
-
-              ${trackingSection}
-            </div>
-          `;
-        }).join('');
-      } else if (currentOrdersTab === 'tracking') {
-        // Tracking numbers focus
-        const trackingOrders = myOrders.filter(o => o.trackingNumber || o.status === 'shipped');
-
-        if (trackingOrders.length === 0) {
-          container.innerHTML = `
-            <div class="user-orders-empty">
-              <i class="ph ph-truck"></i>
-              <h4 style="color:#374151; margin-bottom:4px;">ยังไม่มีเลขพัสดุในขณะนี้</h4>
-              <p style="font-size:12px; line-height:1.5;">เมื่อร้านค้าจัดส่งสินค้าและบันทึกเลขพัสดุ<br>จะแสดงข้อมูลพร้อมลิงก์ติดตามสถานะที่นี่ทันทีครับ 🚚</p>
-            </div>
-          `;
-          return;
-        }
-
-        container.innerHTML = trackingOrders.map(o => {
-          const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH', { year:'2-digit', month:'short', day:'numeric' }) : '-';
-          const trackingNo = o.trackingNumber || 'รอแอดมินอัปเดตเลขพัสดุ';
-          const courierName = o.courier || 'Flash Express';
-
-          return `
-            <div class="user-order-card">
-              <div class="order-card-top">
-                <div>
-                  <div class="order-id-badge">${o.orderId || 'MK-ORDER'}</div>
-                  <div class="order-date-text">สั่งซื้อเมื่อ: ${date}</div>
-                </div>
-                <span class="order-status-pill shipped"><i class="ph ph-truck"></i> จัดส่งแล้ว</span>
-              </div>
-
-              <div class="order-tracking-banner" style="margin-top:4px;">
-                <div class="tracking-top-row">
-                  <span class="tracking-courier-tag"><i class="ph ph-cube"></i> ขนส่ง: ${courierName}</span>
-                  <span class="tracking-number-code">${trackingNo}</span>
-                </div>
-                ${o.trackingNumber ? `
-                  <div class="tracking-actions-row">
-                    <button class="btn-tracking-action btn-tracking-copy" onclick="copyTrackingCode('${o.trackingNumber}')">
-                      <i class="ph ph-copy"></i> คัดลอกเลขพัสดุ
-                    </button>
-                    <a href="${getTrackingUrl(courierName, o.trackingNumber)}" target="_blank" rel="noopener" class="btn-tracking-action btn-tracking-link">
-                      <i class="ph ph-arrow-square-out"></i> ตรวจสอบสถานะพัสดุ
-                    </a>
-                  </div>
-                ` : '<div style="font-size:11px; color:#D97706; margin-top:4px;">⏳ ร้านค้ากำลังเตรียมสินค้าและจะอัปเดตเลขพัสดุเร็วๆ นี้</div>'}
-              </div>
-
-              <div style="font-size:11px; color:#6B7280; margin-top:10px;">
-                <strong>ผู้รับ:</strong> ${o.customerName || '-'} | โทร: ${o.phone || '-'}
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else {
-        // Order History full summary
-        container.innerHTML = myOrders.map(o => {
-          const st = statusMap[o.status] || { label: o.status, cls: 'pending' };
-          const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH', { year:'2-digit', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
-          const itemsList = (o.items || []).map(i => `
-            <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid #F9FAFB;">
-              <span style="color:#374151;">${i.name} <strong style="color:#9CA3AF;">x${i.qty}</strong></span>
-              <span style="font-weight:600; color:#1F2937;">฿${(i.price * i.qty).toLocaleString()}</span>
-            </div>
-          `).join('');
-
-          return `
-            <div class="user-order-card">
-              <div class="order-card-top">
-                <div>
-                  <div class="order-id-badge">${o.orderId || 'MK-ORDER'}</div>
-                  <div class="order-date-text">${date}</div>
-                </div>
-                <span class="order-status-pill ${st.cls}">${st.label}</span>
-              </div>
-
-              <div style="margin:6px 0;">
-                ${itemsList}
-              </div>
-
-              <div style="background:#F9FAFB; padding:8px 10px; border-radius:8px; margin-top:8px; font-size:11px; color:#4B5563; display:flex; flex-direction:column; gap:3px;">
-                <div style="display:flex; justify-content:space-between;">
-                  <span>ยอดรวมสินค้า:</span>
-                  <span>฿${(o.subtotal || 0).toLocaleString()}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span>ค่าจัดส่ง:</span>
-                  <span>${o.shipping === 0 ? '<span style="color:#059669; font-weight:700;">ส่งฟรี ฿0</span>' : '฿' + (o.shipping || 0)}</span>
-                </div>
-                ${o.discount ? `
-                  <div style="display:flex; justify-content:space-between; color:#DC2626;">
-                    <span>ส่วนลด:</span>
-                    <span>-฿${o.discount.toLocaleString()}</span>
-                  </div>
-                ` : ''}
-                <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:var(--mk-red); border-top:1px solid #E5E7EB; padding-top:4px; margin-top:2px;">
-                  <span>ยอดสุทธิ:</span>
-                  <span>฿${(o.grandTotal || 0).toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    window.copyTrackingCode = function(code) {
-      if (!code) return;
-      navigator.clipboard.writeText(code).then(() => {
-        showToast(`📋 คัดลอกเลขพัสดุ "${code}" เรียบร้อยแล้ว`);
-      }).catch(() => {
-        showToast(`เลขพัสดุ: ${code}`);
-      });
-    };
-
-    function getTrackingUrl(courier, trackingNo) {
-      if (!trackingNo) return '#';
-      const c = (courier || '').toLowerCase();
-      if (c.includes('flash')) {
-        return `https://www.flashexpress.co.th/tracking/?se=${encodeURIComponent(trackingNo)}`;
-      } else if (c.includes('kerry')) {
-        return `https://th.kerryexpress.com/th/track/?track=${encodeURIComponent(trackingNo)}`;
-      } else if (c.includes('ไปรษณีย์') || c.includes('ems') || c.includes('post')) {
-        return `https://track.thailandpost.co.th/`;
-      } else if (c.includes('j&t') || c.includes('jt')) {
-        return `https://www.jtexpress.co.th/`;
-      } else if (c.includes('shopee')) {
-        return `https://spx.co.th/`;
-      }
-      return `https://www.google.com/search?q=เช็คพัสดุ+${encodeURIComponent(trackingNo)}`;
-    }
-
-    // 6. Auth State Listener
+    // 5. Auth State Listener
     onAuthStateChanged(auth, (user) => {
       const authSection = document.getElementById('authSection');
       const profileSection = document.getElementById('profileSection');
@@ -1687,14 +966,12 @@
         }
 
         updateProfileStats();
-        initUserOrdersListener(user);
       } else {
         // User is logged out
         authSection.style.display = 'block';
         profileSection.style.display = 'none';
         pageNavTitle.textContent = 'เข้าสู่ระบบ / บัญชีผู้ใช้';
         heroSubtitle.textContent = 'ศูนย์รวมของเล่น & ไอเทมเสริมพลังสุดพรีเมียม';
-        if (unsubsOrders) unsubsOrders();
       }
     });
   </script>
