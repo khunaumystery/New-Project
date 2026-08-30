@@ -394,7 +394,7 @@ function injectChatUI() {
       <!-- Messages Body -->
       <div class="chat-messages-container" id="chatMessagesContainer">
         <div class="chat-bubble-row admin">
-          <span class="chat-sender-name">👑 แอดมิน KHUN AU</span>
+          <span class="chat-sender-name"> แอดมิน</span>
           <div class="chat-msg-bubble">
             สวัสดีครับยินดีต้อนรับสู่ KHUN AU Mystery! 🎁✨<br>มีข้อสงสัยเกี่ยวกับสินค้า โค้ดส่วนลด หรือสถานะพัสดุ สอบถามได้เลยครับ
           </div>
@@ -476,7 +476,7 @@ function listenToMessages() {
     let unreadCount = 0;
     let html = `
       <div class="chat-bubble-row admin">
-        <span class="chat-sender-name">👑 แอดมิน KHUN AU</span>
+        <span class="chat-sender-name">แอดมิน</span>
         <div class="chat-msg-bubble">
           สวัสดีครับยินดีต้อนรับสู่ KHUN AU Mystery! 🎁✨<br>มีข้อสงสัยเกี่ยวกับสินค้า โค้ดส่วนลด หรือสถานะพัสดุ สอบถามได้เลยครับ
         </div>
@@ -495,7 +495,7 @@ function listenToMessages() {
 
       html += `
         <div class="chat-bubble-row ${isCustomer ? 'customer' : 'admin'}">
-          <span class="chat-sender-name">${isCustomer ? 'ฉัน' : '👑 แอดมิน KHUN AU'}</span>
+          <span class="chat-sender-name">${isCustomer ? 'ฉัน' : 'แอดมิน'}</span>
           <div class="chat-msg-bubble">${escapeHtml(msg.text)}</div>
           <span class="chat-time-tag">${timeStr}</span>
         </div>
