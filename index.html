@@ -1042,7 +1042,7 @@
       <div class="lucky-card-header">
         <span class="lucky-card-tag"><i class="ph ph-sparkle"></i> DAILY LUCKY SPIN</span>
         <h3 class="lucky-card-title">กล่องสุ่มลุ้นโชคประจำวัน 🎁</h3>
-        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 1 นาที)</p>
+        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 1 ชั่วโมง ต่อ 1 บัญชีผู้ใช้)</p>
       </div>
 
       <!-- 3D Interactive Gift Box Scene -->
@@ -1220,8 +1220,8 @@
 
   <!-- Lucky Draw Scripts -->
   <script>
-    const COOLDOWN_MS = 60 * 1000;
-    const TOTAL_SECS = 60;
+    const COOLDOWN_MS = 60 * 60 * 1000; // 1 ชั่วโมง (3,600,000 ms)
+    const TOTAL_SECS = 3600; // 3600 วินาที
     let timerInterval = null;
     let currentCode = '';
     let lastSpinTime = null;
@@ -1280,6 +1280,21 @@
       if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
       if (modal) modal.style.display = 'flex';
     };
+
+    function getUserSpinKey() {
+      return window.currentUser ? `mkLastSpin_${window.currentUser.uid}` : 'mkLastSpin_guest';
+    }
+
+    function resetSpinUI() {
+      if (timerInterval) clearInterval(timerInterval);
+      const timerSection = document.getElementById('timerSection');
+      const spinBtn = document.getElementById('spinBtn');
+      if (timerSection) timerSection.classList.remove('active');
+      if (spinBtn) {
+        spinBtn.disabled = false;
+        spinBtn.innerHTML = '<i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>';
+      }
+    }
 
     function doSpin() {
       if (!window.currentUser) {
@@ -1356,7 +1371,10 @@
           codeBox.innerHTML = '<div style="font-size:28px;margin:4px 0;">❌</div>';
         }
 
+        lastSpinTime = Date.now();
+        localStorage.setItem(getUserSpinKey(), lastSpinTime.toString());
         startCountdown();
+
         setTimeout(() => {
           giftBox.classList.remove('popping');
           giftBox.classList.add('floating');
@@ -1382,46 +1400,55 @@
       const timerSection = document.getElementById('timerSection');
       const timerDisplay = document.getElementById('timerDisplay');
       const spinBtn = document.getElementById('spinBtn');
+      if (!timerSection || !timerDisplay || !spinBtn) return;
       timerSection.classList.add('active');
-
-      lastSpinTime = Date.now();
-      localStorage.setItem('mkLastSpin', lastSpinTime.toString());
 
       function updateTimer() {
         const now = Date.now();
         const elapsed = Math.floor((now - lastSpinTime) / 1000);
         const remaining = Math.max(0, TOTAL_SECS - elapsed);
-        const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+        
+        const hours = Math.floor(remaining / 3600);
+        const mins = Math.floor((remaining % 3600) / 60).toString().padStart(2, '0');
         const secs = (remaining % 60).toString().padStart(2, '0');
-        timerDisplay.textContent = `${mins}:${secs}`;
+        timerDisplay.textContent = (hours > 0 ? `${hours.toString().padStart(2, '0')}:${mins}:${secs}` : `${mins}:${secs}`);
 
         if (remaining <= 0) {
           clearInterval(timerInterval);
           timerSection.classList.remove('active');
           spinBtn.disabled = false;
           spinBtn.innerHTML = '<i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>';
-          localStorage.removeItem('mkLastSpin');
+          localStorage.removeItem(getUserSpinKey());
         }
       }
-      clearInterval(timerInterval);
+      if (timerInterval) clearInterval(timerInterval);
       updateTimer();
       timerInterval = setInterval(updateTimer, 500);
     }
 
     function restoreState() {
-      const saved = localStorage.getItem('mkLastSpin');
+      const key = getUserSpinKey();
+      const saved = localStorage.getItem(key);
       if (saved) {
         lastSpinTime = parseInt(saved);
         const elapsed = Date.now() - lastSpinTime;
         if (elapsed < COOLDOWN_MS) {
-          document.getElementById('spinBtn').disabled = true;
-          document.getElementById('spinBtn').innerHTML = '<i class="ph ph-clock"></i> <span>กรุณารอสักครู่...</span>';
+          const spinBtn = document.getElementById('spinBtn');
+          if (spinBtn) {
+            spinBtn.disabled = true;
+            spinBtn.innerHTML = '<i class="ph ph-clock"></i> <span>กรุณารอสักครู่...</span>';
+          }
           startCountdown();
         } else {
-          localStorage.removeItem('mkLastSpin');
+          localStorage.removeItem(key);
+          resetSpinUI();
         }
+      } else {
+        resetSpinUI();
       }
     }
+
+    window.restoreState = restoreState;
 
     function showToast(text) {
       const toast = document.getElementById('toast');
@@ -1454,7 +1481,12 @@
     const db   = getFirestore(app);
 
     window.currentUser = null;
-    onAuthStateChanged(auth, user => { window.currentUser = user; });
+    onAuthStateChanged(auth, user => { 
+      window.currentUser = user; 
+      if (typeof window.restoreState === 'function') {
+        window.restoreState();
+      }
+    });
 
     let storeCategories = [];
     let storeProducts = [];
