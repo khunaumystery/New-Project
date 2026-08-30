@@ -445,7 +445,7 @@
       white-space: nowrap;
     }
 
-    /* Category Banners (Full Image with Rounded Corners) */
+    /* Category Banners (Full Image with Rounded Corners & Modern Overlays) */
     .promotions-list {
       padding: 0 20px;
       display: flex;
@@ -453,14 +453,18 @@
       gap: 16px;
     }
     .category-card-item {
+      position: relative;
       background: transparent !important;
       box-shadow: none !important;
-      border-radius: var(--border-radius);
+      border-radius: 20px;
       overflow: hidden;
       cursor: pointer;
       width: 100%;
       display: block;
-      transition: transform 0.2s ease, filter 0.2s ease;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
+    }
+    .category-card-item:hover {
+      transform: translateY(-2px);
     }
     .category-card-item:active {
       transform: scale(0.985) !important;
@@ -470,8 +474,10 @@
       width: 100%;
       height: auto !important;
       aspect-ratio: auto !important;
-      border-radius: var(--border-radius);
+      border-radius: 20px;
       overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .category-card-item .promo-img-wrapper img {
       width: 100%;
@@ -479,13 +485,70 @@
       max-height: none !important;
       object-fit: contain !important;
       display: block;
-      border-radius: var(--border-radius);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border-radius: 20px;
+      transition: transform 0.4s ease;
+    }
+    .category-card-item:hover .promo-img-wrapper img {
+      transform: scale(1.02);
+    }
+    .category-card-item .discount-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(20, 5, 8, 0.82);
+      backdrop-filter: blur(8px);
+      color: var(--gold);
+      border: 1px solid rgba(245, 200, 66, 0.4);
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      z-index: 2;
+    }
+    .category-card-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 28px 14px 12px;
+      background: linear-gradient(to top, rgba(16, 4, 6, 0.92) 0%, rgba(16, 4, 6, 0.5) 60%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-radius: 0 0 20px 20px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .category-card-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .category-card-action {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold);
+      background: rgba(245, 200, 66, 0.15);
+      border: 1px solid rgba(245, 200, 66, 0.35);
+      padding: 3px 10px;
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* Dynamic Products Grid Section */
     .products-section {
-      padding: 10px 20px 30px;
+      padding: 14px 20px 30px;
     }
     .section-heading {
       display: flex;
@@ -1019,9 +1082,22 @@
       </div>
     </section>
 
+    <!-- Categories Section Header -->
+    <div style="padding: 16px 20px 10px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(245,200,66,0.15); color:var(--gold); font-size:16px;">
+          <i class="ph ph-squares-four"></i>
+        </span>
+        <h3 style="font-size:16px; font-weight:700; color:#fff; letter-spacing:0.3px;">หมวดหมู่สินค้า</h3>
+      </div>
+      <span style="font-size:12px; color:var(--gold); cursor:pointer; font-weight:600;" onclick="selectCategory('ALL', document.querySelector('.cat-btn'))">
+        ดูทั้งหมด <i class="ph ph-caret-right"></i>
+      </span>
+    </div>
+
     <!-- Categories / Filters -->
     <section class="categories" id="categoryButtonsContainer">
-      <button class="cat-btn active" onclick="selectCategory('ALL', this)">ทั้งหมด</button>
+      <button class="cat-btn active" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>
     </section>
 
     <!-- Category Banners / Promotions List -->
@@ -1134,10 +1210,10 @@
     function renderCategoryButtons(categories) {
       const container = document.getElementById('categoryButtonsContainer');
       if (!container) return;
-      let html = `<button class="cat-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">ทั้งหมด</button>`;
+      let html = `<button class="cat-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>`;
       categories.forEach(c => {
         const isActive = selectedCategoryName === c.name ? 'active' : '';
-        html += `<button class="cat-btn ${isActive}" onclick="selectCategory('${c.name}', this)">${c.name}</button>`;
+        html += `<button class="cat-btn ${isActive}" onclick="selectCategory('${c.name}', this)">🏷️ ${c.name}</button>`;
       });
       container.innerHTML = html;
     }
@@ -1146,7 +1222,7 @@
     function renderCategoryBanners(categories) {
       const container = document.getElementById('categoryBannersContainer');
       if (!container) return;
-      container.innerHTML = categories.map(c => {
+      container.innerHTML = categories.map((c, index) => {
         const badgeTxt = c.desc || 'หมวดหมู่สินค้า';
         const imgPath = c.image || 'Banner item.png';
         const clickAction = c.pageLink
@@ -1154,10 +1230,14 @@
           : `onclick="selectCategoryByName('${c.name}')"`;
 
         return `
-          <article class="promo-card category-card-item" style="background: transparent; box-shadow: none;" ${clickAction}>
-            <div class="promo-img-wrapper" style="height: auto;">
-              <span class="discount-badge">${badgeTxt}</span>
-              <img src="${imgPath}" alt="${c.name}" style="height: auto; border-radius: var(--border-radius); display: block;" onerror="this.src='Banner item.png'">
+          <article class="promo-card category-card-item" ${clickAction}>
+            <div class="promo-img-wrapper">
+              <span class="discount-badge"><i class="ph ph-sparkle"></i> ${badgeTxt}</span>
+              <img src="${imgPath}" alt="${c.name}" onerror="this.src='Banner item.png'">
+              <div class="category-card-footer">
+                <span class="category-card-title"><i class="ph ph-folder-open"></i> ${c.name}</span>
+                <span class="category-card-action">เลือกดูสินค้า <i class="ph ph-arrow-right"></i></span>
+              </div>
             </div>
           </article>
         `;
