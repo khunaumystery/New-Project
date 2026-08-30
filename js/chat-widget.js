@@ -1,8 +1,8 @@
 // Customer Live Chat Widget for KHUN AU Mystery
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { 
-  getFirestore, 
+  auth, 
+  db, 
+  onAuthStateChanged,
   collection, 
   doc, 
   setDoc, 
@@ -12,20 +12,7 @@ import {
   query, 
   orderBy, 
   increment 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
-  authDomain: "khunaumystery-f0b63.firebaseapp.com",
-  projectId: "khunaumystery-f0b63",
-  storageBucket: "khunaumystery-f0b63.firebasestorage.app",
-  messagingSenderId: "508588235711",
-  appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+} from "./firebase-config.js";
 
 let currentAuthUser = null;
 let currentChatId = null;
@@ -599,9 +586,12 @@ function initChatWidget() {
 
   onAuthStateChanged(auth, user => {
     currentAuthUser = user;
-    if (currentChatId) {
-      initChatConversation();
+    if (user) {
+      currentChatId = `chat_${user.uid}`;
+    } else {
+      currentChatId = `chat_${getGuestUserId()}`;
     }
+    initChatConversation();
   });
 }
 
