@@ -550,6 +550,59 @@
       background: #10B981;
     }
 
+    /* Active Code Expiry Bar */
+    .lucky-code-expiry-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(28, 7, 10, 0.85), rgba(40, 10, 15, 0.95));
+      border: 1px solid rgba(245, 200, 66, 0.45);
+      border-radius: 14px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      font-size: 12.5px;
+      color: #F3F4F6;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .expiry-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+
+    .expiry-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(245, 200, 66, 0.15);
+      border: 1px solid rgba(245, 200, 66, 0.3);
+      color: var(--gold);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .btn-use-code-quick {
+      background: linear-gradient(135deg, var(--gold), #D49A17);
+      color: #1A0B0C;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-use-code-quick:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(245, 200, 66, 0.5);
+    }
+
     /* Spin Button */
     .btn-spin-action {
       width: 100%;
@@ -1102,11 +1155,24 @@
         <div class="confetti-container" id="confetti"></div>
       </div>
 
+      <!-- Active Code Expiry Alert Bar (Shown when user has an active code) -->
+      <div class="lucky-code-expiry-bar" id="activeCodeExpiryBar" style="display:none;">
+        <div class="expiry-bar-left">
+          <i class="ph ph-ticket" style="color:var(--gold); font-size:16px;"></i>
+          <span>โค้ด: <strong id="activeCodeName" style="color:#FFF; letter-spacing:0.5px;"></strong></span>
+        </div>
+        <div class="expiry-bar-right">
+          <i class="ph ph-hourglass-medium"></i>
+          <span>หมดอายุใน: <strong id="activeCodeTimer">30:00</strong></span>
+        </div>
+        <a href="cart.html" class="btn-use-code-quick">ใช้โค้ด ➔</a>
+      </div>
+
       <!-- Result Panel -->
       <div class="lucky-result-panel">
         <div class="lucky-result-placeholder" id="luckyPlaceholder">
-          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);" id="luckyPlaceholderIcon"></i>
-          <span id="luckyPlaceholderText">กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
+          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);"></i>
+          <span>กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
         </div>
 
         <div class="lucky-result-content" id="luckyResultContent">
@@ -1436,25 +1502,30 @@
         const secs = (remainingSecs % 60).toString().padStart(2, '0');
         const timeStr = `${mins}:${secs}`;
 
-        const placeholderText = document.getElementById('luckyPlaceholderText');
-        const placeholderIcon = document.getElementById('luckyPlaceholderIcon');
-        if (placeholderText) {
-          if (remainingSecs > 0) {
-            placeholderText.innerHTML = `⏳ โค้ดหมดอายุใน: <strong style="color:var(--gold); font-size:14px; margin-left:4px;">${timeStr}</strong>`;
-            if (placeholderIcon) placeholderIcon.className = 'ph ph-timer';
+        // 1. Update Active Code Expiry Bar (in Lucky Card)
+        const expiryBar = document.getElementById('activeCodeExpiryBar');
+        const codeNameEl = document.getElementById('activeCodeName');
+        const codeTimerEl = document.getElementById('activeCodeTimer');
+
+        if (expiryBar && codeNameEl && codeTimerEl) {
+          if (remainingSecs > 0 && currentCode) {
+            codeNameEl.textContent = currentCode;
+            codeTimerEl.textContent = timeStr;
+            expiryBar.style.display = 'flex';
           } else {
-            placeholderText.textContent = 'กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!';
-            if (placeholderIcon) placeholderIcon.className = 'ph ph-gift';
+            expiryBar.style.display = 'none';
           }
         }
 
-        const timerEl = document.getElementById('codeExpiryTimer');
-        if (timerEl) {
-          timerEl.textContent = timeStr;
+        // 2. Update Expiry inside Result Card if visible
+        const resultTimerEl = document.getElementById('codeExpiryTimer');
+        if (resultTimerEl) {
+          resultTimerEl.textContent = timeStr;
         }
 
         if (remainingSecs <= 0) {
           clearInterval(codeExpiryInterval);
+          if (expiryBar) expiryBar.style.display = 'none';
           const prizeBadge = document.getElementById('prizeBadge');
           if (prizeBadge && document.getElementById('luckyResultContent').classList.contains('visible')) {
             prizeBadge.className = 'prize-badge no-prize';
