@@ -1791,11 +1791,6 @@
 
     // ===== ADD TO CART =====
     window.addToCart = function(id, name, price, image) {
-      if (!window.currentUser) {
-        showLoginRequiredModal('สั่งซื้อสินค้า');
-        return;
-      }
-
       let cart = [];
       try {
         cart = JSON.parse(localStorage.getItem('mkCart') || '[]');

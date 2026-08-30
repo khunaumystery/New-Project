@@ -572,29 +572,6 @@
         <span>ข้อมูลการจัดส่ง</span>
       </div>
 
-      <!-- Account Status Banner -->
-      <div id="cartUserAuthBanner" style="background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:none; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:20px;">👑</span>
-          <div>
-            <div style="font-size:13px; font-weight:700; color:#166534;" id="cartUserAuthName">เข้าสู่ระบบแล้ว</div>
-            <div style="font-size:11px; color:#15803D;" id="cartUserAuthEmail">user@email.com</div>
-          </div>
-        </div>
-        <span style="background:#DCFCE7; color:#15803D; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">VIP สั่งซื้อได้ทันที</span>
-      </div>
-
-      <!-- Guest Prompt Banner (if not logged in) -->
-      <div id="cartGuestAuthBanner" style="background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:18px;">🔒</span>
-          <div style="font-size:12px; color:#92400E; font-weight:600;">กรุณาเข้าสู่ระบบเพื่อยืนยันการสั่งซื้อ</div>
-        </div>
-        <a href="login.html" style="background:var(--mk-red); color:#fff; font-size:11px; font-weight:700; padding:6px 12px; border-radius:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-          <i class="ph ph-sign-in"></i> เข้าสู่ระบบ
-        </a>
-      </div>
-
       <div style="display:flex; flex-direction:column; gap:10px;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
@@ -720,23 +697,6 @@
 
   </div>
 
-  <!-- Modal Login Required -->
-  <div class="modal-overlay" id="loginRequiredModal">
-    <div class="modal-content">
-      <div class="modal-icon" style="background:#FFF2F2; color:var(--mk-red);">
-        <i class="ph ph-lock-key"></i>
-      </div>
-      <h3 class="modal-title">กรุณาเข้าสู่ระบบก่อน</h3>
-      <p class="modal-desc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถยืนยันการสั่งซื้อสินค้าได้ครับ 🔒</p>
-      <a href="login.html" class="modal-close-btn" style="display:block; text-decoration:none; margin-bottom:8px; line-height:44px; padding:0;">
-        <i class="ph ph-sign-in"></i> เข้าสู่ระบบ / สมัครสมาชิก
-      </a>
-      <button class="modal-close-btn" onclick="document.getElementById('loginRequiredModal').classList.remove('active')" style="background:#F3F4F6; color:var(--text-muted);">
-        ไว้คราวหลัง
-      </button>
-    </div>
-  </div>
-
   <!-- Modal Success -->
   <div class="modal-overlay" id="successModal">
     <div class="modal-content">
@@ -768,53 +728,26 @@
     let currentUser = auth.currentUser || null;
     window.currentUser = currentUser;
 
-    function updateAuthStatusUI(user) {
+    onAuthStateChanged(auth, user => {
       currentUser = user;
       window.currentUser = user;
-      const userBanner = document.getElementById('cartUserAuthBanner');
-      const guestBanner = document.getElementById('cartGuestAuthBanner');
-      const userNameEl = document.getElementById('cartUserAuthName');
-      const userEmailEl = document.getElementById('cartUserAuthEmail');
       const firstNameInput = document.getElementById('cusFirstName');
-
-      if (user) {
-        if (userBanner) userBanner.style.display = 'flex';
-        if (guestBanner) guestBanner.style.display = 'none';
-        if (userNameEl) userNameEl.textContent = user.displayName ? `คุณ ${user.displayName}` : 'สมาชิก VIP';
-        if (userEmailEl) userEmailEl.textContent = user.email || '';
-        if (firstNameInput && !firstNameInput.value && user.displayName) {
-          firstNameInput.value = user.displayName;
-        }
-      } else {
-        if (userBanner) userBanner.style.display = 'none';
-        if (guestBanner) guestBanner.style.display = 'flex';
+      if (user && firstNameInput && !firstNameInput.value && user.displayName) {
+        firstNameInput.value = user.displayName;
       }
-    }
-
-    if (auth.currentUser) {
-      updateAuthStatusUI(auth.currentUser);
-    }
-    onAuthStateChanged(auth, user => {
-      updateAuthStatusUI(user);
     });
 
-    // Load Cart from localStorage or default demo items
+    // Load Cart from localStorage
     function getCart() {
       const saved = localStorage.getItem('mkCart');
-      if (saved) {
+      if (saved !== null) {
         try {
           return JSON.parse(saved);
         } catch (e) {
           console.error(e);
         }
       }
-      // Default initial items if empty
-      const initialCart = [
-        { id: 'b001', name: 'Full Bottle B01', price: 129, image: 'full%20bottle/b001.jpg', quantity: 1 },
-        { id: 'b002', name: 'Full Bottle B02', price: 139, image: 'full%20bottle/b002.jpg', quantity: 1 }
-      ];
-      localStorage.setItem('mkCart', JSON.stringify(initialCart));
-      return initialCart;
+      return [];
     }
 
     function saveCart(cart) {
@@ -1131,12 +1064,7 @@
     }
 
     function confirmOrder() {
-      // Check Auth
       const user = auth.currentUser || currentUser || window.currentUser;
-      if (!user) {
-        document.getElementById('loginRequiredModal').classList.add('active');
-        return;
-      }
 
       const cart = getCart();
       if (cart.length === 0) {
