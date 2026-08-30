@@ -204,6 +204,296 @@
 
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:#1A1A2E; color:white; padding:10px 20px; border-radius:30px; font-size:13px; z-index:2000; transition:transform 0.3s; white-space:nowrap; border:1px solid rgba(245,200,66,0.3); }
     .toast.show { transform:translateX(-50%) translateY(0); }
+
+    /* Admin Live Chat Styles */
+    .admin-chat-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      height: calc(100vh - 200px);
+      min-height: 520px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 768px) {
+      .admin-chat-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+    .admin-chat-sidebar {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: #FAFAFA;
+      min-width: 0;
+    }
+    .admin-chat-search {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-chat-search input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+    .admin-chat-threads {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .admin-thread-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid #F0F0F0;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .admin-thread-item:hover {
+      background: #F3F4F6;
+    }
+    .admin-thread-item.active {
+      background: #EFF6FF;
+      border-left: 3.5px solid var(--mk-red);
+    }
+    .admin-thread-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #E5E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .admin-thread-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .admin-thread-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .admin-thread-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .admin-thread-time {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .admin-thread-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-thread-lastmsg {
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .admin-thread-badge {
+      background: #EF4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .admin-chat-main {
+      display: flex;
+      flex-direction: column;
+      background: #FFFFFF;
+      min-width: 0;
+    }
+    .admin-chat-empty-prompt {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .admin-chat-active-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .admin-chat-active-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FAFAFA;
+    }
+    .admin-chat-user-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-chat-user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .admin-chat-user-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .admin-chat-user-email {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .admin-chat-stream {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #F9FAFB;
+    }
+    .admin-msg-bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      max-width: 75%;
+    }
+    .admin-msg-bubble-wrap.customer {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+    .admin-msg-bubble-wrap.admin {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .admin-msg-bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13.5px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .admin-msg-bubble-wrap.customer .admin-msg-bubble {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .admin-msg-bubble-wrap.admin .admin-msg-bubble {
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      color: #FFFFFF;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 6px rgba(211, 34, 42, 0.25);
+    }
+    .admin-msg-time {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+    .admin-quick-replies {
+      padding: 8px 14px;
+      background: #FFFFFF;
+      border-top: 1px solid #F0F0F0;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .admin-quick-replies::-webkit-scrollbar {
+      display: none;
+    }
+    .quick-reply-chip {
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .quick-reply-chip:hover {
+      background: #E5E7EB;
+      border-color: #D1D5DB;
+    }
+    .admin-chat-input-bar {
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .admin-chat-input-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13.5px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .admin-chat-input-bar input:focus {
+      border-color: var(--mk-red);
+    }
+    .btn-send-admin {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn-send-admin:hover {
+      opacity: 0.9;
+    }
   </style>
 </head>
 <body>
@@ -244,6 +534,10 @@
     </button>
     <button class="tab-btn" onclick="switchTab('productsTab', this)">
       <i class="ph ph-package"></i> จัดการสินค้า
+    </button>
+    <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
+      <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
+      <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
     </button>
   </nav>
 
@@ -353,6 +647,62 @@
               <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    <!-- ================= TAB 4: LIVE CHAT ================= -->
+    <div id="chatTab" class="tab-content">
+      <div class="admin-chat-layout">
+        <!-- Customer Threads List -->
+        <div class="admin-chat-sidebar">
+          <div class="admin-chat-search">
+            <input type="text" id="adminSearchChat" placeholder="🔍 ค้นหาแชทลูกค้า..." oninput="filterAdminChats()">
+          </div>
+          <div class="admin-chat-threads" id="adminChatThreadsList">
+            <div style="padding:24px; text-align:center; color:var(--muted); font-size:13px;">กำลังโหลดแชท...</div>
+          </div>
+        </div>
+
+        <!-- Chat Main Window -->
+        <div class="admin-chat-main" id="adminChatMainArea">
+          <div class="admin-chat-empty-prompt" id="adminChatEmptyPrompt">
+            <i class="ph ph-chat-circle-dots" style="font-size:48px; color:var(--muted); margin-bottom:10px;"></i>
+            <p>เลือกบทสนทนาจากรายการด้านซ้าย เพื่อเริ่มตอบแชทลูกค้า</p>
+          </div>
+
+          <div class="admin-chat-active-box" id="adminChatActiveBox" style="display:none;">
+            <!-- Header -->
+            <div class="admin-chat-active-header">
+              <div class="admin-chat-user-meta">
+                <div class="admin-chat-user-avatar" id="activeChatAvatar">👤</div>
+                <div>
+                  <div class="admin-chat-user-name" id="activeChatUserName">ชื่อลูกค้า</div>
+                  <div class="admin-chat-user-email" id="activeChatUserEmail">email@example.com</div>
+                </div>
+              </div>
+              <div class="admin-chat-header-actions">
+                <button class="btn-primary" style="padding:6px 12px; font-size:12px;" onclick="refreshActiveChat()" title="รีเฟรช"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
+              </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="admin-chat-stream" id="adminChatMessagesStream">
+              <!-- Loaded messages -->
+            </div>
+
+            <!-- Quick Replies -->
+            <div class="admin-quick-replies">
+              <span class="quick-reply-chip" onclick="setAdminReply('สวัสดีครับยินดีต้อนรับสู่ KHUN AU Mystery มีอะไรให้แอดมินช่วยดูแลไหมครับ 😊')">👋 สวัสดีครับ</span>
+              <span class="quick-reply-chip" onclick="setAdminReply('สินค้าพร้อมส่งทุกรายการ แพ็กกันกระแทกอย่างดีครับ 📦')">📦 สินค้าพร้อมส่ง</span>
+              <span class="quick-reply-chip" onclick="setAdminReply('ได้รับข้อมูลแล้วครับ แอดมินกำลังดำเนินการตรวจสอบให้สักครู่นะครับ ✨')">⏳ กำลังตรวจสอบ</span>
+              <span class="quick-reply-chip" onclick="setAdminReply('ขอบคุณที่อุดหนุน KHUN AU Mystery นะครับ 🙏❤️')">🙏 ขอบคุณครับ</span>
+            </div>
+
+            <!-- Input Bar -->
+            <form class="admin-chat-input-bar" onsubmit="event.preventDefault(); submitAdminReply();">
+              <input type="text" id="adminReplyInput" placeholder="พิมพ์ข้อความตอบกลับลูกค้าที่นี่..." autocomplete="off">
+              <button type="submit" class="btn-send-admin"><i class="ph ph-paper-plane-right"></i> ส่งข้อความ</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -563,7 +913,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -580,10 +930,14 @@
   let allOrders = [];
   let allCategories = [];
   let allProducts = [];
+  let allChats = [];
+  let activeChatId = null;
 
   let unsubsOrders = null;
   let unsubsCategories = null;
   let unsubsProducts = null;
+  let unsubsChats = null;
+  let unsubsActiveMessages = null;
 
   // ===== AUTH STATE =====
   onAuthStateChanged(auth, user => {
@@ -603,12 +957,15 @@
     if (unsubsOrders) { unsubsOrders(); unsubsOrders = null; }
     if (unsubsCategories) { unsubsCategories(); unsubsCategories = null; }
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
+    if (unsubsChats) { unsubsChats(); unsubsChats = null; }
+    if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
 
   function initDataListeners() {
     loadOrders();
     loadCategories();
     loadProducts();
+    loadChats();
   }
 
   // ===== TAB SWITCHING =====
@@ -1116,6 +1473,225 @@
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
     }
   };
+
+  // ===== LIVE CHAT MANAGEMENT =====
+  function loadChats() {
+    if (unsubsChats) unsubsChats();
+    const q = query(collection(db, 'chats'), orderBy('updatedAt', 'desc'));
+    unsubsChats = onSnapshot(q, (snapshot) => {
+      allChats = snapshot.docs.map(docSnap => ({ _id: docSnap.id, ...docSnap.data() }));
+      
+      // Calculate total unread count for Admin
+      const totalUnread = allChats.reduce((sum, c) => sum + (c.unreadByAdmin || 0), 0);
+      const badge = document.getElementById('adminTotalUnreadChatBadge');
+      if (badge) {
+        if (totalUnread > 0) {
+          badge.textContent = totalUnread;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      renderAdminChatThreads(allChats);
+
+      // If there's an active chat open, refresh header if needed
+      if (activeChatId) {
+        const activeChat = allChats.find(c => c._id === activeChatId);
+        if (activeChat) {
+          document.getElementById('activeChatUserName').textContent = activeChat.userName || 'ลูกค้า';
+          document.getElementById('activeChatUserEmail').textContent = activeChat.userEmail || activeChat.userId || '';
+        }
+      }
+    }, (err) => {
+      console.warn("Chats loading error:", err);
+    });
+  }
+
+  function renderAdminChatThreads(chats) {
+    const listEl = document.getElementById('adminChatThreadsList');
+    if (!listEl) return;
+
+    if (!chats || chats.length === 0) {
+      listEl.innerHTML = `
+        <div style="padding:30px 16px; text-align:center; color:var(--muted); font-size:13px;">
+          <i class="ph ph-chat-teardrop" style="font-size:32px; display:block; margin-bottom:6px;"></i>
+          ยังไม่มีการติดต่อจากลูกค้า
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = chats.map(chat => {
+      const isActive = (chat._id === activeChatId) ? 'active' : '';
+      const unreadCount = chat.unreadByAdmin || 0;
+      const unreadBadgeHtml = unreadCount > 0 ? `<span class="admin-thread-badge">${unreadCount}</span>` : '';
+      
+      let timeStr = '';
+      if (chat.lastMessageAt || chat.updatedAt) {
+        const d = new Date(chat.lastMessageAt || chat.updatedAt);
+        timeStr = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      const initial = (chat.userName || 'L').charAt(0).toUpperCase();
+
+      return `
+        <div class="admin-thread-item ${isActive}" onclick="selectAdminChat('${chat._id}')">
+          <div class="admin-thread-avatar">${initial}</div>
+          <div class="admin-thread-body">
+            <div class="admin-thread-top">
+              <span class="admin-thread-name">${escapeHtml(chat.userName || 'ลูกค้า')}</span>
+              <span class="admin-thread-time">${timeStr}</span>
+            </div>
+            <div class="admin-thread-bottom">
+              <span class="admin-thread-lastmsg">${escapeHtml(chat.lastMessage || 'เริ่มการสนทนา')}</span>
+              ${unreadBadgeHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.selectAdminChat = async function(chatId) {
+    activeChatId = chatId;
+    const chat = allChats.find(c => c._id === chatId);
+    if (!chat) return;
+
+    // Show Chat Box, Hide Placeholder
+    document.getElementById('adminChatEmptyPrompt').style.display = 'none';
+    document.getElementById('adminChatActiveBox').style.display = 'flex';
+
+    // Header info
+    document.getElementById('activeChatUserName').textContent = chat.userName || 'ลูกค้า';
+    document.getElementById('activeChatUserEmail').textContent = chat.userEmail || chat.userId || '';
+    document.getElementById('activeChatAvatar').textContent = (chat.userName || 'L').charAt(0).toUpperCase();
+
+    // Re-render threads to highlight active
+    renderAdminChatThreads(allChats);
+
+    // Clear unread count for Admin in Firestore
+    try {
+      await updateDoc(doc(db, 'chats', chatId), {
+        unreadByAdmin: 0
+      });
+    } catch(e) {}
+
+    // Listen to messages
+    listenToActiveChatMessages(chatId);
+  };
+
+  function listenToActiveChatMessages(chatId) {
+    if (unsubsActiveMessages) unsubsActiveMessages();
+    const stream = document.getElementById('adminChatMessagesStream');
+    stream.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:12px;">กำลังโหลดข้อความ...</div>';
+
+    const q = query(
+      collection(db, 'chats', chatId, 'messages'),
+      orderBy('createdAt', 'asc')
+    );
+
+    unsubsActiveMessages = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        stream.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:13px;">ยังไม่มีข้อความในบทสนทนานี้</div>';
+        return;
+      }
+
+      let html = '';
+      snapshot.docs.forEach(docSnap => {
+        const msg = docSnap.data();
+        const isAdmin = (msg.senderRole === 'admin');
+        const timeStr = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
+        
+        html += `
+          <div class="admin-msg-bubble-wrap ${isAdmin ? 'admin' : 'customer'}">
+            <span style="font-size:10px; color:var(--muted); margin-bottom:2px; padding:0 4px;">${isAdmin ? '👑 แอดมิน' : escapeHtml(msg.senderName || 'ลูกค้า')}</span>
+            <div class="admin-msg-bubble">${escapeHtml(msg.text)}</div>
+            <span class="admin-msg-time">${timeStr}</span>
+          </div>
+        `;
+      });
+
+      stream.innerHTML = html;
+      stream.scrollTop = stream.scrollHeight;
+    }, (err) => {
+      console.warn("Active messages sync error:", err);
+    });
+  }
+
+  window.submitAdminReply = async function() {
+    if (!activeChatId) return;
+    const input = document.getElementById('adminReplyInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+
+    const messageData = {
+      chatId: activeChatId,
+      senderId: 'admin',
+      senderRole: 'admin',
+      senderName: 'Admin KHUN AU',
+      text: text,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+
+    try {
+      // 1. Add message
+      await addDoc(collection(db, 'chats', activeChatId, 'messages'), messageData);
+
+      // 2. Update parent conversation metadata
+      await setDoc(doc(db, 'chats', activeChatId), {
+        lastMessage: text,
+        lastMessageAt: new Date().toISOString(),
+        unreadByUser: increment(1),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+    } catch (e) {
+      showToast('❌ ส่งข้อความไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.setAdminReply = function(text) {
+    const input = document.getElementById('adminReplyInput');
+    if (input) {
+      input.value = text;
+      input.focus();
+    }
+  };
+
+  window.filterAdminChats = function() {
+    const queryStr = document.getElementById('adminSearchChat').value.toLowerCase().trim();
+    if (!queryStr) {
+      renderAdminChatThreads(allChats);
+      return;
+    }
+    const filtered = allChats.filter(c => 
+      (c.userName || '').toLowerCase().includes(queryStr) ||
+      (c.userEmail || '').toLowerCase().includes(queryStr) ||
+      (c.lastMessage || '').toLowerCase().includes(queryStr)
+    );
+    renderAdminChatThreads(filtered);
+  };
+
+  window.refreshActiveChat = function() {
+    if (activeChatId) {
+      listenToActiveChatMessages(activeChatId);
+      showToast('🔄 รีเฟรชข้อความแล้ว');
+    }
+  };
+
+  function escapeHtml(text) {
+    return (text || '')
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\n/g, "<br>");
+  }
 
   // Close modals on backdrop click
   document.querySelectorAll('.modal-overlay').forEach(modal => {
