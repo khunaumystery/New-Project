@@ -3,160 +3,408 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>KHUN AU Mystery </title>
-  <link rel="stylesheet" href="style.css">
+  <title>KHUN AU Mystery | ศูนย์รวมของเล่น & ไอเทมเสริมพลังสุดพรีเมียม</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-</head>
-<style>
- :root {
+  <style>
+    :root {
       --mk-red: #D3222A;
-      --mk-red-dark: #A51A20;
+      --mk-red-dark: #8F0E14;
+      --mk-red-light: #FFF2F2;
       --gold: #F5C842;
       --gold-dark: #D4A017;
-      --bg-dark: #1A0A0B;
-      --bg-card: #2C1214;
-      --text-light: #FFF5E0;
-      --text-muted: #C8A8A8;
+      --gold-light: #FFF9E6;
+      --bg-dark: #120406;
+      --bg-card: #20090D;
+      --bg-card-surface: #2D0F14;
+      --text-main: #FFFFFF;
+      --text-muted: #D1A8AC;
+      --border-color: rgba(245, 200, 66, 0.2);
+      --border-radius: 20px;
+      --nav-height: 62px;
+      --bottom-nav-height: 68px;
     }
 
     * {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
     body {
       font-family: 'Prompt', sans-serif;
-      background: radial-gradient(ellipse at top, #3D0F12 0%, #1A0A0B 60%);
+      background: radial-gradient(ellipse at top, #3A0C11 0%, #170407 65%, #0B0203 100%);
+      color: var(--text-main);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 24px 20px 40px;
-      color: var(--text-light);
+      line-height: 1.5;
+      padding-top: var(--nav-height);
+      padding-bottom: calc(var(--bottom-nav-height) + 24px);
       overflow-x: hidden;
+      position: relative;
     }
 
-    /* Sparkle particles */
-    .particles {
+    /* Ambient Sparkle Particles */
+    .particles-bg {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
       z-index: 0;
+      overflow: hidden;
     }
 
     .particle {
       position: absolute;
-      width: 4px; height: 4px;
+      width: 3px;
+      height: 3px;
       border-radius: 50%;
       background: var(--gold);
-      opacity: 0;
-      animation: sparkle linear infinite;
+      opacity: 0.4;
+      animation: floatSparkle linear infinite;
     }
 
-    @keyframes sparkle {
-      0%   { opacity: 0; transform: translateY(0) scale(0); }
-      10%  { opacity: 1; transform: translateY(-20px) scale(1); }
-      90%  { opacity: 0.3; }
-      100% { opacity: 0; transform: translateY(-120px) scale(0.3); }
+    @keyframes floatSparkle {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      20%  { opacity: 0.7; }
+      80%  { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
     }
 
-    /* Header */
-    .header {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      margin-bottom: 24px;
+    /* Top Navigation Bar */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: rgba(22, 5, 8, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 18px;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(245, 200, 66, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
-    .header h1 {
-      font-size: 26px;
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .brand-logo-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      border: 1px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(211, 34, 42, 0.4);
+    }
+
+    .brand-title {
+      font-size: 17px;
       font-weight: 800;
-      background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #FFFFFF;
       letter-spacing: 0.5px;
     }
 
-    .header p {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-top: 6px;
+    .brand-title span {
+      background: linear-gradient(135deg, #FFE066, #F5C842);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    /* Gift Box Container */
-    .gift-scene {
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cart-btn-link {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 20px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .cart-btn-link:active {
+      transform: scale(0.92);
+      border-color: var(--gold);
+    }
+
+    .cart-btn-link .badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background: linear-gradient(135deg, #FF3B30, #D3222A);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      min-width: 19px;
+      height: 19px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid #160508;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Main Container */
+    .main-content {
       position: relative;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 32px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 12px 16px 20px;
     }
 
-    .gift-box-wrapper {
+    /* Hero Banner */
+    .hero-banner-card {
       position: relative;
-      width: 160px;
-      height: 160px;
+      width: 100%;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(245, 200, 66, 0.25);
+      margin-bottom: 18px;
+      background: var(--bg-card);
+    }
+
+    .hero-banner-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 40px 18px 14px;
+      background: linear-gradient(to top, rgba(14, 2, 4, 0.95) 0%, rgba(14, 2, 4, 0.6) 60%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .hero-text h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #FFFFFF;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      margin-bottom: 2px;
+    }
+
+    .hero-text p {
+      font-size: 13px;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .hero-badge-pill {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #3D1C00;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 11px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(245, 200, 66, 0.4);
+      white-space: nowrap;
+    }
+
+    /* Section Headers */
+    .section-header-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 4px 12px;
+    }
+
+    .section-title-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-icon-box {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: rgba(245, 200, 66, 0.15);
+      border: 1px solid rgba(245, 200, 66, 0.3);
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .section-title-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: 0.3px;
+    }
+
+    .section-link-more {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .section-link-more:hover {
+      opacity: 0.8;
+    }
+
+    /* ===== LUCKY DRAW / MYSTERY BOX WIDGET ===== */
+    .lucky-draw-card {
+      background: linear-gradient(145deg, #260B0E, #3D1117);
+      border: 1px solid rgba(245, 200, 66, 0.35);
+      border-radius: 24px;
+      padding: 22px 18px;
+      margin-bottom: 22px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .lucky-draw-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(245, 200, 66, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .lucky-card-header {
+      margin-bottom: 14px;
+    }
+
+    .lucky-card-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(245, 200, 66, 0.15);
+      border: 1px solid rgba(245, 200, 66, 0.3);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+
+    .lucky-card-title {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FFF0A6, #F5C842, #E5A812);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.3px;
+    }
+
+    .lucky-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Gift Box Scene */
+    .gift-stage {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 12px 0 16px;
+    }
+
+    .gift-box-interactive {
+      position: relative;
+      width: 130px;
+      height: 130px;
       cursor: pointer;
       user-select: none;
-    }
-
-    /* Gift Box SVG-like CSS Drawing */
-    .gift-box {
-      width: 160px;
-      height: 160px;
-      position: relative;
+      filter: drop-shadow(0 10px 25px rgba(211, 34, 42, 0.6));
       transition: transform 0.3s ease;
-      filter: drop-shadow(0 10px 30px rgba(213, 34, 42, 0.5));
     }
 
-    /* Shake animation */
-    @keyframes shake {
+    .gift-box-interactive.floating {
+      animation: giftFloat 3s ease-in-out infinite;
+    }
+
+    .gift-box-interactive.shaking {
+      animation: giftShake 0.8s ease-in-out;
+    }
+
+    .gift-box-interactive.popping {
+      animation: giftPop 0.6s ease-out;
+    }
+
+    @keyframes giftFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-7px); }
+    }
+
+    @keyframes giftShake {
       0%, 100% { transform: rotate(0deg); }
-      10%  { transform: rotate(-6deg) scale(1.05); }
-      20%  { transform: rotate(6deg) scale(1.08); }
-      30%  { transform: rotate(-5deg) scale(1.05); }
-      40%  { transform: rotate(5deg) scale(1.08); }
-      50%  { transform: rotate(-4deg) scale(1.05); }
-      60%  { transform: rotate(4deg) scale(1.08); }
-      70%  { transform: rotate(-3deg) scale(1.05); }
-      80%  { transform: rotate(2deg) scale(1.03); }
+      10%  { transform: rotate(-7deg) scale(1.06); }
+      20%  { transform: rotate(7deg) scale(1.08); }
+      30%  { transform: rotate(-6deg) scale(1.06); }
+      40%  { transform: rotate(6deg) scale(1.08); }
+      50%  { transform: rotate(-5deg) scale(1.06); }
+      60%  { transform: rotate(5deg) scale(1.08); }
+      70%  { transform: rotate(-3deg) scale(1.04); }
+      80%  { transform: rotate(3deg) scale(1.02); }
       90%  { transform: rotate(-1deg) scale(1.01); }
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-8px); }
+    @keyframes giftPop {
+      0%   { transform: scale(1); }
+      35%  { transform: scale(1.3) rotate(-6deg); }
+      55%  { transform: scale(0.9) rotate(4deg); }
+      75%  { transform: scale(1.15) rotate(-2deg); }
+      100% { transform: scale(1); }
     }
 
-    @keyframes popOpen {
-      0%   { transform: scale(1) rotate(0deg); }
-      30%  { transform: scale(1.3) rotate(-5deg); }
-      50%  { transform: scale(0.9) rotate(5deg); }
-      70%  { transform: scale(1.2) rotate(-3deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-
-    .gift-box.floating {
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .gift-box.shaking {
-      animation: shake 0.8s ease-in-out;
-    }
-
-    .gift-box.popping {
-      animation: popOpen 0.6s ease-out;
-    }
-
-    /* Confetti burst */
+    /* Confetti */
     .confetti-container {
       position: absolute;
       top: 50%;
@@ -168,329 +416,252 @@
 
     .confetti-piece {
       position: absolute;
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 2px;
       opacity: 0;
     }
 
-    @keyframes confettiBurst {
+    @keyframes confettiExplode {
       0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
       100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(720deg) scale(0); }
     }
 
     .confetti-piece.burst {
-      animation: confettiBurst 1s ease-out forwards;
+      animation: confettiExplode 1s ease-out forwards;
     }
 
-    /* Result Card */
-    .result-card {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 360px;
-      background: linear-gradient(145deg, var(--bg-card), #3D1518);
-      border: 1px solid rgba(245, 200, 66, 0.3);
-      border-radius: 24px;
-      padding: 28px 24px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-      margin-bottom: 24px;
-      min-height: 180px;
+    /* Result Box */
+    .lucky-result-panel {
+      background: rgba(18, 4, 6, 0.6);
+      border: 1px solid rgba(245, 200, 66, 0.25);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      min-height: 90px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
     }
 
-    .result-placeholder {
+    .lucky-result-placeholder {
       display: flex;
-      flex-direction: column;
       align-items: center;
       gap: 8px;
       color: var(--text-muted);
+      font-size: 13px;
     }
 
-    .result-placeholder .big-icon {
-      font-size: 36px;
-    }
-
-    .result-placeholder p {
-      font-size: 14px;
-    }
-
-    .result-content {
+    .lucky-result-content {
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
     }
 
-    .result-content.visible {
+    .lucky-result-content.visible {
       display: flex;
-      animation: fadeInUp 0.5s ease-out;
+      animation: fadeSlideUp 0.4s ease-out;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
     .prize-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #5C3700;
+      color: #3B2100;
       font-weight: 700;
-      font-size: 14px;
-      padding: 6px 16px;
+      font-size: 12.5px;
+      padding: 5px 14px;
       border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(245, 200, 66, 0.35);
     }
 
     .prize-badge.special {
-      background: linear-gradient(135deg, #E040FB, #7B1FA2);
+      background: linear-gradient(135deg, #D946EF, #8B5CF6);
       color: white;
+      box-shadow: 0 4px 14px rgba(217, 70, 239, 0.4);
     }
 
     .prize-badge.no-prize {
-      background: linear-gradient(135deg, #7C3AED, #4C1D95);
+      background: linear-gradient(135deg, #6B7280, #374151);
       color: white;
+      box-shadow: none;
     }
 
     .prize-badge.jackpot {
-      background: linear-gradient(135deg, #FFD700, #FF8C00, #FF4500);
+      background: linear-gradient(135deg, #FFD700, #FF6B00, #FF0055);
       color: white;
-      animation: jackpotGlow 1s ease-in-out infinite alternate;
-      box-shadow: 0 0 16px rgba(255, 200, 0, 0.6);
+      animation: jackpotPulse 1.2s infinite alternate;
+      box-shadow: 0 0 18px rgba(255, 107, 0, 0.7);
     }
 
-    @keyframes jackpotGlow {
-      from { box-shadow: 0 0 10px rgba(255, 200, 0, 0.5); }
-      to   { box-shadow: 0 0 24px rgba(255, 140, 0, 0.9); }
+    @keyframes jackpotPulse {
+      from { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 200, 0, 0.6)); }
+      to   { transform: scale(1.04); filter: drop-shadow(0 0 18px rgba(255, 70, 0, 0.9)); }
     }
 
-    .result-label {
-      font-size: 15px;
-      color: var(--text-muted);
-      font-weight: 400;
-    }
-
-    .code-box {
+    .code-display-wrap {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       justify-content: center;
+      margin: 4px 0;
     }
 
-    .code-char {
-      width: 44px;
-      height: 52px;
+    .code-char-box {
+      width: 38px;
+      height: 44px;
       background: rgba(255,255,255,0.08);
-      border: 1.5px solid rgba(245, 200, 66, 0.5);
-      border-radius: 10px;
+      border: 1.5px solid var(--gold);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 19px;
+      font-weight: 800;
       color: var(--gold);
-      letter-spacing: 0;
-      position: relative;
-      overflow: hidden;
     }
 
-    .code-char.rolling {
-      animation: rollChar 0.5s ease-out;
-    }
-
-    @keyframes rollChar {
-      0%   { transform: translateY(-100%); opacity: 0; }
-      60%  { transform: translateY(10%); opacity: 1; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-
-    .copy-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-muted);
-      font-family: inherit;
-      font-size: 13px;
-      padding: 8px 16px;
-      border-radius: 12px;
+    .btn-copy-code {
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       transition: all 0.2s ease;
     }
 
-    .copy-btn:active, .copy-btn.copied {
-      background: rgba(245, 200, 66, 0.15);
-      border-color: var(--gold);
-      color: var(--gold);
+    .btn-copy-code.copied {
+      background: #10B981;
     }
 
-    /* Spin / Roll Button */
-    .spin-btn {
-      position: relative;
-      z-index: 1;
+    /* Spin Button */
+    .btn-spin-action {
       width: 100%;
-      max-width: 360px;
-      padding: 18px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #E5272F, #A51A20);
-      color: white;
-      font-family: inherit;
-      font-size: 18px;
-      font-weight: 700;
+      padding: 13px 20px;
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #D48800 100%);
+      color: #3D1C00;
       border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: inherit;
       cursor: pointer;
-      box-shadow: 0 6px 24px rgba(213, 34, 42, 0.45);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-      letter-spacing: 0.5px;
+      box-shadow: 0 6px 20px rgba(245, 200, 66, 0.45);
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    .spin-btn:active:not(:disabled) {
+    .btn-spin-action:hover {
+      box-shadow: 0 8px 25px rgba(245, 200, 66, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-spin-action:active {
       transform: scale(0.97);
-      box-shadow: 0 2px 8px rgba(213, 34, 42, 0.3);
     }
 
-    .spin-btn:disabled {
-      background: linear-gradient(135deg, #555, #333);
+    .btn-spin-action:disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: none;
       cursor: not-allowed;
-      opacity: 0.7;
+      transform: none;
     }
 
-    /* Countdown Timer */
-    .timer-section {
-      position: relative;
-      z-index: 1;
-      margin-top: 20px;
-      text-align: center;
+    /* Timer section */
+    .lucky-timer-bar {
       display: none;
-    }
-
-    .timer-section.active {
-      display: block;
-    }
-
-    .timer-label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .timer-circle {
-      position: relative;
-      width: 90px;
-      height: 90px;
-      margin: 0 auto 10px;
-    }
-
-    .timer-circle svg {
-      width: 90px;
-      height: 90px;
-      transform: rotate(-90deg);
-    }
-
-    .timer-circle .track {
-      fill: none;
-      stroke: rgba(255,255,255,0.08);
-      stroke-width: 6;
-    }
-
-    .timer-circle .progress {
-      fill: none;
-      stroke: var(--gold);
-      stroke-width: 6;
-      stroke-linecap: round;
-      stroke-dasharray: 226; /* 2 * PI * r (r=36) */
-      stroke-dashoffset: 226;
-      transition: stroke-dashoffset 1s linear;
-    }
-
-    .timer-display {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--gold);
-    }
-
-    .timer-note {
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
       font-size: 12px;
       color: var(--text-muted);
     }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: rgba(40,40,40,0.95);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-size: 14px;
-      z-index: 999;
-      border: 1px solid rgba(245,200,66,0.4);
-      transition: transform 0.3s ease;
-      white-space: nowrap;
+    .lucky-timer-bar.active {
+      display: flex;
     }
 
-    /* 4-in-a-row Category Grid */
+    .timer-pill {
+      background: rgba(245, 200, 66, 0.15);
+      color: var(--gold);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: 1px solid rgba(245, 200, 66, 0.3);
+    }
+
+    /* ===== CATEGORY 4-COLUMN GRID ===== */
     .categories-grid-4 {
-      padding: 0 16px 20px;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px 10px;
+      gap: 14px 10px;
+      margin-bottom: 20px;
     }
-    .category-grid-card {
+
+    .cat-item-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       cursor: pointer;
-      background: transparent;
-      border: none;
-      padding: 0;
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .category-grid-card:hover {
+
+    .cat-item-card:hover {
       transform: translateY(-3px);
     }
-    .category-grid-card:active {
+
+    .cat-item-card:active {
       transform: scale(0.92);
     }
-    .category-grid-thumb {
+
+    .cat-thumb-box {
       width: 100%;
       aspect-ratio: 1;
       max-width: 78px;
       border-radius: 18px;
       background: radial-gradient(circle at center, rgba(211, 34, 42, 0.2) 0%, rgba(20, 5, 8, 0.8) 100%);
-      border: 1.5px solid rgba(245, 200, 66, 0.3);
+      border: 1.5px solid rgba(245, 200, 66, 0.28);
       overflow: hidden;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.2s ease;
     }
-    .category-grid-card:hover .category-grid-thumb,
-    .category-grid-card.active .category-grid-thumb {
+
+    .cat-item-card:hover .cat-thumb-box,
+    .cat-item-card.active .cat-thumb-box {
       border-color: var(--gold);
-      box-shadow: 0 6px 20px rgba(245, 200, 66, 0.4);
+      box-shadow: 0 6px 20px rgba(245, 200, 66, 0.45);
+      transform: scale(1.03);
     }
-    .category-grid-thumb img {
+
+    .cat-thumb-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -498,10 +669,12 @@
       border-radius: 16px;
       transition: transform 0.3s ease;
     }
-    .category-grid-card:hover .category-grid-thumb img {
+
+    .cat-item-card:hover .cat-thumb-box img {
       transform: scale(1.08);
     }
-    .category-grid-badge {
+
+    .cat-tag-mini {
       position: absolute;
       top: 4px;
       right: 4px;
@@ -513,12 +686,13 @@
       border-radius: 6px;
       border: 0.5px solid rgba(245, 200, 66, 0.6);
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      white-space: nowrap;
       max-width: 90%;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .category-grid-name {
+
+    .cat-item-name {
       margin-top: 7px;
       font-size: 11.5px;
       font-weight: 600;
@@ -533,67 +707,115 @@
       word-break: break-word;
     }
 
-    /* Dynamic Products Grid Section */
+    /* Category Pill Filter Bar */
+    .cat-pill-bar {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 0 0 16px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .cat-pill-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-pill-btn {
+      padding: 7px 16px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(8px);
+      color: rgba(255, 255, 255, 0.85);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cat-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .cat-pill-btn.active {
+      background: linear-gradient(135deg, var(--mk-red) 0%, var(--mk-red-dark) 100%);
+      color: #ffffff;
+      border-color: rgba(245, 200, 66, 0.7);
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(211, 34, 42, 0.45);
+      transform: translateY(-1px);
+    }
+
+    /* ===== PRODUCTS SECTION ===== */
     .products-section {
-      padding: 10px 20px 30px;
+      margin-top: 10px;
+      margin-bottom: 24px;
     }
-    .section-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-    .section-heading h3 {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+
     .product-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
+
     .product-card {
-      background: var(--card-bg);
+      background: var(--bg-card);
       border-radius: var(--border-radius);
       overflow: hidden;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       display: flex;
       flex-direction: column;
-      border: 1px solid var(--border-color);
+      border: 1px solid rgba(245, 200, 66, 0.18);
       transition: transform 0.2s, box-shadow 0.2s;
     }
+
     .product-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+      border-color: rgba(245, 200, 66, 0.4);
     }
+
     .product-img-wrap {
       width: 100%;
       aspect-ratio: 1;
-      background: #F8F9FA;
+      background: #180508;
       position: relative;
       overflow: hidden;
     }
+
     .product-img-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.4s ease;
     }
+
+    .product-card:hover .product-img-wrap img {
+      transform: scale(1.06);
+    }
+
     .product-cat-tag {
       position: absolute;
       top: 8px;
       left: 8px;
-      background: rgba(26,26,46,0.75);
+      background: rgba(14, 2, 4, 0.82);
       backdrop-filter: blur(4px);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 600;
+      color: var(--gold);
+      border: 1px solid rgba(245, 200, 66, 0.3);
+      font-size: 9.5px;
+      font-weight: 700;
       padding: 2px 7px;
-      border-radius: 8px;
+      border-radius: 6px;
+      z-index: 2;
     }
+
     .product-body {
       padding: 10px 12px 12px;
       display: flex;
@@ -601,510 +823,370 @@
       flex: 1;
       justify-content: space-between;
     }
+
     .product-title {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-main);
-      line-height: 1.3;
+      color: #FFFFFF;
+      line-height: 1.35;
       margin-bottom: 4px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      min-height: 35px;
     }
+
     .product-desc {
       font-size: 11px;
       color: var(--text-muted);
+      line-height: 1.3;
       margin-bottom: 8px;
       display: -webkit-box;
       -webkit-line-clamp: 1;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
     .product-footer {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: flex-end;
       margin-top: auto;
+      padding-top: 6px;
     }
+
     .product-price-box {
       display: flex;
       flex-direction: column;
     }
-    .product-price {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--mk-red);
-    }
+
     .product-old-price {
-      font-size: 11px;
-      color: var(--text-muted);
+      font-size: 10.5px;
+      color: #8E7073;
       text-decoration: line-through;
     }
+
+    .product-price {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
     .btn-add-cart-mini {
       width: 32px;
       height: 32px;
-      border-radius: 50%;
-      background: var(--mk-red);
-      color: white;
-      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      border: 1px solid rgba(245, 200, 66, 0.4);
+      color: #FFF;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(211,34,42,0.3);
-      transition: transform 0.15s;
+      box-shadow: 0 2px 8px rgba(211, 34, 42, 0.4);
+      transition: all 0.2s ease;
     }
+
     .btn-add-cart-mini:active {
       transform: scale(0.9);
     }
-    .category-card-item {
-      cursor: pointer;
-      transition: transform 0.2s;
+
+    /* Store Highlights / Trust Badges */
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0 10px;
     }
-    .category-card-item:hover {
-      transform: scale(1.02);
+
+    .trust-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .trust-card i {
+      font-size: 22px;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+
+    .trust-card h4 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .trust-card p {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--bottom-nav-height);
+      background: rgba(18, 4, 7, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      border-top: 1px solid rgba(245, 200, 66, 0.2);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      width: 70px;
+    }
+
+    .nav-item i {
+      font-size: 22px;
+      margin-bottom: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-item.active {
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .nav-item.active i {
+      transform: translateY(-2px);
+      color: var(--gold);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--bottom-nav-height) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(28, 7, 10, 0.95);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2000;
+      border: 1px solid var(--gold);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
     }
   </style>
+</head>
 <body>
-  
-  <!-- Background particles -->
-  <div class="particles" id="particles"></div>
 
-  <!-- Header -->
-  <div class="header">
-    <h1>🎁 สุ่มโค้ดส่งฟรี</h1>
-    <p>กดกล่องของขวัญเพื่อรับโค้ดสุดพิเศษ!</p>
-  </div>
+  <!-- Ambient Particles -->
+  <div class="particles-bg" id="particlesBg"></div>
 
-  <!-- Gift Scene -->
-  <div class="gift-scene">
-    <div class="gift-box-wrapper" id="giftWrapper">
-      <div class="confetti-container" id="confetti"></div>
-      <div class="gift-box floating" id="giftBox">
-        <!-- Gift Box SVG -->
-        <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" width="160" height="160">
-          <!-- Shadow -->
-          <ellipse cx="80" cy="152" rx="48" ry="6" fill="rgba(0,0,0,0.4)"/>
-          <!-- Box body -->
-          <rect x="20" y="80" width="120" height="70" rx="6" fill="#C0392B"/>
-          <rect x="20" y="80" width="120" height="70" rx="6" fill="url(#boxGrad)"/>
-          <!-- Box lid -->
-          <rect x="14" y="60" width="132" height="28" rx="6" fill="#E74C3C"/>
-          <rect x="14" y="60" width="132" height="28" rx="6" fill="url(#lidGrad)"/>
-          <!-- Vertical ribbon on body -->
-          <rect x="69" y="80" width="22" height="70" rx="2" fill="#F5C842" opacity="0.9"/>
-          <!-- Vertical ribbon on lid -->
-          <rect x="69" y="60" width="22" height="28" rx="2" fill="#F5C842"/>
-          <!-- Bow center -->
-          <circle cx="80" cy="62" r="10" fill="#F5C842"/>
-          <circle cx="80" cy="62" r="6" fill="#D4A017"/>
-          <!-- Left bow wing -->
-          <path d="M80,62 Q55,38 48,52 Q42,65 75,65 Z" fill="#F5C842"/>
-          <!-- Right bow wing -->
-          <path d="M80,62 Q105,38 112,52 Q118,65 85,65 Z" fill="#F5C842"/>
-          <!-- Ribbon tail left -->
-          <path d="M74,68 Q62,80 58,90" stroke="#F5C842" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <!-- Ribbon tail right -->
-          <path d="M86,68 Q98,80 102,90" stroke="#F5C842" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <!-- Shine on box -->
-          <rect x="24" y="83" width="20" height="5" rx="2" fill="rgba(255,255,255,0.12)"/>
-          <!-- Shine on lid -->
-          <rect x="18" y="63" width="24" height="5" rx="2" fill="rgba(255,255,255,0.2)"/>
-          <!-- Gradients -->
-          <defs>
-            <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#E74C3C"/>
-              <stop offset="100%" stop-color="#922B21"/>
-            </linearGradient>
-            <linearGradient id="lidGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#F1948A"/>
-              <stop offset="100%" stop-color="#E74C3C"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Result Card -->
-  <div class="result-card">
-    <div class="result-placeholder" id="placeholder">
-      <div class="big-icon">✨</div>
-      <p>กดปุ่มด้านล่างเพื่อรับโค้ดของคุณ!</p>
-    </div>
-    <div class="result-content" id="resultContent">
-      <div class="prize-badge" id="prizeBadge">🚚 โค้ดส่งฟรี!</div>
-      <div class="result-label">กดปุ่มด้านล่างเพื่อรับโค้ดของคุณ!</div>
-      <div class="code-box" id="codeBox"></div>
-      <button class="copy-btn" id="copyBtn" onclick="copyCode()">
-        📋 คัดลอกโค้ด
-      </button>
-    </div>
-  </div>
-
-  <!-- Spin Button -->
-  <button class="spin-btn" id="spinBtn" onclick="doSpin()">
-    🎲 กดสุ่มโค้ด
-  </button>
-
-  <!-- Countdown Timer -->
-  <div class="timer-section" id="timerSection">
-    <div class="timer-label">สุ่มได้ใหม่อีกครั้งใน</div>
-    <div class="timer-circle">
-      <svg>
-        <circle class="track" cx="45" cy="45" r="36"/>
-        <circle class="progress" cx="45" cy="45" r="36" id="timerProgress"/>
-      </svg>
-      <div class="timer-display" id="timerDisplay">01:00</div>
-    </div>
-    <div class="timer-note">ระบบจะรีเซ็ตอัตโนมัติ</div>
-  </div>
-
-  <!-- Toast notification -->
-  <div class="toast" id="toast">✅ คัดลอกโค้ดแล้ว!</div>
-
-  <script>
-    const COOLDOWN_MS = 1 * 60 * 1000; // 1 minutes
-    const TOTAL_SECS = 60;
-    const CIRCUMFERENCE = 2 * Math.PI * 36; // ≈ 226.2
-
-    let timerInterval = null;
-    let currentCode = '';
-    let lastSpinTime = null;
-
-    // --- Particles Background ---
-    function initParticles() {
-      const container = document.getElementById('particles');
-      for (let i = 0; i < 30; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.bottom = Math.random() * 30 + '%';
-        const duration = 3 + Math.random() * 5;
-        const delay = Math.random() * 6;
-        p.style.animationDuration = duration + 's';
-        p.style.animationDelay = delay + 's';
-        p.style.background = Math.random() > 0.5 ? '#F5C842' : '#E74C3C';
-        p.style.width = (2 + Math.random() * 4) + 'px';
-        p.style.height = p.style.width;
-        container.appendChild(p);
-      }
-    }
-
-    // --- Generate Code ---
-    function generateCode() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 6; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return code;
-    }
-
-    // --- Determine Prize (5 outcomes with weighted probability) ---
-    // 1. no_code     = 48%   (ไม่ได้รับโค้ด)
-    // 2. freeship    = 49%   (โค้ดส่งฟรี)  ← ลด 1% เพื่อเก็บโอกาส kiramai+geartlinger
-    // 3. wonderbook  = 2%    (โค้ดส่งฟรี + DX Wonderside Book สุ่ม)
-    // 4. kiramai     = 0.5%  (โค้ดส่งฟรี + DX Kiramai Changer)
-    // 5. geartlinger = 0.5%  (โค้ดส่งฟรี + DX Geartlinger)
-    // รวม = 100%
-    function determinePrize() {
-      const roll = Math.random() * 100; // 0 - 99.999...
-      if (roll < 48)       return 'no_code';      // 0  - 47.99  = 48%
-      if (roll < 97)       return 'freeship';     // 48 - 96.99  = 49%
-      if (roll < 99)       return 'wonderbook';   // 97 - 98.99  = 2%
-      if (roll < 99.5)     return 'kiramai';      // 99 - 99.49  = 0.5%
-      return 'geartlinger';                        // 99.5 - 100  = 0.5%
-    }
-
-    // --- Confetti Burst ---
-    function burstConfetti() {
-      const container = document.getElementById('confetti');
-      container.innerHTML = '';
-      const colors = ['#F5C842','#E74C3C','#3498DB','#2ECC71','#9B59B6','#E67E22'];
-      for (let i = 0; i < 24; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        const angle = (i / 24) * 360;
-        const rad = angle * (Math.PI / 180);
-        const dist = 60 + Math.random() * 60;
-        const tx = Math.cos(rad) * dist + 'px';
-        const ty = (Math.sin(rad) * dist - 30) + 'px';
-        piece.style.setProperty('--tx', tx);
-        piece.style.setProperty('--ty', ty);
-        piece.style.background = colors[i % colors.length];
-        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-        container.appendChild(piece);
-        setTimeout(() => piece.classList.add('burst'), 10);
-      }
-    }
-
-    // --- Animate Code Display ---
-    function animateCode(code) {
-      const codeBox = document.getElementById('codeBox');
-      codeBox.innerHTML = '';
-      code.split('').forEach((char, i) => {
-        const charEl = document.createElement('div');
-        charEl.className = 'code-char';
-        charEl.textContent = char;
-        codeBox.appendChild(charEl);
-        setTimeout(() => {
-          charEl.classList.add('rolling');
-        }, i * 80);
-      });
-    }
-
-    // --- Login Required Helper ---
-    window.showLoginRequiredModal = function(action) {
-      const modal = document.getElementById('loginRequiredModal');
-      const desc = document.getElementById('loginRequiredDesc');
-      if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
-      if (modal) modal.style.display = 'flex';
-    };
-
-    // --- Main Spin Action ---
-    function doSpin() {
-      // Check Auth
-      if (!window.currentUser) {
-        showLoginRequiredModal('สุ่มโค้ดส่วนลด');
-        return;
-      }
-
-      const spinBtn = document.getElementById('spinBtn');
-      const giftBox = document.getElementById('giftBox');
-
-      // Check cooldown
-      if (spinBtn.disabled) return;
-
-      // Disable button immediately
-      spinBtn.disabled = true;
-      spinBtn.textContent = '🎫 โค้ดของคุณคือ ';
-
-      // Animate box: shake then pop
-      giftBox.classList.remove('floating', 'shaking', 'popping');
-      void giftBox.offsetWidth;
-      giftBox.classList.add('shaking');
-
-      setTimeout(() => {
-        giftBox.classList.remove('shaking');
-        giftBox.classList.add('popping');
-        burstConfetti();
-
-        // Determine result
-        const prizeType = determinePrize();
-
-        // Only generate & save a code if the player won something
-        if (prizeType !== 'no_code') {
-          currentCode = generateCode();
-          try {
-            const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-            validCodes.push({
-              code: currentCode,
-              prize: prizeType,
-              used: false,
-              createdAt: Date.now()
-            });
-            localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
-            localStorage.setItem('mkCurrentPromoCode', currentCode);
-            localStorage.setItem('mkCurrentPrizeType', prizeType);
-          } catch (err) {
-            console.error(err);
-          }
-        } else {
-          currentCode = '';
-          localStorage.removeItem('mkCurrentPromoCode');
-          localStorage.removeItem('mkCurrentPrizeType');
-        }
-
-        // Update UI
-        document.getElementById('placeholder').style.display = 'none';
-        const resultContent = document.getElementById('resultContent');
-        resultContent.classList.remove('visible');
-        void resultContent.offsetWidth;
-        resultContent.classList.add('visible');
-
-        // Set prize badge & result text by prize type
-        const prizeBadge = document.getElementById('prizeBadge');
-        const copyBtn = document.getElementById('copyBtn');
-
-        if (prizeType === 'no_code') {
-          prizeBadge.className = 'prize-badge no-prize';
-          prizeBadge.innerHTML = 'ไม่ได้รับโค้ด กดสุ่มใหม่ได้ในครั้งถัดไป';
-          copyBtn.style.display = 'none';
-        } else if (prizeType === 'freeship') {
-          prizeBadge.className = 'prize-badge';
-          prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
-          copyBtn.style.display = '';
-        } else if (prizeType === 'wonderbook') {
-          prizeBadge.className = 'prize-badge special';
-          prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book 1 ชิ้น (แบบสุ่ม)';
-          copyBtn.style.display = '';
-        } else if (prizeType === 'kiramai') {
-          prizeBadge.className = 'prize-badge jackpot';
-          prizeBadge.innerHTML = '🏆 แจ็คพอต! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
-          copyBtn.style.display = '';
-        } else if (prizeType === 'geartlinger') {
-          prizeBadge.className = 'prize-badge jackpot';
-          prizeBadge.innerHTML = '🏆 แจ็คพอต! โค้ดส่งฟรี + 🎁 ฟรี DX Geartlinger!';
-          copyBtn.style.display = '';
-        }
-
-        // Animate code (only if there's a code)
-        if (currentCode) {
-          animateCode(currentCode);
-        } else {
-          document.getElementById('codeBox').innerHTML = '<div style="font-size:48px;margin:8px 0;">❌</div>';
-        }
-
-        // Start countdown
-        startCountdown();
-
-        // Float again after animation
-        setTimeout(() => {
-          giftBox.classList.remove('popping');
-          giftBox.classList.add('floating');
-        }, 700);
-
-      }, 850);
-    }
-
-    // --- Copy Code ---
-    function copyCode() {
-      if (!currentCode) return;
-      navigator.clipboard.writeText(currentCode).then(() => {
-        const btn = document.getElementById('copyBtn');
-        btn.classList.add('copied');
-        btn.textContent = '✅ คัดลอกแล้ว!';
-        setTimeout(() => {
-          btn.classList.remove('copied');
-          btn.textContent = '📋 คัดลอกโค้ด';
-        }, 2000);
-
-        const toast = document.getElementById('toast');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2500);
-      });
-    }
-
-    // --- Countdown Timer ---
-    function startCountdown() {
-      const timerSection = document.getElementById('timerSection');
-      const timerDisplay = document.getElementById('timerDisplay');
-      const timerProgress = document.getElementById('timerProgress');
-      const spinBtn = document.getElementById('spinBtn');
-
-      timerSection.classList.add('active');
-
-      let remaining = TOTAL_SECS;
-      lastSpinTime = Date.now();
-
-      // Save to localStorage so timer persists if user refreshes
-      localStorage.setItem('mkLastSpin', lastSpinTime.toString());
-
-      function updateTimer() {
-        const now = Date.now();
-        const elapsed = Math.floor((now - lastSpinTime) / 1000);
-        remaining = Math.max(0, TOTAL_SECS - elapsed);
-
-        // Update display
-        const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
-        const secs = (remaining % 60).toString().padStart(2, '0');
-        timerDisplay.textContent = `${mins}:${secs}`;
-
-        // Update circle progress (SVG strokeDashoffset)
-        const fraction = remaining / TOTAL_SECS;
-        timerProgress.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
-
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          timerSection.classList.remove('active');
-          spinBtn.disabled = false;
-          spinBtn.textContent = '🎲 กดสุ่มโค้ด';
-          localStorage.removeItem('mkLastSpin');
-        }
-      }
-
-      clearInterval(timerInterval);
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 500);
-    }
-
-    // --- Restore state from localStorage on load ---
-    function restoreState() {
-      const saved = localStorage.getItem('mkLastSpin');
-      if (saved) {
-        lastSpinTime = parseInt(saved);
-        const elapsed = Date.now() - lastSpinTime;
-        if (elapsed < COOLDOWN_MS) {
-          // Still in cooldown
-          document.getElementById('spinBtn').disabled = true;
-          document.getElementById('spinBtn').textContent = '⏳ รอสักครู่...';
-          startCountdown();
-        } else {
-          localStorage.removeItem('mkLastSpin');
-        }
-      }
-    }
-
-    // Init
-    initParticles();
-    restoreState();
-  </script>
-  <!-- Header -->
+  <!-- Top Navigation Header -->
   <header class="top-nav">
-    <div class="menu-icon"><i class="ph ph-list"></i></div>
-    <div class="logo">KHUN AU <span> MYSTERY </span></div>
-    <a href="cart.html" class="cart-icon" aria-label="ดูตะกร้าสินค้า"><i class="ph ph-shopping-cart"></i><span class="badge" id="cartBadge">0</span></a>
+    <a href="index.html" class="nav-brand">
+      <div class="brand-logo-badge">
+        <i class="ph ph-shield-star"></i>
+      </div>
+      <div class="brand-title">KHUN AU <span>MYSTERY</span></div>
+    </a>
+    <div class="nav-actions">
+      <a href="login.html" class="cart-btn-link" title="โปรไฟล์" style="font-size:18px;">
+        <i class="ph ph-user"></i>
+      </a>
+      <a href="cart.html" class="cart-btn-link" aria-label="ดูตะกร้าสินค้า">
+        <i class="ph ph-shopping-cart"></i>
+        <span class="badge" id="cartBadge">0</span>
+      </a>
+    </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="content">
-    <!-- Hero Banner -->
-    <section class="hero-banner">
-      <img src="Banner item.png" alt="MK Promotion Banner">
+  <!-- Main Content Layout -->
+  <main class="main-content">
+
+    <!-- 1. Hero Promotion Banner -->
+    <section class="hero-banner-card">
+      <img src="Banner item.png" alt="KHUN AU Promotion Banner">
       <div class="hero-overlay">
-        <h2>ลุ้นรับ ไอเทมสุดพิเศษ‼️</h2>
-        <p>🚛 พร้อมโค้ดส่งฟรี!</p>
+        <div class="hero-text">
+          <h2>ลุ้นรับไอเทมสุดพิเศษ‼️</h2>
+          <p>🚛 จัดส่งด่วน พร้อมโค้ดลด & ของแถมฟรี</p>
+        </div>
+        <span class="hero-badge-pill">🔥 OFFICIAL</span>
       </div>
     </section>
 
-    <!-- Categories Section Header -->
-    <div style="padding: 16px 20px 10px; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(245,200,66,0.15); color:var(--gold); font-size:16px;">
-          <i class="ph ph-squares-four"></i>
-        </span>
-        <h3 style="font-size:16px; font-weight:700; color:#fff; letter-spacing:0.3px;">หมวดหมู่สินค้า</h3>
+    <!-- 2. Interactive Lucky Draw Box Section -->
+    <section class="lucky-draw-card" id="luckyDrawSection">
+      <div class="lucky-card-header">
+        <span class="lucky-card-tag"><i class="ph ph-sparkle"></i> DAILY LUCKY SPIN</span>
+        <h3 class="lucky-card-title">กล่องสุ่มลุ้นโชคประจำวัน 🎁</h3>
+        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 1 นาที)</p>
       </div>
-      <span style="font-size:12px; color:var(--gold); cursor:pointer; font-weight:600;" onclick="selectCategory('ALL', document.querySelector('.cat-btn'))">
+
+      <!-- 3D Interactive Gift Box Scene -->
+      <div class="gift-stage">
+        <div class="gift-box-interactive floating" id="giftBox" onclick="doSpin()">
+          <svg viewBox="0 0 160 160" width="130" height="130" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#E8303A"/>
+                <stop offset="50%" stop-color="#D3222A"/>
+                <stop offset="100%" stop-color="#8F0E14"/>
+              </linearGradient>
+              <linearGradient id="lidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF4D55"/>
+                <stop offset="100%" stop-color="#B8141B"/>
+              </linearGradient>
+              <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFE57F"/>
+                <stop offset="50%" stop-color="#F5C842"/>
+                <stop offset="100%" stop-color="#C69214"/>
+              </linearGradient>
+              <linearGradient id="bowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFF0A6"/>
+                <stop offset="100%" stop-color="#D49A17"/>
+              </linearGradient>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+            </defs>
+            <!-- Shadow -->
+            <ellipse cx="80" cy="148" rx="55" ry="9" fill="rgba(0,0,0,0.4)"/>
+            <!-- Box Body -->
+            <rect x="25" y="65" width="110" height="75" rx="8" fill="url(#boxGrad)" stroke="rgba(245,200,66,0.3)" stroke-width="1.5"/>
+            <!-- Vertical Ribbon -->
+            <rect x="68" y="65" width="24" height="75" fill="url(#ribbonGrad)"/>
+            <!-- Horizontal Ribbon -->
+            <rect x="25" y="94" width="110" height="18" fill="url(#ribbonGrad)"/>
+            <!-- Box Lid -->
+            <rect x="18" y="48" width="124" height="22" rx="6" fill="url(#lidGrad)" stroke="rgba(245,200,66,0.5)" stroke-width="1.5"/>
+            <rect x="68" y="48" width="24" height="22" fill="url(#ribbonGrad)"/>
+            <!-- Bow Loops -->
+            <path d="M80 50 C65 24 35 24 50 48 C60 48 72 49 80 50 Z" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1"/>
+            <path d="M80 50 C95 24 125 24 110 48 C100 48 88 49 80 50 Z" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1"/>
+            <!-- Bow Center Knot -->
+            <circle cx="80" cy="50" r="8" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1.5" filter="url(#glow)"/>
+            <!-- Sparkles -->
+            <circle cx="34" cy="40" r="2.5" fill="#FFE57F" opacity="0.8"/>
+            <circle cx="126" cy="38" r="3" fill="#FFE57F" opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="confetti-container" id="confetti"></div>
+      </div>
+
+      <!-- Result Panel -->
+      <div class="lucky-result-panel">
+        <div class="lucky-result-placeholder" id="luckyPlaceholder">
+          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);"></i>
+          <span>กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
+        </div>
+
+        <div class="lucky-result-content" id="luckyResultContent">
+          <span class="prize-badge" id="prizeBadge">🎉 ได้รับโค้ดส่งฟรี!</span>
+          <div class="code-display-wrap" id="codeBox"></div>
+          <button class="btn-copy-code" id="copyBtn" onclick="copyCode()" style="display:none;">
+            <i class="ph ph-copy"></i> <span>คัดลอกโค้ด</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button class="btn-spin-action" id="spinBtn" onclick="doSpin()">
+        <i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>
+      </button>
+
+      <!-- Timer Bar -->
+      <div class="lucky-timer-bar" id="timerSection">
+        <i class="ph ph-timer"></i>
+        <span>สุ่มได้ใหม่อีกครั้งใน: <strong class="timer-pill" id="timerDisplay">01:00</strong></span>
+      </div>
+    </section>
+
+    <!-- 3. Category Header & 4-Column Grid -->
+    <div class="section-header-wrap">
+      <div class="section-title-left">
+        <div class="section-icon-box">
+          <i class="ph ph-squares-four"></i>
+        </div>
+        <div class="section-title-text">หมวดหมู่สินค้า</div>
+      </div>
+      <span class="section-link-more" onclick="selectCategory('ALL')">
         ดูทั้งหมด <i class="ph ph-caret-right"></i>
       </span>
     </div>
 
-    <!-- Categories / Filters -->
-    <section class="categories" id="categoryButtonsContainer">
-      <button class="cat-btn active" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>
-    </section>
-
-    <!-- Category 4-in-a-row Grid -->
+    <!-- 4-in-a-row Category Grid -->
     <section class="categories-grid-4" id="categoryBannersContainer">
-      <!-- Generated dynamically or fallbacks -->
+      <!-- Dynamically Rendered -->
     </section>
 
-    <!-- Products Grid Section -->
+    <!-- Category Pill Filter Tabs -->
+    <div class="cat-pill-bar" id="categoryButtonsContainer">
+      <button class="cat-pill-btn active" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>
+    </div>
+
+    <!-- 4. Dynamic Products Section -->
     <section class="products-section" id="productsSection">
-      <div class="section-heading">
-        <h3 id="currentCategoryTitle"><i class="ph ph-shopping-bag"></i> สินค้าทั้งหมด</h3>
-        <span style="font-size:12px;color:var(--text-muted);" id="productCountLabel">0 รายการ</span>
+      <div class="section-header-wrap" style="margin-top: 4px;">
+        <div class="section-title-left">
+          <div class="section-icon-box">
+            <i class="ph ph-shopping-bag"></i>
+          </div>
+          <div class="section-title-text" id="currentCategoryTitle">สินค้าทั้งหมด</div>
+        </div>
+        <span style="font-size:12px; color:var(--text-muted);" id="productCountLabel">0 รายการ</span>
       </div>
+
       <div class="product-grid" id="productGridContainer">
-        <!-- Products generated dynamically -->
+        <!-- Dynamically Loaded Products -->
       </div>
     </section>
+
+    <!-- 5. Store Trust Badges -->
+    <div class="trust-grid">
+      <div class="trust-card">
+        <i class="ph ph-seal-check"></i>
+        <h4>ของแท้ 100%</h4>
+        <p>สินค้านำเข้าแท้</p>
+      </div>
+      <div class="trust-card">
+        <i class="ph ph-truck"></i>
+        <h4>จัดส่งรวดเร็ว</h4>
+        <p>แพ็กกันกระแทกแน่นหนา</p>
+      </div>
+      <div class="trust-card">
+        <i class="ph ph-headset"></i>
+        <h4>บริการดูแล</h4>
+        <p>ตอบไว ใส่ใจลูกค้า</p>
+      </div>
+    </div>
+
   </main>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Navigation Bar -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item active">
       <i class="ph ph-house"></i>
@@ -1117,21 +1199,241 @@
   </nav>
 
   <!-- Modal: Login Required -->
-  <div class="modal-overlay" id="loginRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px;">
-    <div style="background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-      <div style="width:60px;height:60px;border-radius:50%;background:#FFF2F2;color:var(--mk-red);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;">
+  <div class="modal-overlay" id="loginRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+    <div style="background:#24090D;border:1.5px solid rgba(245,200,66,0.4);border-radius:24px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+      <div style="width:62px;height:62px;border-radius:50%;background:rgba(211,34,42,0.2);border:1px solid rgba(211,34,42,0.4);color:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;">
         <i class="ph ph-lock-key"></i>
       </div>
-      <h3 style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:8px;">กรุณาเข้าสู่ระบบก่อน</h3>
-      <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;" id="loginRequiredDesc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถใช้งานได้ครับ</p>
-      <a href="login.html" style="display:block;width:100%;padding:13px;background:var(--mk-red);color:#fff;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;margin-bottom:10px;">
+      <h3 style="font-size:18px;font-weight:700;color:#FFFFFF;margin-bottom:8px;">กรุณาเข้าสู่ระบบก่อน</h3>
+      <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;" id="loginRequiredDesc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถใช้งานได้ครับ</p>
+      <a href="login.html" style="display:block;width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;margin-bottom:10px;box-shadow:0 4px 15px rgba(211,34,42,0.4);">
         <i class="ph ph-sign-in"></i> เข้าสู่ระบบ / สมัครสมาชิก
       </a>
-      <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="width:100%;padding:11px;background:#F3F4F6;color:var(--text-muted);border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">
+      <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="width:100%;padding:10px;background:rgba(255,255,255,0.08);color:var(--text-muted);border:none;border-radius:12px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;">
         ไว้คราวหลัง
       </button>
     </div>
   </div>
+
+  <!-- Toast Message -->
+  <div class="toast" id="toast">✅ ดำเนินการสำเร็จ</div>
+
+  <!-- Lucky Draw Scripts -->
+  <script>
+    const COOLDOWN_MS = 60 * 1000;
+    const TOTAL_SECS = 60;
+    let timerInterval = null;
+    let currentCode = '';
+    let lastSpinTime = null;
+
+    function initParticles() {
+      const container = document.getElementById('particlesBg');
+      if (!container) return;
+      for (let i = 0; i < 26; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = Math.random() * 20 + '%';
+        p.style.animationDuration = (4 + Math.random() * 6) + 's';
+        p.style.animationDelay = (Math.random() * 5) + 's';
+        container.appendChild(p);
+      }
+    }
+
+    function generateCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+
+    function determinePrize() {
+      const roll = Math.random() * 100;
+      if (roll < 48)   return 'no_code';
+      if (roll < 97)   return 'freeship';
+      if (roll < 99)   return 'wonderbook';
+      if (roll < 99.5) return 'kiramai';
+      return 'geartlinger';
+    }
+
+    function burstConfetti() {
+      const container = document.getElementById('confetti');
+      if (!container) return;
+      container.innerHTML = '';
+      const colors = ['#F5C842','#E74C3C','#3498DB','#2ECC71','#9B59B6','#E67E22'];
+      for (let i = 0; i < 22; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        const rad = (i / 22) * 360 * (Math.PI / 180);
+        const dist = 50 + Math.random() * 60;
+        piece.style.setProperty('--tx', (Math.cos(rad) * dist) + 'px');
+        piece.style.setProperty('--ty', (Math.sin(rad) * dist - 25) + 'px');
+        piece.style.background = colors[i % colors.length];
+        container.appendChild(piece);
+        setTimeout(() => piece.classList.add('burst'), 10);
+      }
+    }
+
+    window.showLoginRequiredModal = function(action) {
+      const modal = document.getElementById('loginRequiredModal');
+      const desc = document.getElementById('loginRequiredDesc');
+      if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
+      if (modal) modal.style.display = 'flex';
+    };
+
+    function doSpin() {
+      if (!window.currentUser) {
+        showLoginRequiredModal('สุ่มโค้ดส่วนลด');
+        return;
+      }
+      const spinBtn = document.getElementById('spinBtn');
+      const giftBox = document.getElementById('giftBox');
+      if (spinBtn.disabled) return;
+
+      spinBtn.disabled = true;
+      spinBtn.innerHTML = '<i class="ph ph-spinner-gap"></i> <span>กำลังลุ้นรางวัล...</span>';
+
+      giftBox.classList.remove('floating', 'shaking', 'popping');
+      void giftBox.offsetWidth;
+      giftBox.classList.add('shaking');
+
+      setTimeout(() => {
+        giftBox.classList.remove('shaking');
+        giftBox.classList.add('popping');
+        burstConfetti();
+
+        const prizeType = determinePrize();
+        if (prizeType !== 'no_code') {
+          currentCode = generateCode();
+          try {
+            const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+            validCodes.push({ code: currentCode, prize: prizeType, used: false, createdAt: Date.now() });
+            localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
+            localStorage.setItem('mkCurrentPromoCode', currentCode);
+            localStorage.setItem('mkCurrentPrizeType', prizeType);
+          } catch (err) { console.error(err); }
+        } else {
+          currentCode = '';
+          localStorage.removeItem('mkCurrentPromoCode');
+          localStorage.removeItem('mkCurrentPrizeType');
+        }
+
+        document.getElementById('luckyPlaceholder').style.display = 'none';
+        const resultContent = document.getElementById('luckyResultContent');
+        resultContent.classList.remove('visible');
+        void resultContent.offsetWidth;
+        resultContent.classList.add('visible');
+
+        const prizeBadge = document.getElementById('prizeBadge');
+        const copyBtn = document.getElementById('copyBtn');
+
+        if (prizeType === 'no_code') {
+          prizeBadge.className = 'prize-badge no-prize';
+          prizeBadge.innerHTML = '❌ ไม่ได้รับโค้ด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
+          copyBtn.style.display = 'none';
+        } else if (prizeType === 'freeship') {
+          prizeBadge.className = 'prize-badge';
+          prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
+          copyBtn.style.display = 'inline-flex';
+        } else if (prizeType === 'wonderbook') {
+          prizeBadge.className = 'prize-badge special';
+          prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book (สุ่ม)';
+          copyBtn.style.display = 'inline-flex';
+        } else if (prizeType === 'kiramai') {
+          prizeBadge.className = 'prize-badge jackpot';
+          prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
+          copyBtn.style.display = 'inline-flex';
+        } else if (prizeType === 'geartlinger') {
+          prizeBadge.className = 'prize-badge jackpot';
+          prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Geartlinger!';
+          copyBtn.style.display = 'inline-flex';
+        }
+
+        const codeBox = document.getElementById('codeBox');
+        if (currentCode) {
+          codeBox.innerHTML = currentCode.split('').map(c => `<div class="code-char-box">${c}</div>`).join('');
+        } else {
+          codeBox.innerHTML = '<div style="font-size:28px;margin:4px 0;">❌</div>';
+        }
+
+        startCountdown();
+        setTimeout(() => {
+          giftBox.classList.remove('popping');
+          giftBox.classList.add('floating');
+        }, 700);
+      }, 850);
+    }
+
+    function copyCode() {
+      if (!currentCode) return;
+      navigator.clipboard.writeText(currentCode).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.classList.add('copied');
+        btn.innerHTML = '<i class="ph ph-check"></i> <span>คัดลอกแล้ว!</span>';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerHTML = '<i class="ph ph-copy"></i> <span>คัดลอกโค้ด</span>';
+        }, 2000);
+        showToast('📋 คัดลอกโค้ด ' + currentCode + ' สำเร็จ');
+      });
+    }
+
+    function startCountdown() {
+      const timerSection = document.getElementById('timerSection');
+      const timerDisplay = document.getElementById('timerDisplay');
+      const spinBtn = document.getElementById('spinBtn');
+      timerSection.classList.add('active');
+
+      lastSpinTime = Date.now();
+      localStorage.setItem('mkLastSpin', lastSpinTime.toString());
+
+      function updateTimer() {
+        const now = Date.now();
+        const elapsed = Math.floor((now - lastSpinTime) / 1000);
+        const remaining = Math.max(0, TOTAL_SECS - elapsed);
+        const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+        const secs = (remaining % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${mins}:${secs}`;
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          timerSection.classList.remove('active');
+          spinBtn.disabled = false;
+          spinBtn.innerHTML = '<i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>';
+          localStorage.removeItem('mkLastSpin');
+        }
+      }
+      clearInterval(timerInterval);
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 500);
+    }
+
+    function restoreState() {
+      const saved = localStorage.getItem('mkLastSpin');
+      if (saved) {
+        lastSpinTime = parseInt(saved);
+        const elapsed = Date.now() - lastSpinTime;
+        if (elapsed < COOLDOWN_MS) {
+          document.getElementById('spinBtn').disabled = true;
+          document.getElementById('spinBtn').innerHTML = '<i class="ph ph-clock"></i> <span>กรุณารอสักครู่...</span>';
+          startCountdown();
+        } else {
+          localStorage.removeItem('mkLastSpin');
+        }
+      }
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    initParticles();
+    restoreState();
+  </script>
 
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
@@ -1152,22 +1454,17 @@
     const db   = getFirestore(app);
 
     window.currentUser = null;
-
-    // Listen to Firebase Auth state
-    onAuthStateChanged(auth, user => {
-      window.currentUser = user;
-    });
+    onAuthStateChanged(auth, user => { window.currentUser = user; });
 
     let storeCategories = [];
     let storeProducts = [];
     let selectedCategoryName = 'ALL';
 
-    // Default Fallback Categories
     const defaultCategories = [
-      { name: 'DX Full Bottle', slug: 'full-bottle', image: 'full-bottle.jpg', pageLink: 'full-bottle.html', desc: 'พิเศษ 100-150฿' },
-      { name: 'Wonder Ride Book SG', slug: 'saberbook', image: 'wondersidebookSG.jpg', pageLink: 'SaberbookSG.html', desc: 'โปรโมชั่นพิเศษ' },
+      { name: 'DX Full Bottle', slug: 'full-bottle', image: 'full-bottle.jpg', pageLink: 'full-bottle.html', desc: '100-150฿' },
+      { name: 'Wonder Ride Book SG', slug: 'saberbook', image: 'wondersidebookSG.jpg', pageLink: 'SaberbookSG.html', desc: 'โปรพิเศษ' },
       { name: 'Kamen Rider OOO', slug: 'ooo', image: 'OOO.jpg', pageLink: '', desc: 'สุดคุ้ม' },
-      { name: 'Gotchard Card', slug: 'gotchard', image: 'gotchardcard.jpg', pageLink: '', desc: 'การ์ดก็อตชาร์ด' },
+      { name: 'Gotchard Card', slug: 'gotchard', image: 'gotchardcard.jpg', pageLink: '', desc: 'การ์ดไรเดอร์' },
     ];
 
     // ===== 1. LISTEN TO CATEGORIES =====
@@ -1175,13 +1472,12 @@
     onSnapshot(catQuery, snap => {
       const dbCategories = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
       storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
-      renderCategoryButtons(storeCategories);
-      renderCategoryBanners(storeCategories);
+      renderCategoryGrid(storeCategories);
+      renderCategoryPills(storeCategories);
     }, err => {
-      console.warn('Using default categories:', err);
       storeCategories = defaultCategories;
-      renderCategoryButtons(storeCategories);
-      renderCategoryBanners(storeCategories);
+      renderCategoryGrid(storeCategories);
+      renderCategoryPills(storeCategories);
     });
 
     // ===== 2. LISTEN TO PRODUCTS =====
@@ -1193,60 +1489,60 @@
       console.warn('Error loading products:', err);
     });
 
-    // ===== RENDER CATEGORY BUTTONS =====
-    function renderCategoryButtons(categories) {
-      const container = document.getElementById('categoryButtonsContainer');
-      if (!container) return;
-      let html = `<button class="cat-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>`;
-      categories.forEach(c => {
-        const isActive = selectedCategoryName === c.name ? 'active' : '';
-        html += `<button class="cat-btn ${isActive}" onclick="selectCategory('${c.name}', this)">🏷️ ${c.name}</button>`;
-      });
-      container.innerHTML = html;
-    }
-
-    // ===== RENDER CATEGORY BANNERS / GRID (4 per row) =====
-    function renderCategoryBanners(categories) {
+    // ===== RENDER CATEGORY 4-COLUMN GRID =====
+    function renderCategoryGrid(categories) {
       const container = document.getElementById('categoryBannersContainer');
       if (!container) return;
-      container.innerHTML = categories.map((c) => {
+      container.innerHTML = categories.map(c => {
         const imgPath = c.image || 'Banner item.png';
-        const badgeHtml = c.desc ? `<span class="category-grid-badge">${c.desc}</span>` : '';
+        const badgeHtml = c.desc ? `<span class="cat-tag-mini">${c.desc}</span>` : '';
         const clickAction = c.pageLink
           ? `onclick="window.location.href='${c.pageLink}'"`
           : `onclick="selectCategoryByName('${c.name}')"`;
 
         return `
-          <div class="category-grid-card" ${clickAction} title="${c.name}">
-            <div class="category-grid-thumb">
+          <div class="cat-item-card" ${clickAction} title="${c.name}">
+            <div class="cat-thumb-box">
               <img src="${imgPath}" alt="${c.name}" onerror="this.src='Banner item.png'">
               ${badgeHtml}
             </div>
-            <span class="category-grid-name">${c.name}</span>
+            <span class="cat-item-name">${c.name}</span>
           </div>
         `;
       }).join('');
+    }
+
+    // ===== RENDER CATEGORY PILL TABS =====
+    function renderCategoryPills(categories) {
+      const container = document.getElementById('categoryButtonsContainer');
+      if (!container) return;
+      let html = `<button class="cat-pill-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>`;
+      categories.forEach(c => {
+        const isActive = selectedCategoryName === c.name ? 'active' : '';
+        html += `<button class="cat-pill-btn ${isActive}" onclick="selectCategory('${c.name}', this)">🏷️ ${c.name}</button>`;
+      });
+      container.innerHTML = html;
     }
 
     // ===== CATEGORY SELECT LOGIC =====
     window.selectCategory = function(catName, btnEl) {
       selectedCategoryName = catName;
       if (btnEl) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.cat-pill-btn').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
       }
       renderProductsGrid();
       const titleEl = document.getElementById('currentCategoryTitle');
       if (titleEl) {
-        titleEl.innerHTML = `<i class="ph ph-shopping-bag"></i> ${catName === 'ALL' ? 'สินค้าทั้งหมด' : catName}`;
+        titleEl.textContent = (catName === 'ALL' ? 'สินค้าทั้งหมด' : catName);
       }
     };
 
     window.selectCategoryByName = function(catName) {
-      const btns = document.querySelectorAll('.cat-btn');
+      const btns = document.querySelectorAll('.cat-pill-btn');
       let targetBtn = null;
       btns.forEach(b => {
-        if (b.textContent.trim() === catName.trim()) targetBtn = b;
+        if (b.textContent.includes(catName)) targetBtn = b;
       });
       selectCategory(catName, targetBtn);
       const prodSec = document.getElementById('productsSection');
@@ -1268,8 +1564,8 @@
 
       if (filtered.length === 0) {
         grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align:center; padding:30px 10px; color:var(--text-muted);">
-            <i class="ph ph-package" style="font-size:36px; display:block; margin-bottom:8px;"></i>
+          <div style="grid-column: 1/-1; text-align:center; padding:36px 12px; color:var(--text-muted);">
+            <i class="ph ph-package" style="font-size:38px; display:block; margin-bottom:8px; color:var(--gold);"></i>
             ยังไม่มีสินค้าในหมวดหมู่นี้
           </div>
         `;
@@ -1333,21 +1629,14 @@
       }
       localStorage.setItem('mkCart', JSON.stringify(cart));
       updateCartBadge();
-
-      // Show Toast notification
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.textContent = `🛒 เพิ่ม "${name}" ลงตะกร้าแล้ว!`;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
-      }
+      showToast(`🛒 เพิ่ม "${name}" ลงตะกร้าแล้ว!`);
     };
 
     function updateCartBadge() {
       try {
         const cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
         const total = cart.reduce((s, i) => s + (i.quantity || 1), 0);
-        const badge = document.querySelector('.cart-icon .badge');
+        const badge = document.getElementById('cartBadge');
         if (badge) {
           badge.textContent = total;
           badge.style.transform = 'scale(1.3)';
@@ -1356,7 +1645,6 @@
       } catch(e) {}
     }
 
-    // Init Cart Badge on Load
     document.addEventListener('DOMContentLoaded', updateCartBadge);
   </script>
 </body>
