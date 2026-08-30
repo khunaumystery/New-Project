@@ -1632,21 +1632,7 @@
 
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, collection, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
-      authDomain: "khunaumystery-f0b63.firebaseapp.com",
-      projectId: "khunaumystery-f0b63",
-      storageBucket: "khunaumystery-f0b63.firebasestorage.app",
-      messagingSenderId: "508588235711",
-      appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
-    };
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+    import { auth, db, collection, onSnapshot, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
 
     window.currentUser = null;
     onAuthStateChanged(auth, user => { 
