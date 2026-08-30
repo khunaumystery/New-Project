@@ -757,11 +757,46 @@
     <span id="toastText"></span>
   </div>
 
-  <script>
+  <!-- Cart Logic & Firebase Integration (ESM) -->
+  <script type="module">
+    import { auth, db, collection, addDoc, onAuthStateChanged } from "./js/firebase-config.js";
+
     const DEFAULT_SHIPPING = 50;
     let appliedDiscount = 0;
     let appliedCodeName = '';
     let isFreeShipping = false;
+    let currentUser = auth.currentUser || null;
+    window.currentUser = currentUser;
+
+    function updateAuthStatusUI(user) {
+      currentUser = user;
+      window.currentUser = user;
+      const userBanner = document.getElementById('cartUserAuthBanner');
+      const guestBanner = document.getElementById('cartGuestAuthBanner');
+      const userNameEl = document.getElementById('cartUserAuthName');
+      const userEmailEl = document.getElementById('cartUserAuthEmail');
+      const firstNameInput = document.getElementById('cusFirstName');
+
+      if (user) {
+        if (userBanner) userBanner.style.display = 'flex';
+        if (guestBanner) guestBanner.style.display = 'none';
+        if (userNameEl) userNameEl.textContent = user.displayName ? `คุณ ${user.displayName}` : 'สมาชิก VIP';
+        if (userEmailEl) userEmailEl.textContent = user.email || '';
+        if (firstNameInput && !firstNameInput.value && user.displayName) {
+          firstNameInput.value = user.displayName;
+        }
+      } else {
+        if (userBanner) userBanner.style.display = 'none';
+        if (guestBanner) guestBanner.style.display = 'flex';
+      }
+    }
+
+    if (auth.currentUser) {
+      updateAuthStatusUI(auth.currentUser);
+    }
+    onAuthStateChanged(auth, user => {
+      updateAuthStatusUI(user);
+    });
 
     // Load Cart from localStorage or default demo items
     function getCart() {
@@ -1097,7 +1132,7 @@
 
     function confirmOrder() {
       // Check Auth
-      const user = window.currentUser || (window.authInstance ? window.authInstance.currentUser : null);
+      const user = auth.currentUser || currentUser || window.currentUser;
       if (!user) {
         document.getElementById('loginRequiredModal').classList.add('active');
         return;
@@ -1179,24 +1214,28 @@
 
       // Save to Firestore
       const confirmBtn = document.querySelector('.checkout-btn');
-      if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ กำลังบันทึกออเดอร์...'; }
+      if (confirmBtn) { 
+        confirmBtn.disabled = true; 
+        confirmBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> <span>กำลังบันทึกออเดอร์...</span>'; 
+      }
 
-      saveOrderToFirestore(orderData)
-        .then(() => {
-          document.getElementById('orderIdDisplay').textContent = orderId;
-          document.getElementById('successModal').classList.add('active');
-          localStorage.removeItem('mkCart');
-        })
-        .catch(err => {
-          console.error('Firestore error:', err);
-          // Still show success to customer even if Firestore fails
-          document.getElementById('orderIdDisplay').textContent = orderId;
-          document.getElementById('successModal').classList.add('active');
-          localStorage.removeItem('mkCart');
-        })
-        .finally(() => {
-          if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = '<i class="ph ph-check-circle"></i><span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>'; }
-        });
+      try {
+        await addDoc(collection(db, 'orders'), orderData);
+        document.getElementById('orderIdDisplay').textContent = orderId;
+        document.getElementById('successModal').classList.add('active');
+        localStorage.removeItem('mkCart');
+      } catch (err) {
+        console.error('Firestore error:', err);
+        // Still show success to customer
+        document.getElementById('orderIdDisplay').textContent = orderId;
+        document.getElementById('successModal').classList.add('active');
+        localStorage.removeItem('mkCart');
+      } finally {
+        if (confirmBtn) { 
+          confirmBtn.disabled = false; 
+          confirmBtn.innerHTML = '<i class="ph ph-check-circle"></i><span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>'; 
+        }
+      }
     }
 
     function closeSuccessModal() {
@@ -1208,64 +1247,28 @@
     function showToast(text) {
       const toast = document.getElementById('toastMsg');
       const toastText = document.getElementById('toastText');
+      if (!toast || !toastText) return;
       toastText.textContent = text;
       toast.classList.add('show');
       if (toastTimeout) clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => { 
         toast.classList.remove('show'); 
-      }, 3000); // 3 วินาที
+      }, 3000);
     }
+
+    window.updateQty = updateQty;
+    window.removeItem = removeItem;
+    window.clearCart = clearCart;
+    window.applyCoupon = applyCoupon;
+    window.removeCoupon = removeCoupon;
+    window.fillLatestCode = fillLatestCode;
+    window.confirmOrder = confirmOrder;
+    window.closeSuccessModal = closeSuccessModal;
+    window.showToast = showToast;
 
     // Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-      renderCart();
-      checkLatestCode();
-    });
-  </script>
-
-  <!-- Firebase Firestore & Auth (ESM) -->
-  <script type="module">
-    import { auth, db, collection, addDoc, onAuthStateChanged } from "./js/firebase-config.js";
-
-    window.currentUser = auth.currentUser || null;
-    window.authInstance = auth;
-
-    function updateAuthStatusUI(user) {
-      window.currentUser = user;
-      const userBanner = document.getElementById('cartUserAuthBanner');
-      const guestBanner = document.getElementById('cartGuestAuthBanner');
-      const userNameEl = document.getElementById('cartUserAuthName');
-      const userEmailEl = document.getElementById('cartUserAuthEmail');
-      const firstNameInput = document.getElementById('cusFirstName');
-
-      if (user) {
-        if (userBanner) userBanner.style.display = 'flex';
-        if (guestBanner) guestBanner.style.display = 'none';
-        if (userNameEl) userNameEl.textContent = user.displayName ? `คุณ ${user.displayName}` : 'สมาชิก VIP';
-        if (userEmailEl) userEmailEl.textContent = user.email || '';
-        if (firstNameInput && !firstNameInput.value && user.displayName) {
-          firstNameInput.value = user.displayName;
-        }
-      } else {
-        if (userBanner) userBanner.style.display = 'none';
-        if (guestBanner) guestBanner.style.display = 'flex';
-      }
-    }
-
-    // Initial check
-    if (auth.currentUser) {
-      updateAuthStatusUI(auth.currentUser);
-    }
-
-    // Real-time listener
-    onAuthStateChanged(auth, user => {
-      updateAuthStatusUI(user);
-    });
-
-    // Expose saveOrderToFirestore globally so confirmOrder() can call it
-    window.saveOrderToFirestore = async function(orderData) {
-      await addDoc(collection(db, 'orders'), orderData);
-    };
+    renderCart();
+    checkLatestCode();
   </script>
 
   <!-- Customer Live Chat Widget -->
