@@ -445,6 +445,44 @@
       white-space: nowrap;
     }
 
+    /* Category Banners (Full Image with Rounded Corners) */
+    .promotions-list {
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .category-card-item {
+      background: transparent !important;
+      box-shadow: none !important;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      cursor: pointer;
+      width: 100%;
+      display: block;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .category-card-item:active {
+      transform: scale(0.985) !important;
+    }
+    .category-card-item .promo-img-wrapper {
+      position: relative;
+      width: 100%;
+      height: auto !important;
+      aspect-ratio: auto !important;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+    .category-card-item .promo-img-wrapper img {
+      width: 100%;
+      height: auto !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      display: block;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
     /* Dynamic Products Grid Section */
     .products-section {
       padding: 10px 20px 30px;
