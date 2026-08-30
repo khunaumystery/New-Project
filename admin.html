@@ -374,8 +374,15 @@
         <input type="text" id="catSlug" class="form-control" placeholder="เช่น full-bottle, saberbook" required>
       </div>
       <div class="form-group">
-        <label>รูปภาพปก / ไอคอน (URL หรือ Path ไฟล์) *</label>
-        <input type="text" id="catImage" class="form-control" placeholder="เช่น full-bottle.jpg หรือ URL รูป" required>
+        <label>รูปภาพปก / ไอคอน *</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="catFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'catImage', 'catPreview')">
+          <input type="text" id="catImage" class="form-control" placeholder="หรือกรอก URL / Path ไฟล์ (เช่น full-bottle.jpg)" required oninput="updatePreview('catImage', 'catPreview')">
+        </div>
+        <div id="catPreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="catPreviewImg" src="" style="width:64px; height:64px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
       </div>
       <div class="form-group">
         <label>ลิงก์หน้าเว็บ (ถ้ามี)</label>
@@ -426,8 +433,15 @@
         </div>
       </div>
       <div class="form-group">
-        <label>รูปภาพสินค้า (URL หรือ Path) *</label>
-        <input type="text" id="prodImage" class="form-control" placeholder="เช่น full bottle/b001.jpg หรือ wondersidebookSG/wb001.jpg" required>
+        <label>รูปภาพสินค้า *</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="prodFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'prodImage', 'prodPreview')">
+          <input type="text" id="prodImage" class="form-control" placeholder="หรือกรอก URL / Path ไฟล์ (เช่น full bottle/b001.jpg)" required oninput="updatePreview('prodImage', 'prodPreview')">
+        </div>
+        <div id="prodPreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="prodPreviewImg" src="" style="width:64px; height:64px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
       </div>
       <div class="form-group">
         <label>รายละเอียดสินค้า</label>
@@ -435,6 +449,105 @@
       </div>
       <button type="submit" class="btn-submit"><i class="ph ph-check-circle"></i> บันทึกสินค้า</button>
       <button type="button" class="btn-close-modal" onclick="closeModal('addProductModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: EDIT CATEGORY ===== -->
+<div class="modal-overlay" id="editCategoryModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-pencil-simple"></i> แก้ไขหมวดหมู่สินค้า</h3>
+    <form id="editCategoryForm" onsubmit="event.preventDefault(); submitEditCategory();">
+      <input type="hidden" id="editCatId">
+      <div class="form-group">
+        <label>ชื่อหมวดหมู่ *</label>
+        <input type="text" id="editCatName" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>รหัสหมวดหมู่ (Slug / ID) *</label>
+        <input type="text" id="editCatSlug" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพปก / ไอคอน *</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="editCatFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'editCatImage', 'editCatPreview')">
+          <input type="text" id="editCatImage" class="form-control" required oninput="updatePreview('editCatImage', 'editCatPreview')">
+        </div>
+        <div id="editCatPreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="editCatPreviewImg" src="" style="width:64px; height:64px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ลิงก์หน้าเว็บ (ถ้ามี)</label>
+        <input type="text" id="editCatPageLink" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>คำอธิบายหมวดหมู่</label>
+        <input type="text" id="editCatDesc" class="form-control">
+      </div>
+      <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('editCategoryModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: EDIT PRODUCT ===== -->
+<div class="modal-overlay" id="editProductModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-pencil-simple"></i> แก้ไขข้อมูลสินค้า</h3>
+    <form id="editProductForm" onsubmit="event.preventDefault(); submitEditProduct();">
+      <input type="hidden" id="editProdId">
+      <div class="form-group">
+        <label>ชื่อสินค้า *</label>
+        <input type="text" id="editProdName" class="form-control" required>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>หมวดหมู่ *</label>
+          <select id="editProdCategory" class="form-control" required>
+            <option value="">-- เลือกหมวดหมู่ --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>สถานะสต็อก *</label>
+          <select id="editProdInStock" class="form-control" required>
+            <option value="true">✅ พร้อมจำหน่าย</option>
+            <option value="false">❌ สินค้าหมด</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>ราคาขาย (บาท) *</label>
+          <input type="number" id="editProdPrice" class="form-control" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>ราคาเดิม / ราคาเต็ม (บาท)</label>
+          <input type="number" id="editProdOriginalPrice" class="form-control" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>จำนวนสินค้าในสต็อก (ชิ้น)</label>
+        <input type="number" id="editProdStockQty" class="form-control" placeholder="เช่น 10 (ไม่ระบุก็ได้)" min="0">
+      </div>
+      <div class="form-group">
+        <label>รูปภาพสินค้า *</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="editProdFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'editProdImage', 'editProdPreview')">
+          <input type="text" id="editProdImage" class="form-control" required oninput="updatePreview('editProdImage', 'editProdPreview')">
+        </div>
+        <div id="editProdPreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="editProdPreviewImg" src="" style="width:64px; height:64px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>รายละเอียดสินค้า</label>
+        <textarea id="editProdDesc" class="form-control" rows="2"></textarea>
+      </div>
+      <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('editProductModal')">ยกเลิก</button>
     </form>
   </div>
 </div>
@@ -506,18 +619,85 @@
     btn.classList.add('active');
   };
 
-  // ===== MODAL UTILITIES =====
+  // ===== MODAL & IMAGE UTILITIES =====
   window.openAddCategoryModal = function() {
     document.getElementById('addCategoryForm').reset();
+    document.getElementById('catPreview').style.display = 'none';
     document.getElementById('addCategoryModal').classList.add('active');
   };
   window.openAddProductModal = function() {
     document.getElementById('addProductForm').reset();
+    document.getElementById('prodPreview').style.display = 'none';
     updateCategorySelectOptions();
     document.getElementById('addProductModal').classList.add('active');
   };
   window.closeModal = function(modalId) {
     document.getElementById(modalId).classList.remove('active');
+  };
+
+  // Image Upload and Automatic Optimization
+  window.handleImageUpload = function(inputEl, targetInputId, previewBoxId) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+
+    // Check size limit before processing (e.g. 5MB max raw file)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('⚠️ กรุณาเลือกไฟล์รูปขนาดไม่เกิน 5MB');
+      inputEl.value = '';
+      return;
+    }
+
+    showToast('⏳ กำลังประมวลผลรูปภาพ...');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        // Resize & compress to max 600px width/height for fast loading
+        const maxDim = 600;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        document.getElementById(targetInputId).value = dataUrl;
+        
+        // Show live preview
+        const previewBox = document.getElementById(previewBoxId);
+        const previewImg = document.getElementById(previewBoxId + 'Img');
+        if (previewBox && previewImg) {
+          previewImg.src = dataUrl;
+          previewBox.style.display = 'flex';
+        }
+        showToast('✅ เลือกรูปภาพเรียบร้อย');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.updatePreview = function(inputId, previewBoxId) {
+    const val = document.getElementById(inputId).value.trim();
+    const previewBox = document.getElementById(previewBoxId);
+    const previewImg = document.getElementById(previewBoxId + 'Img');
+    if (val && previewBox && previewImg) {
+      previewImg.src = val;
+      previewBox.style.display = 'flex';
+    } else if (previewBox) {
+      previewBox.style.display = 'none';
+    }
   };
 
   // ===== LOGIN / LOGOUT =====
@@ -662,6 +842,7 @@
   function updateCategorySelectOptions() {
     const filterEl = document.getElementById('productCategoryFilter');
     const formEl = document.getElementById('prodCategory');
+    const editFormEl = document.getElementById('editProdCategory');
     
     let filterOptions = '<option value="">ทุกหมวดหมู่</option>';
     let formOptions = '<option value="">-- เลือกหมวดหมู่ --</option>';
@@ -671,8 +852,9 @@
       formOptions += `<option value="${cat.name}">${cat.name}</option>`;
     });
 
-    filterEl.innerHTML = filterOptions;
-    formEl.innerHTML = formOptions;
+    if (filterEl) filterEl.innerHTML = filterOptions;
+    if (formEl) formEl.innerHTML = formOptions;
+    if (editFormEl) editFormEl.innerHTML = formOptions;
   }
 
   window.filterCategories = function() {
@@ -707,6 +889,7 @@
           <td>${pageLink}</td>
           <td><span class="date-txt">${date}</span></td>
           <td>
+            <button class="action-btn btn-detail" onclick="openEditCategoryModal('${c._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
             <button class="action-btn btn-delete" onclick="deleteCategory('${c._id}', '${c.name}')"><i class="ph ph-trash"></i> ลบ</button>
           </td>
         </tr>
@@ -730,6 +913,49 @@
       showToast('✅ เพิ่มหมวดหมู่ "' + name + '" สำเร็จ');
     } catch(e) {
       showToast('❌ ไม่สามารถเพิ่มหมวดหมู่ได้: ' + e.message);
+    }
+  };
+
+  // ===== EDIT CATEGORY =====
+  window.openEditCategoryModal = function(id) {
+    const cat = allCategories.find(c => c._id === id);
+    if (!cat) return;
+    document.getElementById('editCatId').value = cat._id;
+    document.getElementById('editCatName').value = cat.name || '';
+    document.getElementById('editCatSlug').value = cat.slug || '';
+    document.getElementById('editCatImage').value = cat.image || '';
+    document.getElementById('editCatPageLink').value = cat.pageLink || '';
+    document.getElementById('editCatDesc').value = cat.desc || '';
+
+    // Set preview
+    const previewBox = document.getElementById('editCatPreview');
+    const previewImg = document.getElementById('editCatPreviewImg');
+    if (cat.image) {
+      previewImg.src = cat.image;
+      previewBox.style.display = 'flex';
+    } else {
+      previewBox.style.display = 'none';
+    }
+    document.getElementById('editCategoryModal').classList.add('active');
+  };
+
+  window.submitEditCategory = async function() {
+    const id       = document.getElementById('editCatId').value;
+    const name     = document.getElementById('editCatName').value.trim();
+    const slug     = document.getElementById('editCatSlug').value.trim();
+    const image    = document.getElementById('editCatImage').value.trim();
+    const pageLink = document.getElementById('editCatPageLink').value.trim();
+    const desc     = document.getElementById('editCatDesc').value.trim();
+
+    try {
+      await updateDoc(doc(db, 'categories', id), {
+        name, slug, image, pageLink, desc,
+        updatedAt: new Date().toISOString()
+      });
+      closeModal('editCategoryModal');
+      showToast('✅ แก้ไขหมวดหมู่ "' + name + '" เรียบร้อย');
+    } catch(e) {
+      showToast('❌ ไม่สามารถแก้ไขหมวดหมู่ได้: ' + e.message);
     }
   };
 
@@ -780,8 +1006,9 @@
       const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
       const inStock = (p.inStock === true || p.inStock === 'true');
+      const qtyText = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '') ? ` (${p.stockQty} ชิ้น)` : '';
       const statusBadge = inStock 
-        ? '<span class="status-badge active">✅ พร้อมขาย</span>' 
+        ? `<span class="status-badge active">✅ พร้อมขาย${qtyText}</span>` 
         : '<span class="status-badge out">❌ หมด</span>';
       const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
 
@@ -800,6 +1027,7 @@
           <td>${statusBadge}</td>
           <td><span class="date-txt">${date}</span></td>
           <td>
+            <button class="action-btn btn-detail" onclick="openEditProductModal('${p._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
             <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}', '${p.name}')"><i class="ph ph-trash"></i> ลบ</button>
           </td>
         </tr>
@@ -825,6 +1053,57 @@
       showToast('✅ เพิ่มสินค้า "' + name + '" สำเร็จ');
     } catch(e) {
       showToast('❌ ไม่สามารถเพิ่มสินค้าได้: ' + e.message);
+    }
+  };
+
+  // ===== EDIT PRODUCT =====
+  window.openEditProductModal = function(id) {
+    const prod = allProducts.find(p => p._id === id);
+    if (!prod) return;
+    updateCategorySelectOptions();
+    
+    document.getElementById('editProdId').value = prod._id;
+    document.getElementById('editProdName').value = prod.name || '';
+    document.getElementById('editProdCategory').value = prod.category || '';
+    document.getElementById('editProdInStock').value = (prod.inStock === true || prod.inStock === 'true') ? 'true' : 'false';
+    document.getElementById('editProdPrice').value = prod.price || 0;
+    document.getElementById('editProdOriginalPrice').value = prod.originalPrice || '';
+    document.getElementById('editProdStockQty').value = (prod.stockQty !== undefined && prod.stockQty !== null) ? prod.stockQty : '';
+    document.getElementById('editProdImage').value = prod.image || '';
+    document.getElementById('editProdDesc').value = prod.desc || '';
+
+    // Set preview
+    const previewBox = document.getElementById('editProdPreview');
+    const previewImg = document.getElementById('editProdPreviewImg');
+    if (prod.image) {
+      previewImg.src = prod.image;
+      previewBox.style.display = 'flex';
+    } else {
+      previewBox.style.display = 'none';
+    }
+    document.getElementById('editProductModal').classList.add('active');
+  };
+
+  window.submitEditProduct = async function() {
+    const id            = document.getElementById('editProdId').value;
+    const name          = document.getElementById('editProdName').value.trim();
+    const category      = document.getElementById('editProdCategory').value;
+    const price         = Number(document.getElementById('editProdPrice').value);
+    const originalPrice = document.getElementById('editProdOriginalPrice').value ? Number(document.getElementById('editProdOriginalPrice').value) : null;
+    const stockQty      = document.getElementById('editProdStockQty').value !== '' ? Number(document.getElementById('editProdStockQty').value) : null;
+    const image         = document.getElementById('editProdImage').value.trim();
+    const desc          = document.getElementById('editProdDesc').value.trim();
+    const inStock       = document.getElementById('editProdInStock').value === 'true';
+
+    try {
+      await updateDoc(doc(db, 'products', id), {
+        name, category, price, originalPrice, stockQty, image, desc, inStock,
+        updatedAt: new Date().toISOString()
+      });
+      closeModal('editProductModal');
+      showToast('✅ แก้ไขสินค้า "' + name + '" เรียบร้อย');
+    } catch(e) {
+      showToast('❌ ไม่สามารถแก้ไขสินค้าได้: ' + e.message);
     }
   };
 
