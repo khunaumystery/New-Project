@@ -953,9 +953,16 @@
         const totalCart = cart.reduce((sum, i) => sum + i.quantity, 0);
         document.getElementById('statCartCount').textContent = totalCart;
 
+        const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+        const now = Date.now();
         const codes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-        const unusedCodes = codes.filter(c => !c.used).length;
-        document.getElementById('statCodeCount').textContent = unusedCodes;
+        const validUnusedCodes = codes.filter(c => {
+          if (c.used) return false;
+          const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
+          return expiresAt > now;
+        }).length;
+
+        document.getElementById('statCodeCount').textContent = validUnusedCodes;
       } catch(e) {}
     }
 
