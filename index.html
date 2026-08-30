@@ -1105,13 +1105,16 @@
       <!-- Result Panel -->
       <div class="lucky-result-panel">
         <div class="lucky-result-placeholder" id="luckyPlaceholder">
-          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);"></i>
-          <span>กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
+          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);" id="luckyPlaceholderIcon"></i>
+          <span id="luckyPlaceholderText">กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
         </div>
 
         <div class="lucky-result-content" id="luckyResultContent">
           <span class="prize-badge" id="prizeBadge">🎉 ได้รับโค้ดส่งฟรี!</span>
           <div class="code-display-wrap" id="codeBox"></div>
+          <div style="font-size:12px; color:var(--gold); font-weight:600; margin:2px 0 6px;" id="codeExpiryDisplayWrap">
+            ⏳ โค้ดหมดอายุใน: <strong id="codeExpiryTimer" style="font-size:13.5px;">30:00</strong>
+          </div>
           <button class="btn-copy-code" id="copyBtn" onclick="copyCode()" style="display:none;">
             <i class="ph ph-copy"></i> <span>คัดลอกโค้ด</span>
           </button>
@@ -1325,17 +1328,29 @@
         const prizeType = determinePrize();
         if (prizeType !== 'no_code') {
           currentCode = generateCode();
+          const nowTime = Date.now();
+          const expiresAt = nowTime + CODE_EXPIRY_MS;
           try {
             const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-            validCodes.push({ code: currentCode, prize: prizeType, used: false, createdAt: Date.now() });
+            validCodes.push({ 
+              code: currentCode, 
+              prize: prizeType, 
+              used: false, 
+              createdAt: nowTime,
+              expiresAt: expiresAt 
+            });
             localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
             localStorage.setItem('mkCurrentPromoCode', currentCode);
             localStorage.setItem('mkCurrentPrizeType', prizeType);
+            localStorage.setItem('mkCurrentCodeExpiresAt', expiresAt.toString());
           } catch (err) { console.error(err); }
+
+          startCodeExpiryCountdown(expiresAt);
         } else {
           currentCode = '';
           localStorage.removeItem('mkCurrentPromoCode');
           localStorage.removeItem('mkCurrentPrizeType');
+          localStorage.removeItem('mkCurrentCodeExpiresAt');
         }
 
         document.getElementById('luckyPlaceholder').style.display = 'none';
@@ -1351,22 +1366,26 @@
           prizeBadge.className = 'prize-badge no-prize';
           prizeBadge.innerHTML = '❌ ไม่ได้รับโค้ด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
           copyBtn.style.display = 'none';
-        } else if (prizeType === 'freeship') {
-          prizeBadge.className = 'prize-badge';
-          prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
-          copyBtn.style.display = 'inline-flex';
-        } else if (prizeType === 'wonderbook') {
-          prizeBadge.className = 'prize-badge special';
-          prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book (สุ่ม)';
-          copyBtn.style.display = 'inline-flex';
-        } else if (prizeType === 'kiramai') {
-          prizeBadge.className = 'prize-badge jackpot';
-          prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
-          copyBtn.style.display = 'inline-flex';
-        } else if (prizeType === 'geartlinger') {
-          prizeBadge.className = 'prize-badge jackpot';
-          prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Geartlinger!';
-          copyBtn.style.display = 'inline-flex';
+          document.getElementById('codeExpiryDisplayWrap').style.display = 'none';
+        } else {
+          document.getElementById('codeExpiryDisplayWrap').style.display = 'block';
+          if (prizeType === 'freeship') {
+            prizeBadge.className = 'prize-badge';
+            prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
+            copyBtn.style.display = 'inline-flex';
+          } else if (prizeType === 'wonderbook') {
+            prizeBadge.className = 'prize-badge special';
+            prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book (สุ่ม)';
+            copyBtn.style.display = 'inline-flex';
+          } else if (prizeType === 'kiramai') {
+            prizeBadge.className = 'prize-badge jackpot';
+            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
+            copyBtn.style.display = 'inline-flex';
+          } else if (prizeType === 'geartlinger') {
+            prizeBadge.className = 'prize-badge jackpot';
+            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Geartlinger!';
+            copyBtn.style.display = 'inline-flex';
+          }
         }
 
         const codeBox = document.getElementById('codeBox');
@@ -1401,6 +1420,56 @@
       });
     }
 
+    // ===== 30-MINUTE CODE EXPIRY COUNTDOWN =====
+    const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+    let codeExpiryInterval = null;
+
+    function startCodeExpiryCountdown(expiresAt) {
+      if (codeExpiryInterval) clearInterval(codeExpiryInterval);
+
+      function updateExpiry() {
+        const now = Date.now();
+        const remainingMs = Math.max(0, expiresAt - now);
+        const remainingSecs = Math.floor(remainingMs / 1000);
+
+        const mins = Math.floor(remainingSecs / 60).toString().padStart(2, '0');
+        const secs = (remainingSecs % 60).toString().padStart(2, '0');
+        const timeStr = `${mins}:${secs}`;
+
+        const placeholderText = document.getElementById('luckyPlaceholderText');
+        const placeholderIcon = document.getElementById('luckyPlaceholderIcon');
+        if (placeholderText) {
+          if (remainingSecs > 0) {
+            placeholderText.innerHTML = `⏳ โค้ดหมดอายุใน: <strong style="color:var(--gold); font-size:14px; margin-left:4px;">${timeStr}</strong>`;
+            if (placeholderIcon) placeholderIcon.className = 'ph ph-timer';
+          } else {
+            placeholderText.textContent = 'กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!';
+            if (placeholderIcon) placeholderIcon.className = 'ph ph-gift';
+          }
+        }
+
+        const timerEl = document.getElementById('codeExpiryTimer');
+        if (timerEl) {
+          timerEl.textContent = timeStr;
+        }
+
+        if (remainingSecs <= 0) {
+          clearInterval(codeExpiryInterval);
+          const prizeBadge = document.getElementById('prizeBadge');
+          if (prizeBadge && document.getElementById('luckyResultContent').classList.contains('visible')) {
+            prizeBadge.className = 'prize-badge no-prize';
+            prizeBadge.innerHTML = '❌ โค้ดหมดอายุการใช้งานแล้ว (เกิน 30 นาที)';
+          }
+          localStorage.removeItem('mkCurrentPromoCode');
+          localStorage.removeItem('mkCurrentPrizeType');
+          localStorage.removeItem('mkCurrentCodeExpiresAt');
+        }
+      }
+
+      updateExpiry();
+      codeExpiryInterval = setInterval(updateExpiry, 500);
+    }
+
     function startCountdown() {
       const timerSection = document.getElementById('timerSection');
       const timerDisplay = document.getElementById('timerDisplay');
@@ -1432,6 +1501,7 @@
     }
 
     function restoreState() {
+      // 1. Restore Spin Cooldown
       const key = getUserSpinKey();
       const saved = localStorage.getItem(key);
       if (saved) {
@@ -1451,6 +1521,23 @@
       } else {
         resetSpinUI();
       }
+
+      // 2. Restore Active Code Expiry Countdown
+      try {
+        const promoCode = localStorage.getItem('mkCurrentPromoCode');
+        const expiresAtStr = localStorage.getItem('mkCurrentCodeExpiresAt');
+        if (promoCode && expiresAtStr) {
+          const expiresAt = parseInt(expiresAtStr);
+          if (Date.now() < expiresAt) {
+            currentCode = promoCode;
+            startCodeExpiryCountdown(expiresAt);
+          } else {
+            localStorage.removeItem('mkCurrentPromoCode');
+            localStorage.removeItem('mkCurrentPrizeType');
+            localStorage.removeItem('mkCurrentCodeExpiresAt');
+          }
+        }
+      } catch(e) {}
     }
 
     window.restoreState = restoreState;

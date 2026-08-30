@@ -630,7 +630,8 @@
 
       <!-- Quick Fill Chip from Lucky Draw -->
       <div id="latestCodeChip" style="display:none; margin-top:8px; font-size:12px; color:var(--text-muted);">
-        💡 โค้ดที่คุณสุ่มได้: <span id="latestCodeText" style="color:var(--mk-red); font-weight:700; cursor:pointer; text-decoration:underline;" onclick="fillLatestCode()"></span> (กดเพื่อใส่)
+        💡 โค้ดที่คุณสุ่มได้: <span id="latestCodeText" style="color:var(--mk-red); font-weight:700; cursor:pointer; text-decoration:underline;" onclick="fillLatestCode()"></span>
+        <span id="cartCodeExpiryBadge" style="cursor:pointer; margin-left:4px; font-weight:600; padding:3px 8px; border-radius:8px; background:#FEF3C7; color:#D97706; display:inline-block;" onclick="fillLatestCode()">⏳ หมดอายุใน 30:00 (กดใช้)</span>
       </div>
 
       <!-- Error Message -->
@@ -887,19 +888,57 @@
       return labels[prize] || '(ส่งฟรี 🚚)';
     }
 
+    // ===== 30-MINUTE CODE EXPIRY HANDLING =====
+    const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+    let cartCodeExpiryInterval = null;
+
     // Check if user has an unused code from lucky draw
     function checkLatestCode() {
       try {
         const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-        const unused = validCodes.filter(c => !c.used);
-        if (unused.length > 0) {
-          const latest = unused[unused.length - 1];
-          const chip = document.getElementById('latestCodeChip');
-          const text = document.getElementById('latestCodeText');
+        const now = Date.now();
+        // filter unused codes that are within 30 minutes
+        const activeCodes = validCodes.filter(c => {
+          if (c.used) return false;
+          const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
+          return expiresAt > now;
+        });
+
+        const chip = document.getElementById('latestCodeChip');
+        const text = document.getElementById('latestCodeText');
+        const badge = document.getElementById('cartCodeExpiryBadge');
+
+        if (activeCodes.length > 0) {
+          const latest = activeCodes[activeCodes.length - 1];
+          const expiresAt = latest.expiresAt || (latest.createdAt + CODE_EXPIRY_MS);
+
           if (chip && text) {
             text.textContent = latest.code + ' ' + getPrizeLabel(latest.prize);
             chip.style.display = 'block';
           }
+
+          if (cartCodeExpiryInterval) clearInterval(cartCodeExpiryInterval);
+          function updateCartTimer() {
+            const remSecs = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+            const mins = Math.floor(remSecs / 60).toString().padStart(2, '0');
+            const secs = (remSecs % 60).toString().padStart(2, '0');
+            if (badge) {
+              if (remSecs > 0) {
+                badge.innerHTML = `⏳ หมดอายุใน <strong style="color:#B45309;">${mins}:${secs}</strong> (กดใช้)`;
+                badge.style.background = '#FEF3C7';
+                badge.style.color = '#D97706';
+              } else {
+                badge.innerHTML = `❌ โค้ดหมดอายุแล้ว`;
+                badge.style.background = '#FEE2E2';
+                badge.style.color = '#DC2626';
+                clearInterval(cartCodeExpiryInterval);
+              }
+            }
+          }
+          updateCartTimer();
+          cartCodeExpiryInterval = setInterval(updateCartTimer, 500);
+        } else {
+          if (chip) chip.style.display = 'none';
         }
       } catch(e) {}
     }
@@ -907,11 +946,19 @@
     function fillLatestCode() {
       try {
         const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-        const unused = validCodes.filter(c => !c.used);
-        if (unused.length > 0) {
-          const latest = unused[unused.length - 1];
+        const now = Date.now();
+        const activeCodes = validCodes.filter(c => {
+          if (c.used) return false;
+          const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
+          return expiresAt > now;
+        });
+
+        if (activeCodes.length > 0) {
+          const latest = activeCodes[activeCodes.length - 1];
           document.getElementById('couponInput').value = latest.code;
           applyCoupon();
+        } else {
+          showToast('❌ โค้ดของคุณหมดอายุแล้ว');
         }
       } catch(e) {}
     }
@@ -943,6 +990,18 @@
 
       // 1. If matches a randomized lucky code
       if (foundCode) {
+        const now = Date.now();
+        const expiresAt = foundCode.expiresAt || (foundCode.createdAt ? (foundCode.createdAt + CODE_EXPIRY_MS) : 0);
+
+        if (expiresAt && now > expiresAt) {
+          if (errorMsg) {
+            errorText.textContent = `❌ โค้ด "${code}" หมดอายุการใช้งานแล้ว (มีอายุ 30 นาทีหลังจากได้รับ)`;
+            errorMsg.style.display = 'block';
+          }
+          showToast(`❌ โค้ด "${code}" หมดอายุแล้ว`);
+          return;
+        }
+
         if (foundCode.used) {
           if (errorMsg) {
             errorText.textContent = `โค้ด "${code}" นี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้`;
