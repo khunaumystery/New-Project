@@ -26,6 +26,13 @@ const firebaseConfig = {
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
+// Initialize Firebase Auth
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 // Initialize Firebase Analytics safely
 let analytics = null;
 isSupported().then(supported => {
