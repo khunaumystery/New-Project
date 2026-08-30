@@ -649,6 +649,8 @@
           </table>
         </div>
       </div>
+    </div>
+
     <!-- ================= TAB 4: LIVE CHAT ================= -->
     <div id="chatTab" class="tab-content">
       <div class="admin-chat-layout">
@@ -1477,10 +1479,17 @@
   // ===== LIVE CHAT MANAGEMENT =====
   function loadChats() {
     if (unsubsChats) unsubsChats();
-    const q = query(collection(db, 'chats'), orderBy('updatedAt', 'desc'));
+    const q = collection(db, 'chats');
     unsubsChats = onSnapshot(q, (snapshot) => {
       allChats = snapshot.docs.map(docSnap => ({ _id: docSnap.id, ...docSnap.data() }));
       
+      // Sort chats by lastMessageAt or updatedAt desc
+      allChats.sort((a, b) => {
+        const timeA = new Date(a.lastMessageAt || a.updatedAt || 0).getTime();
+        const timeB = new Date(b.lastMessageAt || b.updatedAt || 0).getTime();
+        return timeB - timeA;
+      });
+
       // Calculate total unread count for Admin
       const totalUnread = allChats.reduce((sum, c) => sum + (c.unreadByAdmin || 0), 0);
       const badge = document.getElementById('adminTotalUnreadChatBadge');
@@ -1495,8 +1504,10 @@
 
       renderAdminChatThreads(allChats);
 
-      // If there's an active chat open, refresh header if needed
-      if (activeChatId) {
+      // Auto-select first chat or refresh current
+      if (!activeChatId && allChats.length > 0) {
+        selectAdminChat(allChats[0]._id);
+      } else if (activeChatId) {
         const activeChat = allChats.find(c => c._id === activeChatId);
         if (activeChat) {
           document.getElementById('activeChatUserName').textContent = activeChat.userName || 'ลูกค้า';
@@ -1586,10 +1597,7 @@
     const stream = document.getElementById('adminChatMessagesStream');
     stream.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:12px;">กำลังโหลดข้อความ...</div>';
 
-    const q = query(
-      collection(db, 'chats', chatId, 'messages'),
-      orderBy('createdAt', 'asc')
-    );
+    const q = collection(db, 'chats', chatId, 'messages');
 
     unsubsActiveMessages = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
@@ -1597,9 +1605,11 @@
         return;
       }
 
+      const msgs = snapshot.docs.map(docSnap => ({ _id: docSnap.id, ...docSnap.data() }));
+      msgs.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+
       let html = '';
-      snapshot.docs.forEach(docSnap => {
-        const msg = docSnap.data();
+      msgs.forEach(msg => {
         const isAdmin = (msg.senderRole === 'admin');
         const timeStr = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
         
