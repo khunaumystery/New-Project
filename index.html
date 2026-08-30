@@ -445,8 +445,137 @@
       white-space: nowrap;
     }
 
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
+    /* Dynamic Products Grid Section */
+    .products-section {
+      padding: 10px 20px 30px;
+    }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .section-heading h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .product-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .product-img-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      background: #F8F9FA;
+      position: relative;
+      overflow: hidden;
+    }
+    .product-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .product-cat-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(26,26,46,0.75);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 8px;
+    }
+    .product-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .product-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+    .product-price-box {
+      display: flex;
+      flex-direction: column;
+    }
+    .product-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--mk-red);
+    }
+    .product-old-price {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+    .btn-add-cart-mini {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--mk-red);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(211,34,42,0.3);
+      transition: transform 0.15s;
+    }
+    .btn-add-cart-mini:active {
+      transform: scale(0.9);
+    }
+    .category-card-item {
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .category-card-item:hover {
+      transform: scale(1.02);
     }
   </style>
 <body>
@@ -824,7 +953,7 @@
   <header class="top-nav">
     <div class="menu-icon"><i class="ph ph-list"></i></div>
     <div class="logo">KHUN AU <span> MYSTERY </span></div>
-    <a href="cart.html" class="cart-icon" aria-label="ดูตะกร้าสินค้า"><i class="ph ph-shopping-cart"></i><span class="badge">2</span></a>
+    <a href="cart.html" class="cart-icon" aria-label="ดูตะกร้าสินค้า"><i class="ph ph-shopping-cart"></i><span class="badge" id="cartBadge">0</span></a>
   </header>
 
   <!-- Main Content -->
@@ -839,52 +968,24 @@
     </section>
 
     <!-- Categories / Filters -->
-    <section class="categories">
-      <button class="cat-btn active">ทั้งหมด</button>
-      <button class="cat-btn">มาสไรเดอร์</button>
-      <button class="cat-btn">ซุปเปอร์ เซ็นไต</button>
-      <button class="cat-btn">อุลตราแมน</button>
+    <section class="categories" id="categoryButtonsContainer">
+      <button class="cat-btn active" onclick="selectCategory('ALL', this)">ทั้งหมด</button>
     </section>
 
-    <!-- Promotions List -->
-    <section class="promotions-list">
-      
-      <!-- Promo Card 1 (Clickable to Full Bottle page - Banner Only) -->
-      <article class="promo-card" style="background: transparent; box-shadow: none; cursor: pointer;">
-        <a href="full-bottle.html" style="text-decoration:none; display:block;">
-          <div class="promo-img-wrapper" style="height: auto;">
-            <span class="discount-badge">🔥 พิเศษ 100-150฿</span>
-            <img src="full-bottle.jpg" alt="Full Bottle Collection" style="height: auto; border-radius: var(--border-radius); display: block;">
-          </div>
-        </a>
-      </article>
+    <!-- Category Banners / Promotions List -->
+    <section class="promotions-list" id="categoryBannersContainer">
+      <!-- Generated dynamically or fallbacks -->
+    </section>
 
-      <!-- Promo Card 2 (Banner Only - No White Box) -->
-      <article class="promo-card" style="background: transparent; box-shadow: none;">
-        <a href="SaberbookSG.html" style="text-decoration:none; display:block;">
-        <div class="promo-img-wrapper" style="height: auto;">
-          <span class="discount-badge">โปรโมชั่นพิเศษ</span>
-          <img src="wondersidebookSG.jpg" alt="วันเดอร์ ไรด์บุ๊ค" style="height: auto; border-radius: var(--border-radius); display: block;">
-        </div>
-        </a>
-      </article>
-
-      <!-- Promo Card 3 (Banner Only - No White Box) -->
-      <article class="promo-card" style="background: transparent; box-shadow: none;">
-        <div class="promo-img-wrapper" style="height: auto;">
-          <span class="discount-badge">สุดคุ้ม</span>
-          <img src="OOO.jpg" alt="โปรโมชั่นพิเศษ 3" style="height: auto; border-radius: var(--border-radius); display: block;">
-        </div>
-      </article>
-
-      <!-- Promo Card 4 (Banner Only - No White Box) -->
-      <article class="promo-card" style="background: transparent; box-shadow: none;">
-        <div class="promo-img-wrapper" style="height: auto;">
-          <span class="discount-badge">สุดคุ้ม</span>
-          <img src="gotchardcard.jpg" alt="โปรโมชั่นพิเศษ 4" style="height: auto; border-radius: var(--border-radius); display: block;">
-        </div>
-      </article>
-
+    <!-- Products Grid Section -->
+    <section class="products-section" id="productsSection">
+      <div class="section-heading">
+        <h3 id="currentCategoryTitle"><i class="ph ph-shopping-bag"></i> สินค้าทั้งหมด</h3>
+        <span style="font-size:12px;color:var(--text-muted);" id="productCountLabel">0 รายการ</span>
+      </div>
+      <div class="product-grid" id="productGridContainer">
+        <!-- Products generated dynamically -->
+      </div>
     </section>
   </main>
 
@@ -898,7 +999,7 @@
       <i class="ph ph-bottle"></i>
       <span>Full Bottle</span>
     </a>
-    <a href="lucky.html" class="nav-item">
+    <a href="#lucky" onclick="document.querySelector('.header').scrollIntoView({behavior:'smooth'});" class="nav-item">
       <i class="ph ph-gift"></i>
       <span>สุ่มโค้ด</span>
     </a>
@@ -908,6 +1009,216 @@
     </a>
   </nav>
 
-  <script src="main.js"></script>
+  <!-- Firebase Firestore & Shop Logic -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
+      authDomain: "khunaumystery-f0b63.firebaseapp.com",
+      projectId: "khunaumystery-f0b63",
+      storageBucket: "khunaumystery-f0b63.firebasestorage.app",
+      messagingSenderId: "508588235711",
+      appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    let storeCategories = [];
+    let storeProducts = [];
+    let selectedCategoryName = 'ALL';
+
+    // Default Fallback Categories
+    const defaultCategories = [
+      { name: 'DX Full Bottle', slug: 'full-bottle', image: 'full-bottle.jpg', pageLink: 'full-bottle.html', desc: 'พิเศษ 100-150฿' },
+      { name: 'Wonder Ride Book SG', slug: 'saberbook', image: 'wondersidebookSG.jpg', pageLink: 'SaberbookSG.html', desc: 'โปรโมชั่นพิเศษ' },
+      { name: 'Kamen Rider OOO', slug: 'ooo', image: 'OOO.jpg', pageLink: '', desc: 'สุดคุ้ม' },
+      { name: 'Gotchard Card', slug: 'gotchard', image: 'gotchardcard.jpg', pageLink: '', desc: 'การ์ดก็อตชาร์ด' },
+    ];
+
+    // ===== 1. LISTEN TO CATEGORIES =====
+    const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
+    onSnapshot(catQuery, snap => {
+      const dbCategories = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
+      renderCategoryButtons(storeCategories);
+      renderCategoryBanners(storeCategories);
+    }, err => {
+      console.warn('Using default categories:', err);
+      storeCategories = defaultCategories;
+      renderCategoryButtons(storeCategories);
+      renderCategoryBanners(storeCategories);
+    });
+
+    // ===== 2. LISTEN TO PRODUCTS =====
+    const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+    onSnapshot(prodQuery, snap => {
+      storeProducts = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      renderProductsGrid();
+    }, err => {
+      console.warn('Error loading products:', err);
+    });
+
+    // ===== RENDER CATEGORY BUTTONS =====
+    function renderCategoryButtons(categories) {
+      const container = document.getElementById('categoryButtonsContainer');
+      if (!container) return;
+      let html = `<button class="cat-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">ทั้งหมด</button>`;
+      categories.forEach(c => {
+        const isActive = selectedCategoryName === c.name ? 'active' : '';
+        html += `<button class="cat-btn ${isActive}" onclick="selectCategory('${c.name}', this)">${c.name}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    // ===== RENDER CATEGORY BANNERS =====
+    function renderCategoryBanners(categories) {
+      const container = document.getElementById('categoryBannersContainer');
+      if (!container) return;
+      container.innerHTML = categories.map(c => {
+        const badgeTxt = c.desc || 'หมวดหมู่สินค้า';
+        const imgPath = c.image || 'Banner item.png';
+        const clickAction = c.pageLink
+          ? `onclick="window.location.href='${c.pageLink}'"`
+          : `onclick="selectCategoryByName('${c.name}')"`;
+
+        return `
+          <article class="promo-card category-card-item" style="background: transparent; box-shadow: none;" ${clickAction}>
+            <div class="promo-img-wrapper" style="height: auto;">
+              <span class="discount-badge">${badgeTxt}</span>
+              <img src="${imgPath}" alt="${c.name}" style="height: auto; border-radius: var(--border-radius); display: block;" onerror="this.src='Banner item.png'">
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // ===== CATEGORY SELECT LOGIC =====
+    window.selectCategory = function(catName, btnEl) {
+      selectedCategoryName = catName;
+      if (btnEl) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      renderProductsGrid();
+      const titleEl = document.getElementById('currentCategoryTitle');
+      if (titleEl) {
+        titleEl.innerHTML = `<i class="ph ph-shopping-bag"></i> ${catName === 'ALL' ? 'สินค้าทั้งหมด' : catName}`;
+      }
+    };
+
+    window.selectCategoryByName = function(catName) {
+      const btns = document.querySelectorAll('.cat-btn');
+      let targetBtn = null;
+      btns.forEach(b => {
+        if (b.textContent.trim() === catName.trim()) targetBtn = b;
+      });
+      selectCategory(catName, targetBtn);
+      const prodSec = document.getElementById('productsSection');
+      if (prodSec) prodSec.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // ===== RENDER PRODUCTS GRID =====
+    function renderProductsGrid() {
+      const grid = document.getElementById('productGridContainer');
+      const countLabel = document.getElementById('productCountLabel');
+      if (!grid) return;
+
+      let filtered = storeProducts;
+      if (selectedCategoryName !== 'ALL') {
+        filtered = filtered.filter(p => p.category === selectedCategoryName);
+      }
+
+      if (countLabel) countLabel.textContent = `${filtered.length} รายการ`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align:center; padding:30px 10px; color:var(--text-muted);">
+            <i class="ph ph-package" style="font-size:36px; display:block; margin-bottom:8px;"></i>
+            ยังไม่มีสินค้าในหมวดหมู่นี้
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const origPriceHtml = p.originalPrice ? `<span class="product-old-price">฿${Number(p.originalPrice).toLocaleString()}</span>` : '';
+        const inStock = (p.inStock === true || p.inStock === 'true');
+        const cartBtn = inStock
+          ? `<button class="btn-add-cart-mini" onclick="addToCart('${p._id}', '${p.name}', ${p.price}, '${p.image}')" title="ใส่ตะกร้า"><i class="ph ph-plus"></i></button>`
+          : `<span style="font-size:10px; color:#EF4444; font-weight:700;">สินค้าหมด</span>`;
+
+        return `
+          <div class="product-card">
+            <div class="product-img-wrap">
+              <span class="product-cat-tag">${p.category || 'สินค้า'}</span>
+              <img src="${p.image}" alt="${p.name}" onerror="this.src='Payment.jpg'">
+            </div>
+            <div class="product-body">
+              <div>
+                <div class="product-title">${p.name}</div>
+                <div class="product-desc">${p.desc || ''}</div>
+              </div>
+              <div class="product-footer">
+                <div class="product-price-box">
+                  ${origPriceHtml}
+                  <span class="product-price">฿${Number(p.price || 0).toLocaleString()}</span>
+                </div>
+                ${cartBtn}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== ADD TO CART =====
+    window.addToCart = function(id, name, price, image) {
+      let cart = [];
+      try {
+        cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
+      } catch(e) { cart = []; }
+
+      const existing = cart.find(item => item.name === name);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          id: id || ('p_' + Date.now()),
+          name: name,
+          price: Number(price),
+          image: image || 'Payment.jpg',
+          quantity: 1
+        });
+      }
+      localStorage.setItem('mkCart', JSON.stringify(cart));
+      updateCartBadge();
+
+      // Show Toast notification
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = `🛒 เพิ่ม "${name}" ลงตะกร้าแล้ว!`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      }
+    };
+
+    function updateCartBadge() {
+      try {
+        const cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
+        const total = cart.reduce((s, i) => s + (i.quantity || 1), 0);
+        const badge = document.querySelector('.cart-icon .badge');
+        if (badge) {
+          badge.textContent = total;
+          badge.style.transform = 'scale(1.3)';
+          setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        }
+      } catch(e) {}
+    }
+
+    // Init Cart Badge on Load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
+  </script>
 </body>
 </html>
