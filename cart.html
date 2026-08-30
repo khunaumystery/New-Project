@@ -571,6 +571,30 @@
         <i class="ph ph-user"></i>
         <span>ข้อมูลการจัดส่ง</span>
       </div>
+
+      <!-- Account Status Banner -->
+      <div id="cartUserAuthBanner" style="background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:none; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">👑</span>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#166534;" id="cartUserAuthName">เข้าสู่ระบบแล้ว</div>
+            <div style="font-size:11px; color:#15803D;" id="cartUserAuthEmail">user@email.com</div>
+          </div>
+        </div>
+        <span style="background:#DCFCE7; color:#15803D; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">VIP สั่งซื้อได้ทันที</span>
+      </div>
+
+      <!-- Guest Prompt Banner (if not logged in) -->
+      <div id="cartGuestAuthBanner" style="background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:12px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🔒</span>
+          <div style="font-size:12px; color:#92400E; font-weight:600;">กรุณาเข้าสู่ระบบเพื่อยืนยันการสั่งซื้อ</div>
+        </div>
+        <a href="login.html" style="background:var(--mk-red); color:#fff; font-size:11px; font-weight:700; padding:6px 12px; border-radius:14px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+          <i class="ph ph-sign-in"></i> เข้าสู่ระบบ
+        </a>
+      </div>
+
       <div style="display:flex; flex-direction:column; gap:10px;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
@@ -1073,7 +1097,8 @@
 
     function confirmOrder() {
       // Check Auth
-      if (!window.currentUser) {
+      const user = window.currentUser || (window.authInstance ? window.authInstance.currentUser : null);
+      if (!user) {
         document.getElementById('loginRequiredModal').classList.add('active');
         return;
       }
@@ -1118,8 +1143,8 @@
       const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const orderData = {
         orderId,
-        userId:       window.currentUser ? window.currentUser.uid : null,
-        userEmail:    window.currentUser ? window.currentUser.email : null,
+        userId:       user ? user.uid : (window.currentUser ? window.currentUser.uid : null),
+        userEmail:    user ? user.email : (window.currentUser ? window.currentUser.email : null),
         customerName: document.getElementById('cusFirstName').value.trim() + ' ' + document.getElementById('cusLastName').value.trim(),
         phone:        document.getElementById('cusPhone').value.trim(),
         address: {
@@ -1202,10 +1227,39 @@
   <script type="module">
     import { auth, db, collection, addDoc, onAuthStateChanged } from "./js/firebase-config.js";
 
-    window.currentUser = null;
+    window.currentUser = auth.currentUser || null;
+    window.authInstance = auth;
 
-    onAuthStateChanged(auth, user => {
+    function updateAuthStatusUI(user) {
       window.currentUser = user;
+      const userBanner = document.getElementById('cartUserAuthBanner');
+      const guestBanner = document.getElementById('cartGuestAuthBanner');
+      const userNameEl = document.getElementById('cartUserAuthName');
+      const userEmailEl = document.getElementById('cartUserAuthEmail');
+      const firstNameInput = document.getElementById('cusFirstName');
+
+      if (user) {
+        if (userBanner) userBanner.style.display = 'flex';
+        if (guestBanner) guestBanner.style.display = 'none';
+        if (userNameEl) userNameEl.textContent = user.displayName ? `คุณ ${user.displayName}` : 'สมาชิก VIP';
+        if (userEmailEl) userEmailEl.textContent = user.email || '';
+        if (firstNameInput && !firstNameInput.value && user.displayName) {
+          firstNameInput.value = user.displayName;
+        }
+      } else {
+        if (userBanner) userBanner.style.display = 'none';
+        if (guestBanner) guestBanner.style.display = 'flex';
+      }
+    }
+
+    // Initial check
+    if (auth.currentUser) {
+      updateAuthStatusUI(auth.currentUser);
+    }
+
+    // Real-time listener
+    onAuthStateChanged(auth, user => {
+      updateAuthStatusUI(user);
     });
 
     // Expose saveOrderToFirestore globally so confirmOrder() can call it
