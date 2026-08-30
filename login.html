@@ -598,6 +598,17 @@
     <!-- 2. LOGIN / REGISTER VIEW (Shown when logged out) -->
     <div id="authSection" class="auth-card">
       
+      <!-- In-App Browser Warning Alert -->
+      <div id="inAppBrowserAlert" style="display:none; background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:14px; padding:12px 14px; margin-bottom:18px; font-size:12.5px; color:#92400E; line-height:1.45;">
+        <div style="display:flex; align-items:flex-start; gap:8px;">
+          <i class="ph ph-warning" style="font-size:20px; color:#D97706; flex-shrink:0; margin-top:2px;"></i>
+          <div>
+            <strong>เปิดผ่าน Messenger / LINE:</strong><br>
+            Google ป้องกันการล็อกอินผ่านแอปแชท กรุณากดปุ่ม <strong>⋯ (สามจุด)</strong> ที่มุมบนขวา แล้วเลือก <strong>"เปิดใน Chrome/Safari"</strong> หรือเข้าสู่ระบบด้วยอีเมลด้านล่างได้ทันทีครับ
+          </div>
+        </div>
+      </div>
+
       <!-- Google Sign In Button -->
       <button type="button" class="btn-google" id="btnGoogleLogin">
         <svg viewBox="0 0 24 24">
@@ -747,6 +758,26 @@
     </a>
   </nav>
 
+  <!-- Modal: In-App Browser Guide -->
+  <div class="modal-overlay" id="inAppGuideModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+    <div style="background:#FFFFFF;border-radius:22px;padding:26px 20px;width:100%;max-width:380px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5);font-family:'Prompt',sans-serif;">
+      <div style="width:58px;height:58px;border-radius:50%;background:#FEF3C7;color:#D97706;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;">
+        <i class="ph ph-browsers"></i>
+      </div>
+      <h3 style="font-size:17px;font-weight:700;color:#1F2937;margin-bottom:8px;">เปิดใน Chrome หรือ Safari</h3>
+      <div style="font-size:13px;color:#4B5563;line-height:1.55;margin-bottom:18px;text-align:left;background:#F9FAFB;padding:12px 14px;border-radius:12px;border:1px solid #E5E7EB;">
+        เนื่องจาก Google มีระบบความปลอดภัยสูง จึงป้องกันการล็อกอินผ่านแอป Messenger / LINE โดยตรง<br><br>
+        👉 <strong>วิธีเข้าสู่ระบบง่ายๆ:</strong><br>
+        1. กดปุ่ม <strong>⋯ (สามจุด)</strong> ที่มุมบนขวา<br>
+        2. เลือก <strong>"เปิดใน Chrome"</strong> หรือ <strong>"เปิดในเบราว์เซอร์ภายนอก"</strong><br>
+        <div style="margin-top:6px; font-size:12px; color:#DC2626;">* หรือสมัคร/เข้าสู่ระบบด้วยอีเมลในหน้านี้ได้ทันที</div>
+      </div>
+      <button onclick="document.getElementById('inAppGuideModal').style.display='none'" style="width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(211,34,42,0.3);">
+        เข้าใจแล้ว / ใช้อีเมลสมัครแทน
+      </button>
+    </div>
+  </div>
+
   <!-- Firebase Authentication Logic (ES Modules) -->
   <script type="module">
     import { 
@@ -759,6 +790,17 @@
       onAuthStateChanged,
       updateProfile 
     } from "./js/firebase-config.js";
+
+    // In-App Browser Detector
+    function isInAppBrowser() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      return /FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger|musical_ly|BytedanceWebview/i.test(ua);
+    }
+
+    if (isInAppBrowser()) {
+      const alertEl = document.getElementById('inAppBrowserAlert');
+      if (alertEl) alertEl.style.display = 'block';
+    }
 
     // Generate subtle particles
     function initParticles() {
@@ -820,6 +862,11 @@
 
     // 1. Google Sign In
     document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
+      if (isInAppBrowser()) {
+        document.getElementById('inAppGuideModal').style.display = 'flex';
+        return;
+      }
+
       try {
         showToast('กำลังเชื่อมต่อ Google Sign-In...');
         const result = await signInWithPopup(auth, googleProvider);
@@ -827,6 +874,10 @@
         showToast(`🎉 ยินดีต้อนรับคุณ ${user.displayName || 'ลูกค้า VIP'}!`);
       } catch (error) {
         console.error("Google login error:", error);
+        if (isInAppBrowser() || error.message?.includes('missing initial state') || error.code === 'auth/operation-not-supported-in-this-environment') {
+          document.getElementById('inAppGuideModal').style.display = 'flex';
+          return;
+        }
         let msg = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ';
         if (error.code === 'auth/popup-closed-by-user') {
           msg = 'ยกเลิกการเข้าสู่ระบบ';
