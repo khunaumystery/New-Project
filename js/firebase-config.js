@@ -34,15 +34,35 @@ isSupported().then(supported => {
   }
 }).catch(() => {});
 
-// Initialize Firebase Authentication
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  getDocs,
+  doc,
+  updateDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Initialize Firestore
+const db = getFirestore(app);
 
 export { 
   app, 
   analytics, 
   auth, 
   googleProvider,
+  db,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  getDocs,
+  doc,
+  updateDoc,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
