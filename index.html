@@ -978,23 +978,27 @@
       position: fixed;
       bottom: calc(var(--bottom-nav-height) + 16px);
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: rgba(28, 7, 10, 0.95);
-      color: white;
+      transform: translateX(-50%) translateY(40px);
+      opacity: 0;
+      visibility: hidden;
+      background: rgba(24, 6, 9, 0.96);
+      color: #FFFFFF;
       padding: 10px 22px;
       border-radius: 30px;
       font-size: 13px;
       font-weight: 600;
       z-index: 2000;
       border: 1px solid var(--gold);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.55);
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease, visibility 0.35s ease;
       white-space: nowrap;
       pointer-events: none;
     }
 
     .toast.show {
       transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
     }
   </style>
 </head>
@@ -1217,7 +1221,7 @@
   </div>
 
   <!-- Toast Message -->
-  <div class="toast" id="toast">✅ ดำเนินการสำเร็จ</div>
+  <div class="toast" id="toast"></div>
 
   <!-- Lucky Draw Scripts -->
   <script>
@@ -1451,13 +1455,18 @@
 
     window.restoreState = restoreState;
 
+    let toastTimer = null;
     function showToast(text) {
       const toast = document.getElementById('toast');
       if (!toast) return;
-      toast.textContent = text;
+      toast.textContent = text || '✅ ดำเนินการสำเร็จ';
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2200);
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000); // 3 วินาทีเต็มแล้วจางหายไปอัตโนมัติ
     }
+    window.showToast = showToast;
 
     initParticles();
     restoreState();

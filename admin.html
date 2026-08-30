@@ -202,8 +202,8 @@
       border:1px solid var(--border);
     }
 
-    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:#1A1A2E; color:white; padding:10px 20px; border-radius:30px; font-size:13px; z-index:2000; transition:transform 0.3s; white-space:nowrap; border:1px solid rgba(245,200,66,0.3); }
-    .toast.show { transform:translateX(-50%) translateY(0); }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(40px); opacity:0; visibility:hidden; background:#1A1A2E; color:white; padding:10px 22px; border-radius:30px; font-size:13px; z-index:2000; transition:transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease, visibility 0.35s ease; white-space:nowrap; border:1px solid rgba(245,200,66,0.3); pointer-events:none; }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; visibility:visible; }
 
     /* Admin Live Chat Styles */
     .admin-chat-layout {
@@ -1710,10 +1710,16 @@
     });
   });
 
+  let adminToastTimer = null;
   function showToast(text) {
     const t = document.getElementById('adminToast');
-    t.textContent = text; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    if (!t) return;
+    t.textContent = text || '✅ ดำเนินการสำเร็จ';
+    t.classList.add('show');
+    if (adminToastTimer) clearTimeout(adminToastTimer);
+    adminToastTimer = setTimeout(() => {
+      t.classList.remove('show');
+    }, 3000); // 3 วินาที
   }
   window.showToast = showToast;
 </script>

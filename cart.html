@@ -490,27 +490,32 @@
     /* Toast */
     .toast-msg {
       position: fixed;
-      bottom: 30px;
+      bottom: 85px;
       left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: rgba(26, 10, 11, 0.95);
+      transform: translateX(-50%) translateY(40px);
+      opacity: 0;
+      visibility: hidden;
+      background: rgba(26, 10, 11, 0.96);
       color: white;
       padding: 10px 20px;
       border-radius: 24px;
       font-size: 13px;
       font-weight: 500;
-      z-index: 999;
+      z-index: 2000;
       border: 1px solid rgba(245, 200, 66, 0.4);
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease, visibility 0.35s ease;
       white-space: nowrap;
+      pointer-events: none;
     }
 
     .toast-msg.show {
       transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
     }
 
     /* Customer Info Form Inputs */
@@ -1115,12 +1120,16 @@
       window.location.href = 'index.html';
     }
 
+    let toastTimeout = null;
     function showToast(text) {
       const toast = document.getElementById('toastMsg');
       const toastText = document.getElementById('toastText');
       toastText.textContent = text;
       toast.classList.add('show');
-      setTimeout(() => { toast.classList.remove('show'); }, 2500);
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { 
+        toast.classList.remove('show'); 
+      }, 3000); // 3 วินาที
     }
 
     // Initialize on load
