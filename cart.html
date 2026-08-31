@@ -536,6 +536,15 @@
       border-color: var(--mk-red);
       box-shadow: 0 0 0 3px rgba(211, 34, 42, 0.08);
     }
+    select.info-input {
+      cursor: pointer;
+      appearance: auto;
+    }
+    select.info-input:disabled {
+      cursor: not-allowed;
+      background: #F3F4F6;
+      color: #9CA3AF;
+    }
     .info-input.error {
       border-color: #EF4444;
     }
@@ -593,22 +602,30 @@
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">แขวง / ตำบล *</label>
-            <input type="text" id="cusSubdistrict" placeholder="แขวง/ตำบล" class="info-input" required>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">จังหวัด *</label>
+            <select id="cusProvince" class="info-input" required>
+              <option value="">-- เลือกจังหวัด --</option>
+            </select>
           </div>
           <div>
             <label style="font-size:12px; color:var(--text-muted); font-weight:600;">เขต / อำเภอ *</label>
-            <input type="text" id="cusDistrict" placeholder="เขต/อำเภอ" class="info-input" required>
+            <select id="cusDistrict" class="info-input" required disabled>
+              <option value="">-- เลือกจังหวัดก่อน --</option>
+            </select>
           </div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">จังหวัด *</label>
-            <input type="text" id="cusProvince" placeholder="จังหวัด" class="info-input" required>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">แขวง / ตำบล *</label>
+            <select id="cusSubdistrict" class="info-input" required disabled>
+              <option value="">-- เลือกเขต/อำเภอก่อน --</option>
+            </select>
           </div>
           <div>
             <label style="font-size:12px; color:var(--text-muted); font-weight:600;">รหัสไปรษณีย์ *</label>
-            <input type="text" id="cusPostcode" placeholder="10110" class="info-input" maxlength="5" required>
+            <select id="cusPostcode" class="info-input" required disabled>
+              <option value="">-- เลือกแขวง/ตำบลก่อน --</option>
+            </select>
           </div>
         </div>
         <div>
@@ -728,6 +745,152 @@
     let hasKeychainGift = false;
     let currentUser = auth.currentUser || null;
     window.currentUser = currentUser;
+
+    const provinceSelect = document.getElementById('cusProvince');
+    const districtSelect = document.getElementById('cusDistrict');
+    const subdistrictSelect = document.getElementById('cusSubdistrict');
+    const postcodeSelect = document.getElementById('cusPostcode');
+    const THAI_GEOGRAPHY_URLS = [
+      'thai-geography.json',
+      'https://cdn.jsdelivr.net/gh/thailand-geography-data/thailand-geography-json@main/src/geography.json',
+      'https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/geography.json'
+    ];
+    let thaiGeography = [];
+
+    function fillAddressSelect(select, placeholder, options, valueKey, labelKey) {
+      if (!select) return;
+      select.innerHTML = `<option value="">${placeholder}</option>` +
+        options.map(option =>
+          `<option value="${String(option[valueKey])}" data-code="${String(option[valueKey])}">${option[labelKey]}</option>`
+        ).join('');
+      select.disabled = options.length === 0;
+    }
+
+    function uniqueBy(list, key) {
+      const seen = new Set();
+      return list.filter(item => {
+        const value = String(item[key]);
+        if (seen.has(value)) return false;
+        seen.add(value);
+        return true;
+      });
+    }
+
+    function resetAddressSelect(select, placeholder) {
+      if (!select) return;
+      select.innerHTML = `<option value="">${placeholder}</option>`;
+      select.value = '';
+      select.disabled = true;
+    }
+
+    function populateProvinces() {
+      const provinces = uniqueBy(thaiGeography, 'provinceCode')
+        .sort((a, b) => a.provinceNameTh.localeCompare(b.provinceNameTh, 'th'));
+      fillAddressSelect(provinceSelect, '-- เลือกจังหวัด --', provinces, 'provinceCode', 'provinceNameTh');
+      resetAddressSelect(districtSelect, '-- เลือกจังหวัดก่อน --');
+      resetAddressSelect(subdistrictSelect, '-- เลือกเขต/อำเภอก่อน --');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populateDistricts() {
+      const provinceCode = provinceSelect?.value;
+      const districts = uniqueBy(
+        thaiGeography.filter(item => String(item.provinceCode) === String(provinceCode)),
+        'districtCode'
+      ).sort((a, b) => a.districtNameTh.localeCompare(b.districtNameTh, 'th'));
+      fillAddressSelect(districtSelect, '-- เลือกเขต / อำเภอ --', districts, 'districtCode', 'districtNameTh');
+      resetAddressSelect(subdistrictSelect, '-- เลือกเขต/อำเภอก่อน --');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populateSubdistricts() {
+      const provinceCode = provinceSelect?.value;
+      const districtCode = districtSelect?.value;
+      const subdistricts = uniqueBy(
+        thaiGeography.filter(item =>
+          String(item.provinceCode) === String(provinceCode) &&
+          String(item.districtCode) === String(districtCode)
+        ),
+        'subdistrictCode'
+      ).sort((a, b) => a.subdistrictNameTh.localeCompare(b.subdistrictNameTh, 'th'));
+      fillAddressSelect(subdistrictSelect, '-- เลือกแขวง / ตำบล --', subdistricts, 'subdistrictCode', 'subdistrictNameTh');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populatePostcodes() {
+      const provinceCode = provinceSelect?.value;
+      const districtCode = districtSelect?.value;
+      const subdistrictCode = subdistrictSelect?.value;
+      const postcodes = [...new Set(
+        thaiGeography
+          .filter(item =>
+            String(item.provinceCode) === String(provinceCode) &&
+            String(item.districtCode) === String(districtCode) &&
+            String(item.subdistrictCode) === String(subdistrictCode)
+          )
+          .map(item => String(item.postalCode || '').trim())
+          .filter(Boolean)
+      )].sort();
+
+      fillAddressSelect(
+        postcodeSelect,
+        '-- เลือกรหัสไปรษณีย์ --',
+        postcodes.map(postalCode => ({ postalCode })),
+        'postalCode',
+        'postalCode'
+      );
+      if (postcodes.length === 1) postcodeSelect.value = postcodes[0];
+    }
+
+    function getSelectedLabel(id) {
+      const select = document.getElementById(id);
+      return select?.selectedOptions?.[0]?.textContent?.trim() || '';
+    }
+
+    async function loadThaiGeography() {
+      let lastError = null;
+      try {
+        for (const url of THAI_GEOGRAPHY_URLS) {
+          try {
+            const response = await fetch(url, { cache: 'force-cache' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data) || data.length === 0) {
+              throw new Error('ไม่พบข้อมูลพื้นที่');
+            }
+            thaiGeography = data;
+            populateProvinces();
+            return;
+          } catch (error) {
+            lastError = error;
+            console.warn(`โหลดข้อมูลพื้นที่จาก ${url} ไม่สำเร็จ`, error);
+          }
+        }
+        throw lastError || new Error('โหลดข้อมูลพื้นที่ไม่สำเร็จ');
+      } catch (error) {
+        console.error('Thai geography loading error:', error);
+        [provinceSelect, districtSelect, subdistrictSelect, postcodeSelect].forEach(select => {
+          if (select) select.disabled = true;
+        });
+        showToast('ไม่สามารถโหลดรายการพื้นที่ได้ กรุณารีเฟรชหน้า');
+      }
+    }
+
+    provinceSelect?.addEventListener('change', () => {
+      provinceSelect.classList.remove('error');
+      populateDistricts();
+    });
+    districtSelect?.addEventListener('change', () => {
+      districtSelect.classList.remove('error');
+      populateSubdistricts();
+    });
+    subdistrictSelect?.addEventListener('change', () => {
+      subdistrictSelect.classList.remove('error');
+      populatePostcodes();
+    });
+    postcodeSelect?.addEventListener('change', () => {
+      postcodeSelect.classList.remove('error');
+    });
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
@@ -1120,10 +1283,10 @@
         phone:        document.getElementById('cusPhone').value.trim(),
         address: {
           street:      document.getElementById('cusAddress').value.trim(),
-          subdistrict: document.getElementById('cusSubdistrict').value.trim(),
-          district:    document.getElementById('cusDistrict').value.trim(),
-          province:    document.getElementById('cusProvince').value.trim(),
-          postcode:    document.getElementById('cusPostcode').value.trim(),
+          subdistrict: getSelectedLabel('cusSubdistrict'),
+          district:    getSelectedLabel('cusDistrict'),
+          province:    getSelectedLabel('cusProvince'),
+          postcode:    getSelectedLabel('cusPostcode'),
         },
         note:        document.getElementById('cusNote').value.trim(),
         items:       cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
@@ -1203,6 +1366,7 @@
     window.showToast = showToast;
 
     // Initialize on load
+    loadThaiGeography();
     renderCart();
     checkLatestCode();
   </script>
