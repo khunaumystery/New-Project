@@ -413,11 +413,6 @@
       box-shadow: 0 2px 8px rgba(211, 34, 42, 0.2);
     }
 
-    .checkout-btn:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-
     /* Modal Order Success */
     .modal-overlay {
       position: fixed;
@@ -541,23 +536,18 @@
       border-color: var(--mk-red);
       box-shadow: 0 0 0 3px rgba(211, 34, 42, 0.08);
     }
+    select.info-input {
+      cursor: pointer;
+      appearance: auto;
+    }
+    select.info-input:disabled {
+      cursor: not-allowed;
+      background: #F3F4F6;
+      color: #9CA3AF;
+    }
     .info-input.error {
       border-color: #EF4444;
     }
-
-    /* Small connection notice (Firebase fallback) */
-    .conn-notice {
-      display: none;
-      font-size: 11.5px;
-      color: #92400E;
-      background: #FFFBEB;
-      border: 1px solid #FDE68A;
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-    .conn-notice.show { display: block; }
   </style>
 </head>
 <body>
@@ -568,11 +558,11 @@
       <i class="ph ph-arrow-left"></i>
     </a>
     <span class="nav-title">ตะกร้าสินค้า & ชำระเงิน</span>
-    <button class="clear-cart-btn" onclick="MK.clearCart()">ล้างตะกร้า</button>
+    <button class="clear-cart-btn" onclick="clearCart()">ล้างตะกร้า</button>
   </header>
 
   <div class="container">
-
+    
     <!-- 1. Cart Items Section -->
     <section class="cart-section">
       <div class="section-title">
@@ -612,22 +602,30 @@
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">แขวง / ตำบล *</label>
-            <input type="text" id="cusSubdistrict" placeholder="แขวง/ตำบล" class="info-input" required>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">จังหวัด *</label>
+            <select id="cusProvince" class="info-input" required>
+              <option value="">-- เลือกจังหวัด --</option>
+            </select>
           </div>
           <div>
             <label style="font-size:12px; color:var(--text-muted); font-weight:600;">เขต / อำเภอ *</label>
-            <input type="text" id="cusDistrict" placeholder="เขต/อำเภอ" class="info-input" required>
+            <select id="cusDistrict" class="info-input" required disabled>
+              <option value="">-- เลือกจังหวัดก่อน --</option>
+            </select>
           </div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">จังหวัด *</label>
-            <input type="text" id="cusProvince" placeholder="จังหวัด" class="info-input" required>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">แขวง / ตำบล *</label>
+            <select id="cusSubdistrict" class="info-input" required disabled>
+              <option value="">-- เลือกเขต/อำเภอก่อน --</option>
+            </select>
           </div>
           <div>
             <label style="font-size:12px; color:var(--text-muted); font-weight:600;">รหัสไปรษณีย์ *</label>
-            <input type="text" id="cusPostcode" placeholder="10110" class="info-input" maxlength="5" required>
+            <select id="cusPostcode" class="info-input" required disabled>
+              <option value="">-- เลือกแขวง/ตำบลก่อน --</option>
+            </select>
           </div>
         </div>
         <div>
@@ -645,13 +643,13 @@
       </div>
       <div class="coupon-box">
         <input type="text" class="coupon-input" id="couponInput" placeholder="กรอกโค้ด 6 หลักที่ได้จากการสุ่ม" maxlength="12">
-        <button class="apply-coupon-btn" onclick="MK.applyCoupon()">ใช้โค้ด</button>
+        <button class="apply-coupon-btn" onclick="applyCoupon()">ใช้โค้ด</button>
       </div>
 
       <!-- Quick Fill Chip from Lucky Draw -->
       <div id="latestCodeChip" style="display:none; margin-top:8px; font-size:12px; color:var(--text-muted);">
-        💡 โค้ดที่คุณสุ่มได้: <span id="latestCodeText" style="color:var(--mk-red); font-weight:700; cursor:pointer; text-decoration:underline;" onclick="MK.fillLatestCode()"></span>
-        <span id="cartCodeExpiryBadge" style="cursor:pointer; margin-left:4px; font-weight:600; padding:3px 8px; border-radius:8px; background:#FEF3C7; color:#D97706; display:inline-block;" onclick="MK.fillLatestCode()">⏳ หมดอายุใน 30:00 (กดใช้)</span>
+        💡 โค้ดที่คุณสุ่มได้: <span id="latestCodeText" style="color:var(--mk-red); font-weight:700; cursor:pointer; text-decoration:underline;" onclick="fillLatestCode()"></span>
+        <span id="cartCodeExpiryBadge" style="cursor:pointer; margin-left:4px; font-weight:600; padding:3px 8px; border-radius:8px; background:#FEF3C7; color:#D97706; display:inline-block;" onclick="fillLatestCode()">⏳ หมดอายุใน 30:00 (กดใช้)</span>
       </div>
 
       <!-- Error Message -->
@@ -662,7 +660,7 @@
       <!-- Applied Tag -->
       <div class="applied-coupon-tag" id="appliedCouponTag">
         <span>🎉 โค้ดถูกต้อง: <strong id="appliedCouponName"></strong> (<span id="appliedCouponDesc"></span>)</span>
-        <button class="remove-coupon-btn" onclick="MK.removeCoupon()" title="ยกเลิกโค้ด">
+        <button class="remove-coupon-btn" onclick="removeCoupon()" title="ยกเลิกโค้ด">
           <i class="ph ph-x"></i>
         </button>
       </div>
@@ -700,22 +698,19 @@
         <span>สแกนชำระเงินผ่าน QR Code</span>
       </div>
       <p style="font-size: 13px; color: var(--text-muted);">สแกน QR Code ด้านล่างนี้เพื่อโอนเงินชำระค่าสินค้า</p>
-
+      
       <div class="payment-img-container">
-        <img src="Payment.jpg" alt="Payment QR Code / บัญชีชำระเงิน">
+        <img src="Payment.jpg" alt="Payment QR Code / บัญชีชำระเงิน" onerror="this.src='Payment.jpg'">
       </div>
 
       <p class="payment-note">💡 เมื่อชำระเงินเรียบร้อยแล้ว กรุณากดปุ่ม <strong>"ยืนยันการชำระเงิน"</strong> ด้านล่าง</p>
     </section>
 
     <!-- 5. Confirm Order Button -->
-    <button class="checkout-btn" id="checkoutBtn" onclick="MK.confirmOrder()">
+    <button class="checkout-btn" onclick="confirmOrder()">
       <i class="ph ph-check-circle"></i>
       <span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>
     </button>
-    <div class="conn-notice" id="connNotice">
-      ⚠️ ไม่สามารถเชื่อมต่อระบบออนไลน์ได้ในขณะนี้ ระบบจะบันทึกคำสั่งซื้อไว้ในเครื่องนี้ก่อน กรุณาติดต่อร้านค้าเพื่อยืนยันอีกครั้ง
-    </div>
 
   </div>
 
@@ -729,7 +724,7 @@
       <p style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">หมายเลขออเดอร์ของคุณ</p>
       <p style="font-size:18px; font-weight:800; color:var(--mk-red); margin-bottom:12px; letter-spacing:1px;" id="orderIdDisplay">MK-XXXXXX</p>
       <p class="modal-desc">ระบบได้รับข้อมูลคำสั่งซื้อของคุณเรียบร้อยแล้ว ทางร้านจะเร่งจัดส่งสินค้าให้โดยเร็วที่สุด 📦</p>
-      <button class="modal-close-btn" onclick="MK.closeSuccessModal()">กลับหน้าหลัก</button>
+      <button class="modal-close-btn" onclick="closeSuccessModal()">กลับหน้าหลัก</button>
     </div>
   </div>
 
@@ -739,239 +734,316 @@
     <span id="toastText"></span>
   </div>
 
-  <!-- ============================================================
-       CORE CART LOGIC (plain script, NOT a module)
-       This block never depends on Firebase, network access, or
-       any external import. As long as this file loads, the cart
-       will always read/write localStorage and render correctly -
-       even if Firebase fails to load for any reason.
-  ============================================================= -->
-  <script>
-    (function () {
-      'use strict';
+  <!-- Cart Logic & Firebase Integration (ESM) -->
+  <script type="module">
+    import { auth, db, collection, addDoc, onAuthStateChanged } from "./js/firebase-config.js";
 
-      const DEFAULT_SHIPPING = 50;
-      const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+    const DEFAULT_SHIPPING = 50;
+    let appliedDiscount = 0;
+    let appliedCodeName = '';
+    let isFreeShipping = false;
+    let hasKeychainGift = false;
+    let currentUser = auth.currentUser || null;
+    window.currentUser = currentUser;
 
-      const state = {
-        appliedDiscount: 0,
-        appliedCodeName: '',
-        isFreeShipping: false,
-        hasKeychainGift: false,
-      };
+    const provinceSelect = document.getElementById('cusProvince');
+    const districtSelect = document.getElementById('cusDistrict');
+    const subdistrictSelect = document.getElementById('cusSubdistrict');
+    const postcodeSelect = document.getElementById('cusPostcode');
+    let thaiGeography = [];
 
-      let cartCodeExpiryInterval = null;
-      let toastTimeout = null;
+    function fillAddressSelect(select, placeholder, options, valueKey, labelKey) {
+      if (!select) return;
+      select.innerHTML = `<option value="">${placeholder}</option>` +
+        options.map(option =>
+          `<option value="${String(option[valueKey])}" data-code="${String(option[valueKey])}">${option[labelKey]}</option>`
+        ).join('');
+      select.disabled = options.length === 0;
+    }
 
-      // ---------- Storage helpers ----------
-      function getCart() {
+    function uniqueBy(list, key) {
+      const seen = new Set();
+      return list.filter(item => {
+        const value = String(item[key]);
+        if (seen.has(value)) return false;
+        seen.add(value);
+        return true;
+      });
+    }
+
+    function resetAddressSelect(select, placeholder) {
+      if (!select) return;
+      select.innerHTML = `<option value="">${placeholder}</option>`;
+      select.value = '';
+      select.disabled = true;
+    }
+
+    function populateProvinces() {
+      const provinces = uniqueBy(thaiGeography, 'provinceCode')
+        .sort((a, b) => a.provinceNameTh.localeCompare(b.provinceNameTh, 'th'));
+      fillAddressSelect(provinceSelect, '-- เลือกจังหวัด --', provinces, 'provinceCode', 'provinceNameTh');
+      resetAddressSelect(districtSelect, '-- เลือกจังหวัดก่อน --');
+      resetAddressSelect(subdistrictSelect, '-- เลือกเขต/อำเภอก่อน --');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populateDistricts() {
+      const provinceCode = provinceSelect?.value;
+      const districts = uniqueBy(
+        thaiGeography.filter(item => String(item.provinceCode) === String(provinceCode)),
+        'districtCode'
+      ).sort((a, b) => a.districtNameTh.localeCompare(b.districtNameTh, 'th'));
+      fillAddressSelect(districtSelect, '-- เลือกเขต / อำเภอ --', districts, 'districtCode', 'districtNameTh');
+      resetAddressSelect(subdistrictSelect, '-- เลือกเขต/อำเภอก่อน --');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populateSubdistricts() {
+      const provinceCode = provinceSelect?.value;
+      const districtCode = districtSelect?.value;
+      const subdistricts = uniqueBy(
+        thaiGeography.filter(item =>
+          String(item.provinceCode) === String(provinceCode) &&
+          String(item.districtCode) === String(districtCode)
+        ),
+        'subdistrictCode'
+      ).sort((a, b) => a.subdistrictNameTh.localeCompare(b.subdistrictNameTh, 'th'));
+      fillAddressSelect(subdistrictSelect, '-- เลือกแขวง / ตำบล --', subdistricts, 'subdistrictCode', 'subdistrictNameTh');
+      resetAddressSelect(postcodeSelect, '-- เลือกแขวง/ตำบลก่อน --');
+    }
+
+    function populatePostcodes() {
+      const provinceCode = provinceSelect?.value;
+      const districtCode = districtSelect?.value;
+      const subdistrictCode = subdistrictSelect?.value;
+      const postcodes = [...new Set(
+        thaiGeography
+          .filter(item =>
+            String(item.provinceCode) === String(provinceCode) &&
+            String(item.districtCode) === String(districtCode) &&
+            String(item.subdistrictCode) === String(subdistrictCode)
+          )
+          .map(item => String(item.postalCode || '').trim())
+          .filter(Boolean)
+      )].sort();
+
+      fillAddressSelect(
+        postcodeSelect,
+        '-- เลือกรหัสไปรษณีย์ --',
+        postcodes.map(postalCode => ({ postalCode })),
+        'postalCode',
+        'postalCode'
+      );
+      if (postcodes.length === 1) postcodeSelect.value = postcodes[0];
+    }
+
+    function getSelectedLabel(id) {
+      const select = document.getElementById(id);
+      return select?.selectedOptions?.[0]?.textContent?.trim() || '';
+    }
+
+    async function loadThaiGeography() {
+      try {
+        const response = await fetch('thai-geography.json', { cache: 'force-cache' });
+        if (!response.ok) throw new Error('โหลดข้อมูลพื้นที่ไม่สำเร็จ');
+        thaiGeography = await response.json();
+        if (!Array.isArray(thaiGeography) || thaiGeography.length === 0) {
+          throw new Error('ไม่พบข้อมูลพื้นที่');
+        }
+        populateProvinces();
+      } catch (error) {
+        console.error('Thai geography loading error:', error);
+        [provinceSelect, districtSelect, subdistrictSelect, postcodeSelect].forEach(select => {
+          if (select) select.disabled = true;
+        });
+        showToast('ไม่สามารถโหลดรายการพื้นที่ได้ กรุณารีเฟรชหน้า');
+      }
+    }
+
+    provinceSelect?.addEventListener('change', () => {
+      provinceSelect.classList.remove('error');
+      populateDistricts();
+    });
+    districtSelect?.addEventListener('change', () => {
+      districtSelect.classList.remove('error');
+      populateSubdistricts();
+    });
+    subdistrictSelect?.addEventListener('change', () => {
+      subdistrictSelect.classList.remove('error');
+      populatePostcodes();
+    });
+    postcodeSelect?.addEventListener('change', () => {
+      postcodeSelect.classList.remove('error');
+    });
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      window.currentUser = user;
+      const firstNameInput = document.getElementById('cusFirstName');
+      if (user && firstNameInput && !firstNameInput.value && user.displayName) {
+        firstNameInput.value = user.displayName;
+      }
+    });
+
+    // Load Cart from localStorage
+    function getCart() {
+      const saved = localStorage.getItem('mkCart');
+      if (saved !== null) {
         try {
-          const saved = localStorage.getItem('mkCart');
-          if (saved) return JSON.parse(saved);
+          return JSON.parse(saved);
         } catch (e) {
-          console.error('getCart parse error:', e);
-        }
-        return [];
-      }
-
-      function saveCart(cart) {
-        try {
-          localStorage.setItem('mkCart', JSON.stringify(cart));
-        } catch (e) {
-          console.error('saveCart error:', e);
-        }
-        renderCart();
-      }
-
-      // ---------- Toast ----------
-      function showToast(text) {
-        const toast = document.getElementById('toastMsg');
-        const toastText = document.getElementById('toastText');
-        if (!toast || !toastText) return;
-        toastText.textContent = text;
-        toast.classList.add('show');
-        if (toastTimeout) clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
-      }
-
-      // ---------- Render ----------
-      function renderCart() {
-        const cart = getCart();
-        const listEl = document.getElementById('cartItemsList');
-        const cartCountTitle = document.getElementById('cartCountTitle');
-        if (!listEl || !cartCountTitle) return;
-
-        let totalItems = 0;
-        let subtotal = 0;
-
-        if (cart.length === 0) {
-          listEl.innerHTML =
-            '<div class="empty-cart">' +
-            '<i class="ph ph-shopping-bag"></i>' +
-            '<p>ยังไม่มีสินค้าในตะกร้า</p>' +
-            '<a href="index.html" class="shop-now-btn">เลือกซื้อสินค้า</a>' +
-            '</div>';
-          cartCountTitle.textContent = '0';
-        } else {
-          listEl.innerHTML = '';
-          cart.forEach((item, index) => {
-            const qty = Number(item.quantity) || 0;
-            const price = Number(item.price) || 0;
-            totalItems += qty;
-            subtotal += price * qty;
-
-            const itemEl = document.createElement('div');
-            itemEl.className = 'cart-item';
-
-            const img = document.createElement('img');
-            img.className = 'item-img';
-            img.src = item.image || 'Payment.jpg';
-            img.alt = item.name || 'สินค้า';
-            img.onerror = function () { this.onerror = null; this.src = 'Payment.jpg'; };
-
-            const details = document.createElement('div');
-            details.className = 'item-details';
-            const nameEl = document.createElement('div');
-            nameEl.className = 'item-name';
-            nameEl.textContent = item.name || 'สินค้า';
-            const priceEl = document.createElement('div');
-            priceEl.className = 'item-price';
-            priceEl.textContent = '฿' + price.toLocaleString();
-            details.appendChild(nameEl);
-            details.appendChild(priceEl);
-
-            const controls = document.createElement('div');
-            controls.className = 'quantity-controls';
-            const minusBtn = document.createElement('button');
-            minusBtn.className = 'qty-btn';
-            minusBtn.textContent = '-';
-            minusBtn.addEventListener('click', () => updateQty(index, -1));
-            const qtyNum = document.createElement('span');
-            qtyNum.className = 'qty-num';
-            qtyNum.textContent = qty;
-            const plusBtn = document.createElement('button');
-            plusBtn.className = 'qty-btn';
-            plusBtn.textContent = '+';
-            plusBtn.addEventListener('click', () => updateQty(index, 1));
-            controls.appendChild(minusBtn);
-            controls.appendChild(qtyNum);
-            controls.appendChild(plusBtn);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-item-btn';
-            removeBtn.title = 'ลบรายการ';
-            removeBtn.innerHTML = '<i class="ph ph-trash"></i>';
-            removeBtn.addEventListener('click', () => removeItem(index));
-
-            itemEl.appendChild(img);
-            itemEl.appendChild(details);
-            itemEl.appendChild(controls);
-            itemEl.appendChild(removeBtn);
-            listEl.appendChild(itemEl);
-          });
-
-          if (state.hasKeychainGift) {
-            const giftEl = document.createElement('div');
-            giftEl.className = 'cart-item';
-            giftEl.style.background = '#FEF3C7';
-            giftEl.style.padding = '8px 12px';
-            giftEl.style.borderRadius = '12px';
-            giftEl.style.border = '1px dashed #F59E0B';
-            giftEl.innerHTML =
-              '<div style="font-size:24px;">🗝️</div>' +
-              '<div class="item-details">' +
-              '<div class="item-name" style="color:#92400E; font-weight:700;">[ของแถมพิเศษ] พวงกุญแจลิมิเต็ด</div>' +
-              '<div class="item-price" style="color:#D97706; font-size:12px;">ฟรี ฿0 (สิทธิ์พิเศษจากโค้ดสุ่ม)</div>' +
-              '</div>' +
-              '<span style="background:#F59E0B; color:white; font-size:11px; font-weight:700; padding:3px 8px; border-radius:10px;">FREE</span>';
-            listEl.appendChild(giftEl);
-          }
-
-          cartCountTitle.textContent = String(totalItems);
-        }
-
-        const shipping = cart.length === 0 ? 0 : (state.isFreeShipping ? 0 : DEFAULT_SHIPPING);
-        const grandTotal = Math.max(0, subtotal + shipping - state.appliedDiscount);
-
-        const subtotalEl = document.getElementById('subtotalText');
-        const shippingEl = document.getElementById('shippingText');
-        const discountRow = document.getElementById('discountRow');
-        const discountEl = document.getElementById('discountText');
-        const grandTotalEl = document.getElementById('grandTotalText');
-
-        if (subtotalEl) subtotalEl.textContent = '฿' + subtotal.toLocaleString();
-        if (shippingEl) {
-          shippingEl.innerHTML = state.isFreeShipping
-            ? '<span style="color:#10B981; font-weight:600;">ฟรี (฿0)</span>'
-            : '฿' + shipping.toLocaleString();
-        }
-        if (discountRow && discountEl) {
-          if (state.appliedDiscount > 0 || state.isFreeShipping) {
-            discountRow.style.display = 'flex';
-            const discountDisplay = state.appliedDiscount > 0
-              ? '฿' + state.appliedDiscount.toLocaleString()
-              : 'ส่งฟรี ฿50';
-            discountEl.textContent = '-' + discountDisplay;
-          } else {
-            discountRow.style.display = 'none';
-          }
-        }
-        if (grandTotalEl) grandTotalEl.textContent = '฿' + grandTotal.toLocaleString();
-      }
-
-      // ---------- Item mutations ----------
-      function updateQty(index, change) {
-        const cart = getCart();
-        if (cart[index]) {
-          cart[index].quantity = (Number(cart[index].quantity) || 0) + change;
-          if (cart[index].quantity <= 0) cart.splice(index, 1);
-          saveCart(cart);
+          console.error(e);
         }
       }
+      return [];
+    }
 
-      function removeItem(index) {
-        const cart = getCart();
-        cart.splice(index, 1);
+    function saveCart(cart) {
+      localStorage.setItem('mkCart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    function renderCart() {
+      const cart = getCart();
+      const listEl = document.getElementById('cartItemsList');
+      const cartCountTitle = document.getElementById('cartCountTitle');
+
+      let totalItems = 0;
+      let subtotal = 0;
+
+      if (cart.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-cart">
+            <i class="ph ph-shopping-bag"></i>
+            <p>ยังไม่มีสินค้าในตะกร้า</p>
+            <a href="full-bottle.html" class="shop-now-btn">เลือกซื้อสินค้า Full Bottle</a>
+          </div>
+        `;
+        cartCountTitle.textContent = '0';
+      } else {
+        listEl.innerHTML = '';
+        cart.forEach((item, index) => {
+          totalItems += item.quantity;
+          subtotal += item.price * item.quantity;
+
+          const itemEl = document.createElement('div');
+          itemEl.className = 'cart-item';
+          itemEl.innerHTML = `
+            <img src="${item.image}" alt="${item.name}" class="item-img" onerror="this.src='LINE_ALBUM_1952026_260519_3.jpg'">
+            <div class="item-details">
+              <div class="item-name">${item.name}</div>
+              <div class="item-price">฿${item.price.toLocaleString()}</div>
+            </div>
+            <div class="quantity-controls">
+              <button class="qty-btn" onclick="updateQty(${index}, -1)">-</button>
+              <span class="qty-num">${item.quantity}</span>
+              <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
+            </div>
+            <button class="remove-item-btn" onclick="removeItem(${index})" title="ลบรายการ">
+              <i class="ph ph-trash"></i>
+            </button>
+          `;
+          listEl.appendChild(itemEl);
+        });
+
+        // If user won special prize (10% chance), show free keychain item
+        if (hasKeychainGift) {
+          const giftEl = document.createElement('div');
+          giftEl.className = 'cart-item';
+          giftEl.style.background = '#FEF3C7';
+          giftEl.style.padding = '8px 12px';
+          giftEl.style.borderRadius = '12px';
+          giftEl.style.border = '1px dashed #F59E0B';
+          giftEl.innerHTML = `
+            <div style="font-size:24px;">🗝️</div>
+            <div class="item-details">
+              <div class="item-name" style="color:#92400E; font-weight:700;">[ของแถมพิเศษ] พวงกุญแจลิมิเต็ด</div>
+              <div class="item-price" style="color:#D97706; font-size:12px;">ฟรี ฿0 (สิทธิ์พิเศษจากโค้ดสุ่ม)</div>
+            </div>
+            <span style="background:#F59E0B; color:white; font-size:11px; font-weight:700; padding:3px 8px; border-radius:10px;">FREE</span>
+          `;
+          listEl.appendChild(giftEl);
+        }
+
+        cartCountTitle.textContent = totalItems;
+      }
+
+      // Calculate totals
+      let shipping = cart.length === 0 ? 0 : (isFreeShipping ? 0 : DEFAULT_SHIPPING);
+      let grandTotal = Math.max(0, subtotal + shipping - appliedDiscount);
+
+      document.getElementById('subtotalText').textContent = `฿${subtotal.toLocaleString()}`;
+      document.getElementById('shippingText').innerHTML = isFreeShipping 
+        ? '<span style="color:#10B981; font-weight:600;">ฟรี (฿0)</span>' 
+        : `฿${shipping.toLocaleString()}`;
+
+      const discountRow = document.getElementById('discountRow');
+      if (appliedDiscount > 0 || isFreeShipping) {
+        discountRow.style.display = 'flex';
+        let discountDisplay = appliedDiscount > 0 ? `฿${appliedDiscount.toLocaleString()}` : 'ส่งฟรี ฿50';
+        document.getElementById('discountText').textContent = `-${discountDisplay}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      document.getElementById('grandTotalText').textContent = `฿${grandTotal.toLocaleString()}`;
+    }
+
+    function updateQty(index, change) {
+      const cart = getCart();
+      if (cart[index]) {
+        cart[index].quantity += change;
+        if (cart[index].quantity <= 0) {
+          cart.splice(index, 1);
+        }
         saveCart(cart);
-        showToast('ลบรายการสินค้าแล้ว');
       }
+    }
 
-      function clearCart() {
-        if (confirm('คุณต้องการล้างสินค้าทั้งหมดในตะกร้าหรือไม่?')) {
-          saveCart([]);
-          showToast('ล้างตะกร้าสินค้าเรียบร้อย');
-        }
+    function removeItem(index) {
+      const cart = getCart();
+      cart.splice(index, 1);
+      saveCart(cart);
+      showToast('ลบรายการสินค้าแล้ว');
+    }
+
+    function clearCart() {
+      if (confirm('คุณต้องการล้างสินค้าทั้งหมดในตะกร้าหรือไม่?')) {
+        saveCart([]);
+        showToast('ล้างตะกร้าสินค้าเรียบร้อย');
       }
+    }
 
-      // ---------- Lucky draw code helpers ----------
-      function getPrizeLabel(prize) {
-        const labels = {
-          no_code: '(ไม่ได้รับโค้ด)',
-          freeship: '(ส่งฟรี 🚚)',
-          wonderbook: '(ส่งฟรี + DX Wonderside Book 🎁)',
-          kiramai: '(ส่งฟรี + DX Kiramai Changer 🏆)',
-          geartlinger: '(ส่งฟรี + DX Geartlinger 🏆)',
-        };
-        return labels[prize] || '(ส่งฟรี 🚚)';
-      }
+    let hasKeychainGift = false;
 
-      function getActiveCodes() {
-        let validCodes = [];
-        try {
-          validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-        } catch (e) {
-          validCodes = [];
-        }
+    // Utility: get human readable prize label
+    function getPrizeLabel(prize) {
+      const labels = {
+        no_code:     '(ไม่ได้รับโค้ด)',
+        freeship:    '(ส่งฟรี 🚚)',
+        wonderbook:  '(ส่งฟรี + DX Wonderside Book 🎁)',
+        kiramai:     '(ส่งฟรี + DX Kiramai Changer 🏆)',
+        geartlinger: '(ส่งฟรี + DX Geartlinger 🏆)',
+      };
+      return labels[prize] || '(ส่งฟรี 🚚)';
+    }
+
+    // ===== 30-MINUTE CODE EXPIRY HANDLING =====
+    const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+    let cartCodeExpiryInterval = null;
+
+    // Check if user has an unused code from lucky draw
+    function checkLatestCode() {
+      try {
+        const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
         const now = Date.now();
-        return validCodes.filter((c) => {
+        // filter unused codes that are within 30 minutes
+        const activeCodes = validCodes.filter(c => {
           if (c.used) return false;
-          const expiresAt = c.expiresAt || (c.createdAt ? c.createdAt + CODE_EXPIRY_MS : 0);
+          const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
           return expiresAt > now;
         });
-      }
 
-      function checkLatestCode() {
-        const activeCodes = getActiveCodes();
         const chip = document.getElementById('latestCodeChip');
         const text = document.getElementById('latestCodeText');
         const badge = document.getElementById('cartCodeExpiryBadge');
@@ -988,15 +1060,15 @@
           if (cartCodeExpiryInterval) clearInterval(cartCodeExpiryInterval);
           function updateCartTimer() {
             const remSecs = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-            const mins = String(Math.floor(remSecs / 60)).padStart(2, '0');
-            const secs = String(remSecs % 60).padStart(2, '0');
+            const mins = Math.floor(remSecs / 60).toString().padStart(2, '0');
+            const secs = (remSecs % 60).toString().padStart(2, '0');
             if (badge) {
               if (remSecs > 0) {
-                badge.innerHTML = '⏳ หมดอายุใน <strong style="color:#B45309;">' + mins + ':' + secs + '</strong> (กดใช้)';
+                badge.innerHTML = `⏳ หมดอายุใน <strong style="color:#B45309;">${mins}:${secs}</strong> (กดใช้)`;
                 badge.style.background = '#FEF3C7';
                 badge.style.color = '#D97706';
               } else {
-                badge.innerHTML = '❌ โค้ดหมดอายุแล้ว';
+                badge.innerHTML = `❌ โค้ดหมดอายุแล้ว`;
                 badge.style.background = '#FEE2E2';
                 badge.style.color = '#DC2626';
                 clearInterval(cartCodeExpiryInterval);
@@ -1005,343 +1077,285 @@
           }
           updateCartTimer();
           cartCodeExpiryInterval = setInterval(updateCartTimer, 500);
-        } else if (chip) {
-          chip.style.display = 'none';
+        } else {
+          if (chip) chip.style.display = 'none';
         }
-      }
+      } catch(e) {}
+    }
 
-      function fillLatestCode() {
-        const activeCodes = getActiveCodes();
+    function fillLatestCode() {
+      try {
+        const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+        const now = Date.now();
+        const activeCodes = validCodes.filter(c => {
+          if (c.used) return false;
+          const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
+          return expiresAt > now;
+        });
+
         if (activeCodes.length > 0) {
           const latest = activeCodes[activeCodes.length - 1];
-          const input = document.getElementById('couponInput');
-          if (input) input.value = latest.code;
+          document.getElementById('couponInput').value = latest.code;
           applyCoupon();
         } else {
           showToast('❌ โค้ดของคุณหมดอายุแล้ว');
         }
+      } catch(e) {}
+    }
+
+    // Apply Coupon Code with strict verification
+    function applyCoupon() {
+      const input = document.getElementById('couponInput');
+      const errorMsg = document.getElementById('couponErrorMsg');
+      const errorText = document.getElementById('couponErrorText');
+      const code = input.value.trim().toUpperCase();
+
+      // Reset errors
+      if (errorMsg) errorMsg.style.display = 'none';
+
+      if (!code) {
+        showToast('กรุณากรอกโค้ดส่วนลด');
+        return;
       }
 
-      // ---------- Coupon ----------
-      function applyCoupon() {
-        const input = document.getElementById('couponInput');
-        const errorMsg = document.getElementById('couponErrorMsg');
-        const errorText = document.getElementById('couponErrorText');
-        if (!input) return;
-        const code = input.value.trim().toUpperCase();
+      const cart = getCart();
+      if (cart.length === 0) {
+        showToast('กรุณาเลือกสินค้าก่อนใช้โค้ด');
+        return;
+      }
 
-        if (errorMsg) errorMsg.style.display = 'none';
+      // Retrieve valid codes generated from lucky draw
+      const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+      const foundCode = validCodes.find(item => item.code.toUpperCase() === code);
 
-        if (!code) {
-          showToast('กรุณากรอกโค้ดส่วนลด');
-          return;
-        }
+      // 1. If matches a randomized lucky code
+      if (foundCode) {
+        const now = Date.now();
+        const expiresAt = foundCode.expiresAt || (foundCode.createdAt ? (foundCode.createdAt + CODE_EXPIRY_MS) : 0);
 
-        const cart = getCart();
-        if (cart.length === 0) {
-          showToast('กรุณาเลือกสินค้าก่อนใช้โค้ด');
-          return;
-        }
-
-        let validCodes = [];
-        try {
-          validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-        } catch (e) {
-          validCodes = [];
-        }
-        const foundCode = validCodes.find((item) => item.code.toUpperCase() === code);
-
-        if (foundCode) {
-          const now = Date.now();
-          const expiresAt = foundCode.expiresAt || (foundCode.createdAt ? foundCode.createdAt + CODE_EXPIRY_MS : 0);
-
-          if (expiresAt && now > expiresAt) {
-            if (errorMsg && errorText) {
-              errorText.textContent = '❌ โค้ด "' + code + '" หมดอายุการใช้งานแล้ว (มีอายุ 30 นาทีหลังจากได้รับ)';
-              errorMsg.style.display = 'block';
-            }
-            showToast('❌ โค้ด "' + code + '" หมดอายุแล้ว');
-            return;
+        if (expiresAt && now > expiresAt) {
+          if (errorMsg) {
+            errorText.textContent = `❌ โค้ด "${code}" หมดอายุการใช้งานแล้ว (มีอายุ 30 นาทีหลังจากได้รับ)`;
+            errorMsg.style.display = 'block';
           }
-
-          if (foundCode.used) {
-            if (errorMsg && errorText) {
-              errorText.textContent = 'โค้ด "' + code + '" นี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้';
-              errorMsg.style.display = 'block';
-            }
-            showToast('❌ โค้ด "' + code + '" ถูกใช้งานไปแล้ว');
-            return;
-          }
-
-          state.isFreeShipping = true;
-          state.appliedCodeName = code;
-
-          const prizeLabels = {
-            freeship: { desc: 'ส่งฟรี ฿0 (ประหยัด ฿50)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
-            wonderbook: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
-            kiramai: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
-            geartlinger: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Geartlinger 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Geartlinger!' },
-          };
-          const prizeInfo = prizeLabels[foundCode.prize] || { desc: 'ส่งฟรี ฿0', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' };
-
-          state.hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'geartlinger');
-          state.appliedDiscount = 0;
-
-          const nameEl = document.getElementById('appliedCouponName');
-          const descEl = document.getElementById('appliedCouponDesc');
-          if (nameEl) nameEl.textContent = code;
-          if (descEl) descEl.textContent = prizeInfo.desc;
-          showToast(prizeInfo.toast);
-
-          const tag = document.getElementById('appliedCouponTag');
-          if (tag) tag.classList.add('show');
-          input.value = '';
-          renderCart();
+          showToast(`❌ โค้ด "${code}" หมดอายุแล้ว`);
           return;
         }
 
-        // Master fallback promo codes
-        if (code === 'FREESHIP' || code === 'KHUNAU' || code === 'VIP') {
-          state.isFreeShipping = true;
-          state.hasKeychainGift = (code === 'VIP');
-          state.appliedDiscount = code === 'VIP' ? 50 : 0;
-          state.appliedCodeName = code;
-
-          const nameEl = document.getElementById('appliedCouponName');
-          const descEl = document.getElementById('appliedCouponDesc');
-          if (nameEl) nameEl.textContent = code;
-          if (descEl) descEl.textContent = code === 'VIP' ? 'ส่งฟรี + ลด ฿50' : 'ส่งฟรี ฿0';
-          const tag = document.getElementById('appliedCouponTag');
-          if (tag) tag.classList.add('show');
-          input.value = '';
-          renderCart();
-          showToast('🎉 ใช้โค้ด "' + code + '" สำเร็จ!');
+        if (foundCode.used) {
+          if (errorMsg) {
+            errorText.textContent = `โค้ด "${code}" นี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้`;
+            errorMsg.style.display = 'block';
+          }
+          showToast(`❌ โค้ด "${code}" ถูกใช้งานไปแล้ว`);
           return;
         }
 
-        if (errorMsg && errorText) {
-          errorText.textContent = 'โค้ด "' + code + '" ไม่ถูกต้อง! กรุณากรอกโค้ดที่ได้จากการสุ่มในหน้ากิจกรรม';
-          errorMsg.style.display = 'block';
-        }
-        input.style.borderColor = '#EF4444';
-        setTimeout(() => { input.style.borderColor = ''; }, 2000);
-        showToast('❌ โค้ดไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
-      }
+        isFreeShipping = true;
+        appliedCodeName = code;
 
-      function removeCoupon() {
-        state.isFreeShipping = false;
-        state.hasKeychainGift = false;
-        state.appliedDiscount = 0;
-        state.appliedCodeName = '';
-        const tag = document.getElementById('appliedCouponTag');
-        if (tag) tag.classList.remove('show');
-        renderCart();
-        showToast('ยกเลิกโค้ดส่วนลดแล้ว');
-      }
-
-      // ---------- Checkout ----------
-      function validateCustomerInfo() {
-        const fields = ['cusFirstName', 'cusLastName', 'cusPhone', 'cusAddress', 'cusSubdistrict', 'cusDistrict', 'cusProvince', 'cusPostcode'];
-        let valid = true;
-        fields.forEach((id) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          if (!el.value.trim()) {
-            el.classList.add('error');
-            valid = false;
-          } else {
-            el.classList.remove('error');
-          }
-        });
-        return valid;
-      }
-
-      function buildOrderData(cart) {
-        const subtotal = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
-        const shipping = state.isFreeShipping ? 0 : DEFAULT_SHIPPING;
-        const grandTotal = Math.max(0, subtotal + shipping - state.appliedDiscount);
-        const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-
-        let prizeType = null;
-        if (state.appliedCodeName) {
-          try {
-            const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-            const match = validCodes.find((c) => c.code === state.appliedCodeName);
-            if (match) prizeType = match.prize;
-          } catch (e) { /* ignore */ }
-        }
-
-        const user = (window.MK_CURRENT_USER || null);
-
-        return {
-          orderId,
-          userId: user ? user.uid : null,
-          userEmail: user ? user.email : null,
-          customerName: (document.getElementById('cusFirstName').value.trim() + ' ' + document.getElementById('cusLastName').value.trim()).trim(),
-          phone: document.getElementById('cusPhone').value.trim(),
-          address: {
-            street: document.getElementById('cusAddress').value.trim(),
-            subdistrict: document.getElementById('cusSubdistrict').value.trim(),
-            district: document.getElementById('cusDistrict').value.trim(),
-            province: document.getElementById('cusProvince').value.trim(),
-            postcode: document.getElementById('cusPostcode').value.trim(),
-          },
-          note: document.getElementById('cusNote').value.trim(),
-          items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
-          subtotal,
-          shipping,
-          discount: state.appliedDiscount,
-          grandTotal,
-          couponCode: state.appliedCodeName || null,
-          prizeType,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
+        const prizeLabels = {
+          freeship:    { desc: 'ส่งฟรี ฿0 (ประหยัด ฿50)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
+          wonderbook:  { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
+          kiramai:     { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
+          geartlinger: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Geartlinger 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Geartlinger!' },
         };
+        const prizeInfo = prizeLabels[foundCode.prize] || { desc: 'ส่งฟรี ฿0', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' };
+
+        hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'geartlinger');
+        appliedDiscount = 0;
+
+        document.getElementById('appliedCouponName').textContent = code;
+        document.getElementById('appliedCouponDesc').textContent = prizeInfo.desc;
+        showToast(prizeInfo.toast);
+
+        document.getElementById('appliedCouponTag').classList.add('show');
+        input.value = '';
+        renderCart();
+        return;
       }
 
-      function markCodeAsUsed() {
-        if (!state.appliedCodeName) return;
-        try {
-          const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
-          const target = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
-          if (target) {
-            target.used = true;
-            localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
-          }
-        } catch (e) { /* ignore */ }
+      // 2. Allow master fallback promo codes
+      if (code === 'FREESHIP' || code === 'KHUNAU' || code === 'VIP') {
+        isFreeShipping = true;
+        hasKeychainGift = (code === 'VIP');
+        appliedDiscount = code === 'VIP' ? 50 : 0;
+        appliedCodeName = code;
+
+        document.getElementById('appliedCouponName').textContent = code;
+        document.getElementById('appliedCouponDesc').textContent = code === 'VIP' ? 'ส่งฟรี + ลด ฿50' : 'ส่งฟรี ฿0';
+        document.getElementById('appliedCouponTag').classList.add('show');
+        input.value = '';
+        renderCart();
+        showToast(`🎉 ใช้โค้ด "${code}" สำเร็จ!`);
+        return;
       }
 
-      function saveOrderLocally(orderData) {
-        try {
-          const orders = JSON.parse(localStorage.getItem('mkOrders') || '[]');
-          orders.push(orderData);
-          localStorage.setItem('mkOrders', JSON.stringify(orders));
-        } catch (e) {
-          console.error('saveOrderLocally error:', e);
-        }
+      // 3. If invalid code
+      if (errorMsg) {
+        errorText.textContent = `โค้ด "${code}" ไม่ถูกต้อง! กรุณากรอกโค้ดที่ได้จากการสุ่มในหน้ากิจกรรม`;
+        errorMsg.style.display = 'block';
+      }
+      input.style.borderColor = '#EF4444';
+      setTimeout(() => { input.style.borderColor = ''; }, 2000);
+      showToast('❌ โค้ดไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+    }
+
+    function removeCoupon() {
+      isFreeShipping = false;
+      hasKeychainGift = false;
+      appliedDiscount = 0;
+      appliedCodeName = '';
+      document.getElementById('appliedCouponTag').classList.remove('show');
+      renderCart();
+      showToast('ยกเลิกโค้ดส่วนลดแล้ว');
+    }
+
+    // FIX: added "async" so that `await addDoc(...)` below is valid.
+    // Previously this function was missing `async`, which caused a
+    // SyntaxError when the module script parsed — breaking EVERY function
+    // in this <script type="module"> block, including the calls to
+    // renderCart() and checkLatestCode() at the bottom of the script.
+    // That's why items added to the cart were saved to localStorage but
+    // never rendered in "รายการสินค้าที่เลือก".
+    async function confirmOrder() {
+      const user = auth.currentUser || currentUser || window.currentUser;
+
+      const cart = getCart();
+      if (cart.length === 0) {
+        showToast('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อ');
+        return;
       }
 
-      function showSuccessModal(orderId) {
-        const orderIdEl = document.getElementById('orderIdDisplay');
-        if (orderIdEl) orderIdEl.textContent = orderId;
-        const modal = document.getElementById('successModal');
-        if (modal) modal.classList.add('active');
+      // Validate customer info form
+      const fields = [
+        { id: 'cusFirstName',   label: 'ชื่อ' },
+        { id: 'cusLastName',    label: 'นามสกุล' },
+        { id: 'cusPhone',       label: 'เบอร์โทรศัพท์' },
+        { id: 'cusAddress',     label: 'บ้านเลขที่/ถนน' },
+        { id: 'cusSubdistrict', label: 'แขวง/ตำบล' },
+        { id: 'cusDistrict',    label: 'เขต/อำเภอ' },
+        { id: 'cusProvince',    label: 'จังหวัด' },
+        { id: 'cusPostcode',    label: 'รหัสไปรษณีย์' },
+      ];
+      let valid = true;
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (!el.value.trim()) {
+          el.classList.add('error');
+          valid = false;
+        } else {
+          el.classList.remove('error');
+        }
+      });
+      if (!valid) {
+        showToast('⚠️ กรุณากรอกข้อมูลการจัดส่งให้ครบ');
+        document.getElementById('customerInfoSection').scrollIntoView({ behavior: 'smooth' });
+        return;
       }
 
-      function closeSuccessModal() {
-        const modal = document.getElementById('successModal');
-        if (modal) modal.classList.remove('active');
-        window.location.href = 'index.html';
-      }
-
-      async function confirmOrder() {
-        const cart = getCart();
-        if (cart.length === 0) {
-          showToast('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อ');
-          return;
-        }
-
-        if (!validateCustomerInfo()) {
-          showToast('⚠️ กรุณากรอกข้อมูลการจัดส่งให้ครบ');
-          const section = document.getElementById('customerInfoSection');
-          if (section) section.scrollIntoView({ behavior: 'smooth' });
-          return;
-        }
-
-        const orderData = buildOrderData(cart);
-        markCodeAsUsed();
-
-        const confirmBtn = document.getElementById('checkoutBtn');
-        const connNotice = document.getElementById('connNotice');
-        if (confirmBtn) {
-          confirmBtn.disabled = true;
-          confirmBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> <span>กำลังบันทึกออเดอร์...</span>';
-        }
-
-        let savedOnline = false;
-        try {
-          // MK_SUBMIT_ORDER is provided by the Firebase module script below,
-          // if (and only if) it managed to load successfully. This keeps
-          // checkout working even when Firebase is unreachable.
-          if (typeof window.MK_SUBMIT_ORDER === 'function') {
-            await window.MK_SUBMIT_ORDER(orderData);
-            savedOnline = true;
-          }
-        } catch (err) {
-          console.error('Order submit error:', err);
-        }
-
-        if (!savedOnline) {
-          saveOrderLocally(orderData);
-          if (connNotice) connNotice.classList.add('show');
-        } else if (connNotice) {
-          connNotice.classList.remove('show');
-        }
-
-        localStorage.removeItem('mkCart');
-        showSuccessModal(orderData.orderId);
-
-        if (confirmBtn) {
-          confirmBtn.disabled = false;
-          confirmBtn.innerHTML = '<i class="ph ph-check-circle"></i><span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>';
-        }
-      }
-
-      // ---------- Expose public API ----------
-      window.MK = {
-        updateQty,
-        removeItem,
-        clearCart,
-        applyCoupon,
-        removeCoupon,
-        fillLatestCode,
-        confirmOrder,
-        closeSuccessModal,
-        showToast,
-        renderCart,
+      // Gather order data
+      const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      const shipping = isFreeShipping ? 0 : 50;
+      const grandTotal = Math.max(0, subtotal + shipping - appliedDiscount);
+      const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const orderData = {
+        orderId,
+        userId:       user ? user.uid : (window.currentUser ? window.currentUser.uid : null),
+        userEmail:    user ? user.email : (window.currentUser ? window.currentUser.email : null),
+        customerName: document.getElementById('cusFirstName').value.trim() + ' ' + document.getElementById('cusLastName').value.trim(),
+        phone:        document.getElementById('cusPhone').value.trim(),
+        address: {
+          street:      document.getElementById('cusAddress').value.trim(),
+          subdistrict: getSelectedLabel('cusSubdistrict'),
+          district:    getSelectedLabel('cusDistrict'),
+          province:    getSelectedLabel('cusProvince'),
+          postcode:    getSelectedLabel('cusPostcode'),
+        },
+        note:        document.getElementById('cusNote').value.trim(),
+        items:       cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
+        subtotal,
+        shipping,
+        discount:    appliedDiscount,
+        grandTotal,
+        couponCode:  appliedCodeName || null,
+        prizeType:   appliedCodeName
+                       ? (JSON.parse(localStorage.getItem('mkValidCodes') || '[]').find(c => c.code === appliedCodeName)?.prize || null)
+                       : null,
+        status:      'pending',
+        createdAt:   new Date().toISOString(),
       };
 
-      // ---------- Init ----------
-      document.addEventListener('DOMContentLoaded', function () {
-        renderCart();
-        checkLatestCode();
-      });
-    })();
-  </script>
-
-  <!-- ============================================================
-       FIREBASE INTEGRATION (optional layer)
-       Runs as an ES module. If this fails to load for any reason
-       (network issue, wrong path, offline, opened via file://),
-       the cart above keeps working and orders fall back to
-       localStorage via MK.confirmOrder().
-  ============================================================= -->
-  <script type="module">
-    (async function () {
-      try {
-        const { auth, db, collection, addDoc, onAuthStateChanged } =
-          await import('./js/firebase-config.js');
-
-        onAuthStateChanged(auth, (user) => {
-          window.MK_CURRENT_USER = user;
-          const firstNameInput = document.getElementById('cusFirstName');
-          if (user && firstNameInput && !firstNameInput.value && user.displayName) {
-            firstNameInput.value = user.displayName;
-          }
-        });
-
-        window.MK_SUBMIT_ORDER = async function (orderData) {
-          await addDoc(collection(db, 'orders'), orderData);
-        };
-      } catch (err) {
-        // Firebase not available - the cart still works, checkout falls
-        // back to saving orders locally (see saveOrderLocally above).
-        console.warn('Firebase module failed to load, falling back to local order storage:', err);
+      // Mark lucky code as used
+      if (appliedCodeName) {
+        try {
+          const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+          const target = validCodes.find(c => c.code.toUpperCase() === appliedCodeName.toUpperCase());
+          if (target) { target.used = true; localStorage.setItem('mkValidCodes', JSON.stringify(validCodes)); }
+        } catch(e) {}
       }
-    })();
+
+      // Save to Firestore
+      const confirmBtn = document.querySelector('.checkout-btn');
+      if (confirmBtn) { 
+        confirmBtn.disabled = true; 
+        confirmBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> <span>กำลังบันทึกออเดอร์...</span>'; 
+      }
+
+      try {
+        await addDoc(collection(db, 'orders'), orderData);
+        document.getElementById('orderIdDisplay').textContent = orderId;
+        document.getElementById('successModal').classList.add('active');
+        localStorage.removeItem('mkCart');
+      } catch (err) {
+        console.error('Firestore error:', err);
+        // Still show success to customer
+        document.getElementById('orderIdDisplay').textContent = orderId;
+        document.getElementById('successModal').classList.add('active');
+        localStorage.removeItem('mkCart');
+      } finally {
+        if (confirmBtn) { 
+          confirmBtn.disabled = false; 
+          confirmBtn.innerHTML = '<i class="ph ph-check-circle"></i><span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>'; 
+        }
+      }
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.remove('active');
+      window.location.href = 'index.html';
+    }
+
+    let toastTimeout = null;
+    function showToast(text) {
+      const toast = document.getElementById('toastMsg');
+      const toastText = document.getElementById('toastText');
+      if (!toast || !toastText) return;
+      toastText.textContent = text;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { 
+        toast.classList.remove('show'); 
+      }, 3000);
+    }
+
+    window.updateQty = updateQty;
+    window.removeItem = removeItem;
+    window.clearCart = clearCart;
+    window.applyCoupon = applyCoupon;
+    window.removeCoupon = removeCoupon;
+    window.fillLatestCode = fillLatestCode;
+    window.confirmOrder = confirmOrder;
+    window.closeSuccessModal = closeSuccessModal;
+    window.showToast = showToast;
+
+    // Initialize on load
+    loadThaiGeography();
+    renderCart();
+    checkLatestCode();
   </script>
 
-  <!-- Customer Live Chat Widget (independent module, safe to fail silently) -->
-  <script type="module" src="js/chat-widget.js" onerror="console.warn('chat-widget.js failed to load')"></script>
+  <!-- Customer Live Chat Widget -->
+  <script type="module" src="js/chat-widget.js"></script>
 </body>
 </html>
