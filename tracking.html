@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เลขพัสดุ | KHUN AU Mystery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --red: #D3222A;
+      --red-dark: #A51A20;
+      --gold: #F5C842;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --bg: #F8F9FA;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      padding: 76px 16px 32px;
+      background: radial-gradient(ellipse at top, #3A1115 0%, #170609 58%, #0A0203 100%);
+      color: var(--text);
+      font-family: 'Prompt', sans-serif;
+    }
+
+    .top-nav {
+      position: fixed;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text);
+      font-size: 20px;
+      text-decoration: none;
+    }
+
+    .nav-title { font-size: 16px; font-weight: 700; }
+    .nav-spacer { width: 40px; }
+
+    .container { width: 100%; max-width: 620px; margin: 0 auto; }
+
+    .hero {
+      padding: 18px 8px 22px;
+      color: white;
+      text-align: center;
+    }
+
+    .hero-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      border: 2px solid rgba(245,200,66,.7);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #4A171B, #21080A);
+      color: var(--gold);
+      font-size: 32px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.3);
+    }
+
+    .hero h1 { font-size: 24px; font-weight: 800; }
+    .hero p { margin-top: 4px; color: #E8C9CB; font-size: 13px; }
+
+    .panel {
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 12px 36px rgba(0,0,0,.3);
+    }
+
+    .loading, .empty, .error, .login-needed {
+      padding: 34px 18px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .loading i, .empty i, .error i, .login-needed i {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 36px;
+    }
+
+    .error { color: #B91C1C; }
+
+    .login-needed a {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .order-list { display: grid; gap: 14px; }
+
+    .order-card {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: white;
+    }
+
+    .order-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      background: #FFFBFB;
+    }
+
+    .order-label { color: var(--muted); font-size: 11px; }
+    .order-id { color: var(--red); font-size: 15px; font-weight: 800; }
+    .order-date { color: var(--muted); font-size: 11px; text-align: right; }
+
+    .tracking-box { padding: 14px 16px 4px; }
+    .tracking-label { color: var(--muted); font-size: 12px; }
+    .tracking-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .tracking-number {
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .3px;
+    }
+
+    .tracking-pending { color: #B45309; font-size: 13px; font-weight: 600; }
+
+    .copy-btn {
+      flex-shrink: 0;
+      padding: 7px 10px;
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .status-area { padding: 16px; }
+    .status-title { margin-bottom: 14px; font-size: 12px; font-weight: 700; }
+    .timeline { display: flex; justify-content: space-between; position: relative; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 13px;
+      left: 13%;
+      right: 13%;
+      height: 3px;
+      background: #E5E7EB;
+    }
+
+    .step {
+      position: relative;
+      z-index: 1;
+      width: 33.33%;
+      color: #9CA3AF;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px;
+      border: 3px solid white;
+      border-radius: 50%;
+      background: #E5E7EB;
+      box-shadow: 0 0 0 1px #D1D5DB;
+      font-size: 13px;
+    }
+
+    .step.done, .step.current { color: var(--red); font-weight: 700; }
+    .step.done .step-dot, .step.current .step-dot {
+      background: var(--red);
+      color: white;
+      box-shadow: 0 0 0 1px var(--red);
+    }
+
+    .cancelled {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #FEF2F2;
+      color: #B91C1C;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .order-total {
+      padding: 11px 16px;
+      border-top: 1px solid #F3F4F6;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .order-total strong { color: var(--red); font-size: 15px; }
+
+    @media (max-width: 430px) {
+      .panel { padding: 14px; }
+      .order-head { padding: 13px; }
+      .tracking-box, .status-area, .order-total { padding-left: 13px; padding-right: 13px; }
+      .tracking-number { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <a href="login.html" class="back-btn" aria-label="กลับหน้าโปรไฟล์"><i class="ph ph-arrow-left"></i></a>
+    <span class="nav-title">หน้าเลขพัสดุ</span>
+    <div class="nav-spacer"></div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-icon"><i class="ph ph-truck"></i></div>
+      <h1>เลขพัสดุของฉัน</h1>
+      <p>ติดตามสถานะคำสั่งซื้อจากระบบร้านค้า</p>
+    </section>
+
+    <section class="panel">
+      <div id="trackingContent">
+        <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db, onAuthStateChanged } from './js/firebase-config.js';
+    import { collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const content = document.getElementById('trackingContent');
+
+    const statusInfo = {
+      pending: { label: 'รอดำเนินการ', step: 0 },
+      paid: { label: 'ชำระเงินแล้ว', step: 1 },
+      shipped: { label: 'จัดส่งแล้ว', step: 2 },
+      cancelled: { label: 'ยกเลิก', step: -1 }
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = value?.toDate ? value.toDate() : new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('th-TH', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString('th-TH');
+    }
+
+    function renderStep(label, icon, active) {
+      return `<div class="step ${active ? 'done' : ''}">
+        <div class="step-dot"><i class="ph ${icon}"></i></div>
+        <span>${label}</span>
+      </div>`;
+    }
+
+    function renderOrder(order) {
+      const status = statusInfo[order.status] || statusInfo.pending;
+      const tracking = String(order.trackingNumber || '').trim();
+      const trackingHtml = tracking
+        ? `<div class="tracking-row">
+             <span class="tracking-number">${escapeHtml(tracking)}</span>
+             <button class="copy-btn" type="button" data-tracking="${escapeHtml(tracking)}"><i class="ph ph-copy"></i> คัดลอก</button>
+           </div>`
+        : '<div class="tracking-pending">รอแอดมินเพิ่มเลขพัสดุ</div>';
+
+      let statusHtml;
+      if (order.status === 'cancelled') {
+        statusHtml = '<div class="cancelled"><i class="ph ph-x-circle"></i> ออเดอร์นี้ถูกยกเลิก</div>';
+      } else {
+        statusHtml = `<div class="status-title">สถานะปัจจุบัน: ${escapeHtml(status.label)}</div>
+          <div class="timeline">
+            ${renderStep('รับออเดอร์', 'ph-receipt', status.step >= 0)}
+            ${renderStep('ชำระเงินแล้ว', 'ph-check-circle', status.step >= 1)}
+            ${renderStep('จัดส่งแล้ว', 'ph-truck', status.step >= 2)}
+          </div>`;
+      }
+
+      return `<article class="order-card">
+        <div class="order-head">
+          <div><div class="order-label">หมายเลขออเดอร์</div><div class="order-id">${escapeHtml(order.orderId || order._id || '-')}</div></div>
+          <div class="order-date">${formatDate(order.createdAt)}</div>
+        </div>
+        <div class="tracking-box">
+          <div class="tracking-label">เลขพัสดุ</div>
+          ${trackingHtml}
+        </div>
+        <div class="status-area">${statusHtml}</div>
+        <div class="order-total">ยอดรวม <strong>฿${formatMoney(order.grandTotal)}</strong></div>
+      </article>`;
+    }
+
+    function bindCopyButtons() {
+      document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          const tracking = button.dataset.tracking || '';
+          try {
+            await navigator.clipboard.writeText(tracking);
+            button.innerHTML = '<i class="ph ph-check"></i> คัดลอกแล้ว';
+            setTimeout(() => {
+              button.innerHTML = '<i class="ph ph-copy"></i> คัดลอก';
+            }, 1800);
+          } catch (error) {
+            window.prompt('คัดลอกเลขพัสดุนี้', tracking);
+          }
+        });
+      });
+    }
+
+    async function loadOrders(user) {
+      try {
+        // ออเดอร์ใหม่ควรบันทึก userId: auth.currentUser.uid ตอนสร้างออเดอร์
+        const userQuery = query(collection(db, 'orders'), where('userId', '==', user.uid));
+        let snapshot = await getDocs(userQuery);
+
+        // รองรับออเดอร์เก่าที่อาจเก็บอีเมลแทน userId
+        if (snapshot.empty && user.email) {
+          const emailQuery = query(collection(db, 'orders'), where('customerEmail', '==', user.email));
+          snapshot = await getDocs(emailQuery);
+        }
+
+        const orders = snapshot.docs
+          .map(docSnap => ({ _id: docSnap.id, ...docSnap.data() }))
+          .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+        if (!orders.length) {
+          content.innerHTML = `<div class="empty"><i class="ph ph-package"></i><div>ยังไม่พบคำสั่งซื้อของคุณ</div><small>เมื่อแอดมินบันทึกเลขพัสดุแล้ว ข้อมูลจะแสดงที่หน้านี้</small></div>`;
+          return;
+        }
+
+        content.innerHTML = `<div class="order-list">${orders.map(renderOrder).join('')}</div>`;
+        bindCopyButtons();
+      } catch (error) {
+        console.error('Load tracking orders error:', error);
+        content.innerHTML = `<div class="error"><i class="ph ph-warning-circle"></i>ไม่สามารถโหลดข้อมูลเลขพัสดุได้<br><small>${escapeHtml(error.message)}</small></div>`;
+      }
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        content.innerHTML = `<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อดูเลขพัสดุของคุณ</div><a href="login.html">เข้าสู่ระบบ</a></div>`;
+        return;
+      }
+      loadOrders(user);
+    });
+  </script>
+</body>
+</html>
