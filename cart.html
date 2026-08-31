@@ -750,6 +750,11 @@
     const districtSelect = document.getElementById('cusDistrict');
     const subdistrictSelect = document.getElementById('cusSubdistrict');
     const postcodeSelect = document.getElementById('cusPostcode');
+    const THAI_GEOGRAPHY_URLS = [
+      'thai-geography.json',
+      'https://cdn.jsdelivr.net/gh/thailand-geography-data/thailand-geography-json@main/src/geography.json',
+      'https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/geography.json'
+    ];
     let thaiGeography = [];
 
     function fillAddressSelect(select, placeholder, options, valueKey, labelKey) {
@@ -843,14 +848,25 @@
     }
 
     async function loadThaiGeography() {
+      let lastError = null;
       try {
-        const response = await fetch('thai-geography.json', { cache: 'force-cache' });
-        if (!response.ok) throw new Error('โหลดข้อมูลพื้นที่ไม่สำเร็จ');
-        thaiGeography = await response.json();
-        if (!Array.isArray(thaiGeography) || thaiGeography.length === 0) {
-          throw new Error('ไม่พบข้อมูลพื้นที่');
+        for (const url of THAI_GEOGRAPHY_URLS) {
+          try {
+            const response = await fetch(url, { cache: 'force-cache' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data) || data.length === 0) {
+              throw new Error('ไม่พบข้อมูลพื้นที่');
+            }
+            thaiGeography = data;
+            populateProvinces();
+            return;
+          } catch (error) {
+            lastError = error;
+            console.warn(`โหลดข้อมูลพื้นที่จาก ${url} ไม่สำเร็จ`, error);
+          }
         }
-        populateProvinces();
+        throw lastError || new Error('โหลดข้อมูลพื้นที่ไม่สำเร็จ');
       } catch (error) {
         console.error('Thai geography loading error:', error);
         [provinceSelect, districtSelect, subdistrictSelect, postcodeSelect].forEach(select => {
