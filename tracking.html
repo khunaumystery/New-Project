@@ -230,20 +230,39 @@
       text-align: center;
     }
 
-    .order-total {
-      padding: 11px 16px;
+    .flash-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 58px;
+      padding: 8px 16px;
       border-top: 1px solid #F3F4F6;
-      color: var(--muted);
-      font-size: 12px;
-      text-align: right;
+      background: #FFFDE7;
+      text-decoration: none;
+      transition: background .2s ease, transform .2s ease;
     }
 
-    .order-total strong { color: var(--red); font-size: 15px; }
+    .flash-link:hover {
+      background: #FFF9B0;
+    }
+
+    .flash-link:active {
+      transform: scale(.99);
+    }
+
+    .flash-logo {
+      display: block;
+      width: 116px;
+      height: 42px;
+      object-fit: cover;
+      border-radius: 7px;
+      border: 1px solid #FDE047;
+    }
 
     @media (max-width: 430px) {
       .panel { padding: 14px; }
       .order-head { padding: 13px; }
-      .tracking-box, .status-area, .order-total { padding-left: 13px; padding-right: 13px; }
+      .tracking-box, .status-area, .order-total, .flash-link { padding-left: 13px; padding-right: 13px; }
       .tracking-number { font-size: 15px; }
     }
   </style>
@@ -300,10 +319,6 @@
       });
     }
 
-    function formatMoney(value) {
-      return Number(value || 0).toLocaleString('th-TH');
-    }
-
     function renderStep(label, icon, active) {
       return `<div class="step ${active ? 'done' : ''}">
         <div class="step-dot"><i class="ph ${icon}"></i></div>
@@ -343,7 +358,9 @@
           ${trackingHtml}
         </div>
         <div class="status-area">${statusHtml}</div>
-        <div class="order-total">ยอดรวม <strong>฿${formatMoney(order.grandTotal)}</strong></div>
+        <a class="flash-link" href="https://www.flashexpress.co.th/fle/tracking" target="_blank" rel="noopener noreferrer" aria-label="เปิดหน้าติดตามพัสดุ Flash Express">
+          <img class="flash-logo" src="flash_logo.jpg" alt="Flash Express">
+        </a>
       </article>`;
     }
 
