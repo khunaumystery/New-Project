@@ -1064,7 +1064,14 @@
       showToast('ยกเลิกโค้ดส่วนลดแล้ว');
     }
 
-    function confirmOrder() {
+    // FIX: added "async" so that `await addDoc(...)` below is valid.
+    // Previously this function was missing `async`, which caused a
+    // SyntaxError when the module script parsed — breaking EVERY function
+    // in this <script type="module"> block, including the calls to
+    // renderCart() and checkLatestCode() at the bottom of the script.
+    // That's why items added to the cart were saved to localStorage but
+    // never rendered in "รายการสินค้าที่เลือก".
+    async function confirmOrder() {
       const user = auth.currentUser || currentUser || window.currentUser;
 
       const cart = getCart();
