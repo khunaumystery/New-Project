@@ -1225,7 +1225,7 @@
             <i class="ph ph-question"></i>
           </button>
         </h3>
-        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 1 ชั่วโมง)</p>
+        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 5 ชั่วโมง)</p>
       </div>
 
       <!-- 3D Interactive Gift Box Scene -->
@@ -1320,7 +1320,7 @@
       <!-- Timer Bar -->
       <div class="lucky-timer-bar" id="timerSection">
         <i class="ph ph-timer"></i>
-        <span>สุ่มได้ใหม่อีกครั้งใน: <strong class="timer-pill" id="timerDisplay">01:00</strong></span>
+        <span>สุ่มได้ใหม่อีกครั้งใน: <strong class="timer-pill" id="timerDisplay">05:00:00</strong></span>
       </div>
     </section>
 
@@ -1463,8 +1463,8 @@
 
   <!-- Lucky Draw Scripts -->
   <script>
-    const COOLDOWN_MS = 60 * 60 * 1000; // 1 ชั่วโมง (3,600,000 ms)
-    const TOTAL_SECS = 3600; // 3600 วินาที
+    const COOLDOWN_MS = 5 * 60 * 60 * 1000; // 5 ชั่วโมง (18,000,000 ms)
+    const TOTAL_SECS = 18000; // 18000 วินาที (5 ชั่วโมง)
     let timerInterval = null;
     let currentCode = '';
     let lastSpinTime = null;
