@@ -339,12 +339,132 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .odds-info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(245, 200, 66, 0.15);
+      border: 1px solid rgba(245, 200, 66, 0.5);
+      color: var(--gold);
+      -webkit-text-fill-color: var(--gold);
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      vertical-align: middle;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .odds-info-btn:hover {
+      background: rgba(245, 200, 66, 0.3);
+    }
+
+    .odds-info-btn:active {
+      transform: scale(0.9);
     }
 
     .lucky-card-desc {
       font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
+    }
+
+    /* Odds Info Modal */
+    .odds-modal-box {
+      background: #1B0609;
+      border: 1.5px solid rgba(245, 200, 66, 0.4);
+      border-radius: 22px;
+      padding: 22px 20px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+
+    .odds-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .odds-modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .odds-modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .odds-modal-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .odds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .odds-table th {
+      text-align: left;
+      color: var(--gold);
+      font-weight: 700;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(245, 200, 66, 0.3);
+    }
+
+    .odds-table th:last-child,
+    .odds-table td:last-child {
+      text-align: right;
+    }
+
+    .odds-table td {
+      padding: 9px 6px;
+      color: #F0F0F0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .odds-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .odds-table td.odds-value {
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .odds-guaranteed {
+      color: #34D399 !important;
+    }
+
+    .odds-modal-footnote {
+      margin-top: 12px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
 
     /* Gift Box Scene */
@@ -1099,7 +1219,12 @@
     <section class="lucky-draw-card" id="luckyDrawSection">
       <div class="lucky-card-header">
         <span class="lucky-card-tag"><i class="ph ph-sparkle"></i> DAILY LUCKY SPIN</span>
-        <h3 class="lucky-card-title"> LUCKY BOOK 🎁</h3>
+        <h3 class="lucky-card-title">
+          LUCKY BOOK 🎁
+          <button type="button" class="odds-info-btn" id="oddsInfoBtn" onclick="showOddsModal()" aria-label="ดูเปอร์เซ็นต์โอกาสได้รับรางวัล" title="ดูเปอร์เซ็นต์โอกาส">
+            <i class="ph ph-question"></i>
+          </button>
+        </h3>
         <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 1 ชั่วโมง)</p>
       </div>
 
@@ -1289,6 +1414,50 @@
     </div>
   </div>
 
+  <!-- Modal: Lucky Draw Odds Info -->
+  <div class="modal-overlay" id="oddsInfoModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+    <div class="odds-modal-box">
+      <div class="odds-modal-header">
+        <span class="odds-modal-title">หีบ LUCKY BOOK (ประจำวัน)</span>
+        <button type="button" class="odds-modal-close" onclick="closeOddsModal()" aria-label="ปิด">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <p class="odds-modal-sub">สุ่มได้ 1 ครั้งทุก 1 ชั่วโมง — จะได้รับ 1 รางวัลตามความน่าจะเป็นด้านล่าง</p>
+      <table class="odds-table">
+        <thead>
+          <tr>
+            <th>รายการรางวัล</th>
+            <th>โอกาสได้รับ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>❌ ไม่ได้รับโค้ด</td>
+            <td class="odds-value">48%</td>
+          </tr>
+          <tr>
+            <td>🚚 โค้ดส่งฟรี</td>
+            <td class="odds-value">49%</td>
+          </tr>
+          <tr>
+            <td>🎁 ส่งฟรี + DX Wonderside Book</td>
+            <td class="odds-value">2%</td>
+          </tr>
+          <tr>
+            <td>🏆 ส่งฟรี + DX Kiramai Changer</td>
+            <td class="odds-value">0.5%</td>
+          </tr>
+          <tr>
+            <td>🏆 ส่งฟรี + DX Geartlinger</td>
+            <td class="odds-value">0.5%</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากการสุ่ม 1 ครั้ง โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ</p>
+    </div>
+  </div>
+
   <!-- Toast Message -->
   <div class="toast" id="toast"></div>
 
@@ -1354,6 +1523,25 @@
       if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
       if (modal) modal.style.display = 'flex';
     };
+
+    window.showOddsModal = function() {
+      const modal = document.getElementById('oddsInfoModal');
+      if (modal) modal.style.display = 'flex';
+    };
+
+    window.closeOddsModal = function() {
+      const modal = document.getElementById('oddsInfoModal');
+      if (modal) modal.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const oddsModal = document.getElementById('oddsInfoModal');
+      if (oddsModal) {
+        oddsModal.addEventListener('click', function (e) {
+          if (e.target === oddsModal) closeOddsModal();
+        });
+      }
+    });
 
     function getUserSpinKey() {
       return window.currentUser ? `mkLastSpin_${window.currentUser.uid}` : 'mkLastSpin_guest';
