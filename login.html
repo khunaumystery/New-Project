@@ -684,7 +684,12 @@
         <span class="profile-badge-vip">👑 VIP</span>
       </div>
 
-      <h3 class="profile-name" id="profileName">ผู้ใช้งาน</h3>
+      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+        <h3 class="profile-name" id="profileName">ผู้ใช้งาน</h3>
+        <button type="button" id="btnEditName" onclick="openEditNameModal()" aria-label="แก้ไขชื่อผู้ใช้งาน" title="แก้ไขชื่อ" style="width:26px; height:26px; flex-shrink:0; border:none; border-radius:50%; background:#F3F4F6; color:var(--mk-red); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px;">
+          <i class="ph ph-pencil-simple"></i>
+        </button>
+      </div>
       <p class="profile-email" id="profileEmail">user@email.com</p>
 
       <!-- Stats -->
@@ -762,6 +767,27 @@
       <span>โปรไฟล์</span>
     </a>
   </nav>
+
+  <!-- Modal: Edit Display Name -->
+  <div class="modal-overlay" id="editNameModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;" onclick="if(event.target===this) closeEditNameModal();">
+    <div style="background:#FFFFFF;border-radius:22px;padding:26px 22px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,0.5);font-family:'Prompt',sans-serif;">
+      <h3 style="font-size:17px;font-weight:700;color:#1F2937;margin-bottom:4px;">แก้ไขชื่อผู้ใช้งาน</h3>
+      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">การเปลี่ยนชื่อนี้จะมีผลกับโปรไฟล์ของคุณเท่านั้น <strong>ไม่กระทบชื่อในคำสั่งซื้อเดิม</strong> ที่เคยสั่งไว้แล้ว</p>
+      <div class="form-group">
+        <label class="form-label">ชื่อ - นามสกุล หรือ ชื่อเล่น</label>
+        <div class="input-wrapper">
+          <i class="ph ph-user icon-prefix"></i>
+          <input type="text" class="form-input" id="editNameInput" placeholder="ระบุชื่อของคุณ" maxlength="60">
+        </div>
+      </div>
+      <button type="button" class="btn-submit" id="btnSaveName" onclick="saveDisplayName()">
+        <i class="ph ph-check"></i> บันทึกชื่อใหม่
+      </button>
+      <button type="button" onclick="closeEditNameModal()" style="width:100%;padding:12px;margin-top:8px;background:#F3F4F6;color:var(--text-muted);border:none;border-radius:12px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;">
+        ยกเลิก
+      </button>
+    </div>
+  </div>
 
   <!-- Modal: In-App Browser Guide -->
   <div class="modal-overlay" id="inAppGuideModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
@@ -866,6 +892,57 @@
         toast.classList.remove('show'); 
       }, 3000); // 3 วินาที
     }
+
+    // ---- Edit Display Name ----
+    window.openEditNameModal = function() {
+      if (!auth.currentUser) return;
+      const input = document.getElementById('editNameInput');
+      if (input) input.value = auth.currentUser.displayName || '';
+      const modal = document.getElementById('editNameModal');
+      if (modal) modal.style.display = 'flex';
+      if (input) setTimeout(() => input.focus(), 50);
+    };
+
+    window.closeEditNameModal = function() {
+      const modal = document.getElementById('editNameModal');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.saveDisplayName = async function() {
+      const input = document.getElementById('editNameInput');
+      const btn = document.getElementById('btnSaveName');
+      if (!input || !auth.currentUser) return;
+      const newName = input.value.trim();
+
+      if (!newName) {
+        showToast('❌ กรุณากรอกชื่อของคุณ');
+        return;
+      }
+      if (newName.length > 60) {
+        showToast('❌ ชื่อยาวเกินไป (ไม่เกิน 60 ตัวอักษร)');
+        return;
+      }
+
+      try {
+        if (btn) btn.disabled = true;
+        showToast('กำลังบันทึกชื่อ...');
+        await updateProfile(auth.currentUser, { displayName: newName });
+
+        // Reflect the change immediately in the UI
+        const profileNameEl = document.getElementById('profileName');
+        const heroSubtitleEl = document.getElementById('heroSubtitle');
+        if (profileNameEl) profileNameEl.textContent = newName;
+        if (heroSubtitleEl) heroSubtitleEl.textContent = `ยินดีต้อนรับกลับ, คุณ ${newName}`;
+
+        closeEditNameModal();
+        showToast('✅ บันทึกชื่อใหม่เรียบร้อยแล้ว');
+      } catch (error) {
+        console.error('Update display name error:', error);
+        showToast('❌ ไม่สามารถบันทึกชื่อได้ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
 
     // 1. Google Sign In
     document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
