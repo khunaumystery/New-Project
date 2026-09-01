@@ -1084,13 +1084,51 @@
       }
 
       // ---------- Item mutations ----------
-      function updateQty(index, change) {
+      async function updateQty(index, change) {
         const cart = getCart();
-        if (cart[index]) {
-          cart[index].quantity = (Number(cart[index].quantity) || 0) + change;
-          if (cart[index].quantity <= 0) cart.splice(index, 1);
-          saveCart(cart);
+        const item = cart[index];
+        if (!item) return;
+
+        // Block increases beyond what's actually in stock
+        if (change > 0 && item.id && typeof window.MK_GET_PRODUCT_STOCK === 'function') {
+          const available = await window.MK_GET_PRODUCT_STOCK(item.id);
+          if (available !== null) {
+            const currentQty = Number(item.quantity) || 0;
+            if (currentQty >= available) {
+              showToast(available > 0
+                ? `⚠️ สินค้า "${item.name}" เหลือเพียง ${available} ชิ้น ไม่สามารถเพิ่มได้อีก`
+                : `⚠️ สินค้า "${item.name}" หมดสต็อกแล้ว`);
+              return;
+            }
+          }
         }
+
+        item.quantity = (Number(item.quantity) || 0) + change;
+        if (item.quantity <= 0) cart.splice(index, 1);
+        saveCart(cart);
+      }
+
+      // Clamp cart quantities to whatever stock actually allowed, and let the
+      // customer know. Used both for the pre-checkout check and as a fallback
+      // if the final order transaction still finds a shortage (e.g. someone
+      // else bought the last one in the meantime).
+      function applyStockShortages(shortages) {
+        if (!shortages || !shortages.length) return;
+        const cart = getCart();
+        let changed = false;
+        shortages.forEach((s) => {
+          const idx = cart.findIndex((i) => i.id === s.id);
+          if (idx === -1) return;
+          changed = true;
+          if (s.available <= 0) {
+            cart.splice(idx, 1);
+          } else {
+            cart[idx].quantity = s.available;
+          }
+        });
+        if (changed) saveCart(cart);
+        const detail = shortages.map((s) => `${s.name} (เหลือ ${s.available} ชิ้น)`).join(', ');
+        showToast('⚠️ สินค้าไม่พอ: ' + detail + ' — ระบบปรับจำนวนในตะกร้าให้แล้ว กรุณาตรวจสอบอีกครั้ง');
       }
 
       function removeItem(index) {
@@ -1444,6 +1482,23 @@
           return;
         }
 
+        // Verify stock is still available before showing the payment QR.
+        // (The order transaction below is still the final authority.)
+        if (typeof window.MK_CHECK_STOCK === 'function') {
+          const checkoutBtn = document.getElementById('checkoutBtn');
+          if (checkoutBtn) checkoutBtn.disabled = true;
+          showToast('⏳ กำลังตรวจสอบสต็อกสินค้า...');
+          let shortages = [];
+          try {
+            shortages = await window.MK_CHECK_STOCK(cart);
+          } catch (e) { /* ignore; transaction remains the source of truth */ }
+          if (checkoutBtn) checkoutBtn.disabled = false;
+          if (shortages && shortages.length) {
+            applyStockShortages(shortages);
+            return;
+          }
+        }
+
         const orderData = buildOrderData(cart);
 
         // Order is NOT written to Firestore yet. We first show the
@@ -1640,6 +1695,7 @@
         orderData.slipUploadedAt = new Date().toISOString();
 
         let savedOnline = false;
+        let stockShortages = null;
         try {
           if (typeof window.MK_SUBMIT_ORDER !== 'function') {
             throw new Error('Firebase order submission is unavailable');
@@ -1648,6 +1704,17 @@
           savedOnline = true;
         } catch (err) {
           console.error('Order submit error:', err);
+          if (typeof err.message === 'string' && err.message.indexOf('STOCK_INSUFFICIENT::') === 0) {
+            try {
+              stockShortages = JSON.parse(err.message.slice('STOCK_INSUFFICIENT::'.length));
+            } catch (parseErr) { stockShortages = null; }
+          }
+        }
+
+        if (stockShortages && stockShortages.length) {
+          applyStockShortages(stockShortages);
+          cancelPayment();
+          return;
         }
 
         if (!savedOnline) {
@@ -1730,6 +1797,8 @@
        authentication and a successful Firestore write.
   ============================================================= -->
   <script type="module">
+    import { doc, getDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
     (async function () {
       try {
         const { auth, db, collection, addDoc, onAuthStateChanged } =
@@ -1783,8 +1852,91 @@
           });
         });
 
+        // ---- Live stock lookup for one product (used by qty +/- buttons) ----
+        // Returns available stock as a number, or null if this product doesn't track stock.
+        window.MK_GET_PRODUCT_STOCK = async function (productId) {
+          if (!productId) return null;
+          try {
+            const pSnap = await getDoc(doc(db, 'products', productId));
+            if (!pSnap.exists()) return null;
+            const data = pSnap.data();
+            if (data.stockQty === undefined || data.stockQty === null) return null;
+            return Number(data.stockQty) || 0;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        // ---- Soft pre-check before opening the payment QR (fast UX feedback) ----
+        // Real enforcement still happens in MK_SUBMIT_ORDER's transaction below.
+        window.MK_CHECK_STOCK = async function (cartItems) {
+          const shortages = [];
+          for (const item of (cartItems || [])) {
+            if (!item.id) continue;
+            try {
+              const pSnap = await getDoc(doc(db, 'products', item.id));
+              if (!pSnap.exists()) continue;
+              const data = pSnap.data();
+              if (data.stockQty === undefined || data.stockQty === null) continue;
+              const available = Number(data.stockQty) || 0;
+              const requested = Number(item.quantity) || 0;
+              if (available < requested) {
+                shortages.push({ id: item.id, name: item.name, requested, available });
+              }
+            } catch (e) { /* ignore; the transaction is the source of truth */ }
+          }
+          return shortages;
+        };
+
+        // ---- Authoritative order submission ----
+        // Runs as a Firestore transaction: verifies each item still has enough
+        // stock and decrements it atomically with creating the order, so two
+        // customers checking out the last item at the same time can't both win.
         window.MK_SUBMIT_ORDER = async function (orderData) {
-          await addDoc(collection(db, 'orders'), orderData);
+          const orderRef = doc(collection(db, 'orders'));
+
+          await runTransaction(db, async (transaction) => {
+            const items = orderData.items || [];
+            const reads = [];
+
+            for (const item of items) {
+              if (!item.id) continue;
+              const pRef = doc(db, 'products', item.id);
+              const pSnap = await transaction.get(pRef);
+              reads.push({ item, ref: pRef, snap: pSnap });
+            }
+
+            const shortages = [];
+            reads.forEach(({ item, snap }) => {
+              if (!snap.exists()) return;
+              const data = snap.data();
+              if (data.stockQty === undefined || data.stockQty === null) return; // stock not tracked = unlimited
+              const available = Number(data.stockQty) || 0;
+              const requested = Number(item.qty) || 0;
+              if (available < requested) {
+                shortages.push({ id: item.id, name: item.name, requested, available });
+              }
+            });
+
+            if (shortages.length) {
+              // Aborts the transaction; nothing is written.
+              throw new Error('STOCK_INSUFFICIENT::' + JSON.stringify(shortages));
+            }
+
+            reads.forEach(({ item, ref, snap }) => {
+              if (!snap.exists()) return;
+              const data = snap.data();
+              if (data.stockQty === undefined || data.stockQty === null) return;
+              const newQty = (Number(data.stockQty) || 0) - (Number(item.qty) || 0);
+              transaction.update(ref, {
+                stockQty: newQty,
+                inStock: newQty > 0,
+                updatedAt: new Date().toISOString()
+              });
+            });
+
+            transaction.set(orderRef, orderData);
+          });
         };
       } catch (err) {
         // Fail safely: do not show a fake success message or create an

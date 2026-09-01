@@ -2035,6 +2035,21 @@
       } catch(e) { cart = []; }
 
       const existing = cart.find(item => item.name === name);
+      const currentQty = existing ? (Number(existing.quantity) || 0) : 0;
+
+      // Stock check: block adding beyond what's actually in stock
+      const product = storeProducts.find(p => p._id === id);
+      const hasStockLimit = product && product.stockQty !== undefined && product.stockQty !== null;
+      if (hasStockLimit) {
+        const stockLimit = Number(product.stockQty) || 0;
+        if (currentQty + 1 > stockLimit) {
+          showToast(stockLimit > 0
+            ? `⚠️ สินค้า "${name}" เหลือเพียง ${stockLimit} ชิ้น (มีในตะกร้าแล้ว ${currentQty} ชิ้น)`
+            : `⚠️ สินค้า "${name}" หมดสต็อกแล้ว`);
+          return;
+        }
+      }
+
       if (existing) {
         existing.quantity += 1;
       } else {
