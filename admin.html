@@ -168,6 +168,19 @@
       cursor:pointer; white-space:nowrap;
     }
     .btn-tracking:hover { opacity:.85; }
+    .stock-qty-controls { display:flex; align-items:center; gap:4px; }
+    .stock-qty-btn {
+      width:24px; height:24px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+      border:1.5px solid var(--border); border-radius:7px; background:#F9FAFB; color:var(--text);
+      cursor:pointer; font-size:12px; transition: background .15s, border-color .15s;
+    }
+    .stock-qty-btn:hover { background:#F3F4F6; border-color:#D1D5DB; }
+    .stock-qty-btn:active { transform:scale(0.92); }
+    .stock-qty-input {
+      width:52px; padding:5px 4px; text-align:center; border:1.5px solid var(--border);
+      border-radius:7px; font-family:'Prompt',sans-serif; font-size:12px; outline:none;
+    }
+    .stock-qty-input:focus { border-color:#2563EB; }
     
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
@@ -652,11 +665,11 @@
           <table>
             <thead>
               <tr>
-                <th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+                <th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จำนวนสต็อก</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="productsTableBody">
-              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -795,6 +808,10 @@
           <label>ราคาเดิม / ราคาเต็ม (บาท)</label>
           <input type="number" id="prodOriginalPrice" class="form-control" placeholder="เช่น 159 (ไม่ใส่ก็ได้)" min="0">
         </div>
+      </div>
+      <div class="form-group">
+        <label>จำนวนสินค้าในสต็อก (ชิ้น)</label>
+        <input type="number" id="prodStockQty" class="form-control" placeholder="เช่น 10 (ไม่ระบุก็ได้)" min="0">
       </div>
       <div class="form-group">
         <label>รูปภาพสินค้า *</label>
@@ -1451,18 +1468,31 @@
   function renderProductsTable(products) {
     const tbody = document.getElementById('productsTableBody');
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
       return;
     }
     tbody.innerHTML = products.map(p => {
       const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
       const inStock = (p.inStock === true || p.inStock === 'true');
-      const qtyText = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '') ? ` (${p.stockQty} ชิ้น)` : '';
-      const statusBadge = inStock 
-        ? `<span class="status-badge active">✅ พร้อมขาย${qtyText}</span>` 
+      const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
+      const qtyVal = hasQty ? Number(p.stockQty) : 0;
+      const statusBadge = inStock
+        ? `<span class="status-badge active">✅ พร้อมขาย</span>`
         : '<span class="status-badge out">❌ หมด</span>';
       const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
+      const stockCell = hasQty
+        ? `<div class="stock-qty-controls">
+             <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
+             <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="${qtyVal}" min="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
+             <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', 1)" title="เพิ่ม 1 ชิ้น"><i class="ph ph-plus"></i></button>
+           </div>
+           <button class="btn-tracking" style="margin-top:4px;" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> บันทึก</button>`
+        : `<div style="font-size:11px;color:var(--muted); margin-bottom:6px;">ยังไม่ระบุจำนวน</div>
+           <div class="stock-qty-controls">
+             <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="0" min="0" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
+             <button class="btn-tracking" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> ตั้งค่า</button>
+           </div>`;
 
       return `
         <tr>
@@ -1476,6 +1506,7 @@
             ${origPriceTxt}
             <span class="total-amt">฿${Number(p.price || 0).toLocaleString()}</span>
           </td>
+          <td class="tracking-cell">${stockCell}</td>
           <td>${statusBadge}</td>
           <td><span class="date-txt">${date}</span></td>
           <td>
@@ -1494,11 +1525,14 @@
     const originalPrice = document.getElementById('prodOriginalPrice').value ? Number(document.getElementById('prodOriginalPrice').value) : null;
     const image         = document.getElementById('prodImage').value.trim();
     const desc          = document.getElementById('prodDesc').value.trim();
-    const inStock       = document.getElementById('prodInStock').value === 'true';
+    const stockQtyRaw   = document.getElementById('prodStockQty').value;
+    const stockQty      = stockQtyRaw !== '' ? Number(stockQtyRaw) : null;
+    let   inStock       = document.getElementById('prodInStock').value === 'true';
+    if (stockQty !== null) inStock = stockQty > 0;
 
     try {
       await addDoc(collection(db, 'products'), {
-        name, category, price, originalPrice, image, desc, inStock,
+        name, category, price, originalPrice, image, desc, inStock, stockQty,
         createdAt: new Date().toISOString()
       });
       closeModal('addProductModal');
@@ -1566,6 +1600,49 @@
       showToast(`🗑️ ลบสินค้า "${name}" เรียบร้อยแล้ว`);
     } catch(e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ===== QUICK STOCK QUANTITY ADJUST (+/- buttons & manual set) =====
+  window.adjustStockQty = async function(id, delta) {
+    const input = document.getElementById('stockQtyInput_' + id);
+    if (!input) return;
+    let current = parseInt(input.value, 10);
+    if (isNaN(current)) current = 0;
+    let next = current + delta;
+    if (next < 0) next = 0;
+    input.value = next; // optimistic update while Firestore syncs
+    try {
+      const inStock = next > 0;
+      await updateDoc(doc(db, 'products', id), {
+        stockQty: next,
+        inStock,
+        updatedAt: new Date().toISOString()
+      });
+      showToast(delta > 0 ? `➕ เพิ่มสต็อกแล้ว (${next} ชิ้น)` : `➖ ลดสต็อกแล้ว (${next} ชิ้น)`);
+    } catch(e) {
+      showToast('❌ อัปเดตสต็อกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.setStockQty = async function(id) {
+    const input = document.getElementById('stockQtyInput_' + id);
+    if (!input) return;
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 0) {
+      showToast('⚠️ กรุณากรอกจำนวนที่ถูกต้อง (0 ขึ้นไป)');
+      return;
+    }
+    try {
+      const inStock = val > 0;
+      await updateDoc(doc(db, 'products', id), {
+        stockQty: val,
+        inStock,
+        updatedAt: new Date().toISOString()
+      });
+      showToast(`✅ บันทึกจำนวนสต็อก: ${val} ชิ้น`);
+    } catch(e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
   };
 
