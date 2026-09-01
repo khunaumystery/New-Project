@@ -1359,6 +1359,19 @@
       return window.currentUser ? `mkLastSpin_${window.currentUser.uid}` : 'mkLastSpin_guest';
     }
 
+    function getCodesKey() {
+      return window.currentUser ? ('mkValidCodes_' + window.currentUser.uid) : 'mkValidCodes_guest';
+    }
+    function getCurrentPromoKey() {
+      return window.currentUser ? ('mkCurrentPromoCode_' + window.currentUser.uid) : 'mkCurrentPromoCode_guest';
+    }
+    function getCurrentPrizeKey() {
+      return window.currentUser ? ('mkCurrentPrizeType_' + window.currentUser.uid) : 'mkCurrentPrizeType_guest';
+    }
+    function getCurrentExpiryKey() {
+      return window.currentUser ? ('mkCurrentCodeExpiresAt_' + window.currentUser.uid) : 'mkCurrentCodeExpiresAt_guest';
+    }
+
     function resetSpinUI() {
       if (timerInterval) clearInterval(timerInterval);
       const timerSection = document.getElementById('timerSection');
@@ -1397,7 +1410,7 @@
           const nowTime = Date.now();
           const expiresAt = nowTime + CODE_EXPIRY_MS;
           try {
-            const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+            const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
             validCodes.push({ 
               code: currentCode, 
               prize: prizeType, 
@@ -1405,18 +1418,18 @@
               createdAt: nowTime,
               expiresAt: expiresAt 
             });
-            localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
-            localStorage.setItem('mkCurrentPromoCode', currentCode);
-            localStorage.setItem('mkCurrentPrizeType', prizeType);
-            localStorage.setItem('mkCurrentCodeExpiresAt', expiresAt.toString());
+            localStorage.setItem(getCodesKey(), JSON.stringify(validCodes));
+            localStorage.setItem(getCurrentPromoKey(), currentCode);
+            localStorage.setItem(getCurrentPrizeKey(), prizeType);
+            localStorage.setItem(getCurrentExpiryKey(), expiresAt.toString());
           } catch (err) { console.error(err); }
 
           startCodeExpiryCountdown(expiresAt);
         } else {
           currentCode = '';
-          localStorage.removeItem('mkCurrentPromoCode');
-          localStorage.removeItem('mkCurrentPrizeType');
-          localStorage.removeItem('mkCurrentCodeExpiresAt');
+          localStorage.removeItem(getCurrentPromoKey());
+          localStorage.removeItem(getCurrentPrizeKey());
+          localStorage.removeItem(getCurrentExpiryKey());
         }
 
         document.getElementById('luckyPlaceholder').style.display = 'none';
@@ -1531,9 +1544,9 @@
             prizeBadge.className = 'prize-badge no-prize';
             prizeBadge.innerHTML = '❌ โค้ดหมดอายุการใช้งานแล้ว (เกิน 30 นาที)';
           }
-          localStorage.removeItem('mkCurrentPromoCode');
-          localStorage.removeItem('mkCurrentPrizeType');
-          localStorage.removeItem('mkCurrentCodeExpiresAt');
+          localStorage.removeItem(getCurrentPromoKey());
+          localStorage.removeItem(getCurrentPrizeKey());
+          localStorage.removeItem(getCurrentExpiryKey());
         }
       }
 
@@ -1595,17 +1608,17 @@
 
       // 2. Restore Active Code Expiry Countdown
       try {
-        const promoCode = localStorage.getItem('mkCurrentPromoCode');
-        const expiresAtStr = localStorage.getItem('mkCurrentCodeExpiresAt');
+        const promoCode = localStorage.getItem(getCurrentPromoKey());
+        const expiresAtStr = localStorage.getItem(getCurrentExpiryKey());
         if (promoCode && expiresAtStr) {
           const expiresAt = parseInt(expiresAtStr);
           if (Date.now() < expiresAt) {
             currentCode = promoCode;
             startCodeExpiryCountdown(expiresAt);
           } else {
-            localStorage.removeItem('mkCurrentPromoCode');
-            localStorage.removeItem('mkCurrentPrizeType');
-            localStorage.removeItem('mkCurrentCodeExpiresAt');
+            localStorage.removeItem(getCurrentPromoKey());
+            localStorage.removeItem(getCurrentPrizeKey());
+            localStorage.removeItem(getCurrentExpiryKey());
           }
         }
       } catch(e) {}
@@ -1634,9 +1647,45 @@
   <script type="module">
     import { auth, db, collection, onSnapshot, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
 
+    function getCartKey() {
+      return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
+    }
+
+    function migrateGuestCartToUser(uid) {
+      try {
+        const guestKey = 'mkCart_guest';
+        const userKey = 'mkCart_' + uid;
+        const guestCart = JSON.parse(localStorage.getItem(guestKey) || '[]');
+        if (guestCart.length > 0 && !localStorage.getItem(userKey)) {
+          localStorage.setItem(userKey, JSON.stringify(guestCart));
+          localStorage.removeItem(guestKey);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    function migrateGuestCodesToUser(uid) {
+      try {
+        const bases = ['mkValidCodes', 'mkCurrentPromoCode', 'mkCurrentPrizeType', 'mkCurrentCodeExpiresAt'];
+        bases.forEach(base => {
+          const guestKey = base + '_guest';
+          const userKey = base + '_' + uid;
+          const guestVal = localStorage.getItem(guestKey);
+          if (guestVal !== null && localStorage.getItem(userKey) === null) {
+            localStorage.setItem(userKey, guestVal);
+            localStorage.removeItem(guestKey);
+          }
+        });
+      } catch (e) { /* ignore */ }
+    }
+
     window.currentUser = null;
-    onAuthStateChanged(auth, user => { 
-      window.currentUser = user; 
+    onAuthStateChanged(auth, user => {
+      window.currentUser = user;
+      if (user) {
+        migrateGuestCartToUser(user.uid);
+        migrateGuestCodesToUser(user.uid);
+      }
+      updateCartBadge();
       if (typeof window.restoreState === 'function') {
         window.restoreState();
       }
@@ -1792,8 +1841,9 @@
     // ===== ADD TO CART =====
     window.addToCart = function(id, name, price, image) {
       let cart = [];
+      const cartKey = getCartKey();
       try {
-        cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
+        cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
       } catch(e) { cart = []; }
 
       const existing = cart.find(item => item.name === name);
@@ -1808,14 +1858,14 @@
           quantity: 1
         });
       }
-      localStorage.setItem('mkCart', JSON.stringify(cart));
+      localStorage.setItem(cartKey, JSON.stringify(cart));
       updateCartBadge();
       showToast(`🛒 เพิ่ม "${name}" ลงตะกร้าแล้ว!`);
     };
 
     function updateCartBadge() {
       try {
-        const cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
+        const cart = JSON.parse(localStorage.getItem(getCartKey()) || '[]');
         const total = cart.reduce((s, i) => s + (i.quantity || 1), 0);
         const badge = document.getElementById('cartBadge');
         if (badge) {

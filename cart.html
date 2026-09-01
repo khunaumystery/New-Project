@@ -918,9 +918,19 @@
       let qrExpiresAt = null;
 
       // ---------- Storage helpers ----------
+      function getCartKey() {
+        const user = window.MK_CURRENT_USER;
+        return user && user.uid ? ('mkCart_' + user.uid) : 'mkCart_guest';
+      }
+
+      function getCodesKey() {
+        const user = window.MK_CURRENT_USER;
+        return user && user.uid ? ('mkValidCodes_' + user.uid) : 'mkValidCodes_guest';
+      }
+
       function getCart() {
         try {
-          const saved = localStorage.getItem('mkCart');
+          const saved = localStorage.getItem(getCartKey());
           if (saved) return JSON.parse(saved);
         } catch (e) {
           console.error('getCart parse error:', e);
@@ -930,7 +940,7 @@
 
       function saveCart(cart) {
         try {
-          localStorage.setItem('mkCart', JSON.stringify(cart));
+          localStorage.setItem(getCartKey(), JSON.stringify(cart));
         } catch (e) {
           console.error('saveCart error:', e);
         }
@@ -1112,7 +1122,7 @@
       function getActiveCodes() {
         let validCodes = [];
         try {
-          validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+          validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
         } catch (e) {
           validCodes = [];
         }
@@ -1199,7 +1209,7 @@
 
         let validCodes = [];
         try {
-          validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+          validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
         } catch (e) {
           validCodes = [];
         }
@@ -1319,7 +1329,7 @@
         let prizeType = null;
         if (state.appliedCodeName) {
           try {
-            const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+            const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
             const match = validCodes.find((c) => c.code === state.appliedCodeName);
             if (match) prizeType = match.prize;
           } catch (e) { /* ignore */ }
@@ -1356,11 +1366,12 @@
       function markCodeAsUsed() {
         if (!state.appliedCodeName) return;
         try {
-          const validCodes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+          const codesKey = getCodesKey();
+          const validCodes = JSON.parse(localStorage.getItem(codesKey) || '[]');
           const target = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
           if (target) {
             target.used = true;
-            localStorage.setItem('mkValidCodes', JSON.stringify(validCodes));
+            localStorage.setItem(codesKey, JSON.stringify(validCodes));
           }
         } catch (e) { /* ignore */ }
       }
@@ -1653,7 +1664,7 @@
 
         // Consume the coupon only after Firestore has accepted the order.
         markCodeAsUsed();
-        localStorage.removeItem('mkCart');
+        localStorage.removeItem(getCartKey());
         renderPaymentPendingState(orderData);
       }
 
@@ -1696,6 +1707,7 @@
          closeLoginRequiredModal,
         showToast,
         renderCart,
+        checkLatestCode,
         regenerateQR,
         cancelPayment,
         handleSlipFileChange,
@@ -1728,6 +1740,36 @@
 
           onAuthStateChanged(auth, (user) => {
             window.MK_CURRENT_USER = user;
+
+            if (user) {
+              try {
+                const guestCartKey = 'mkCart_guest';
+                const userCartKey = 'mkCart_' + user.uid;
+                const guestCart = JSON.parse(localStorage.getItem(guestCartKey) || '[]');
+                if (guestCart.length > 0 && !localStorage.getItem(userCartKey)) {
+                  localStorage.setItem(userCartKey, JSON.stringify(guestCart));
+                  localStorage.removeItem(guestCartKey);
+                }
+
+                const codeBases = ['mkValidCodes', 'mkCurrentPromoCode', 'mkCurrentPrizeType', 'mkCurrentCodeExpiresAt'];
+                codeBases.forEach(base => {
+                  const guestKey = base + '_guest';
+                  const userKey = base + '_' + user.uid;
+                  const guestVal = localStorage.getItem(guestKey);
+                  if (guestVal !== null && localStorage.getItem(userKey) === null) {
+                    localStorage.setItem(userKey, guestVal);
+                    localStorage.removeItem(guestKey);
+                  }
+                });
+              } catch (e) { /* ignore */ }
+            }
+
+            if (window.MK && typeof window.MK.renderCart === 'function') {
+              window.MK.renderCart();
+            }
+            if (window.MK && typeof window.MK.checkLatestCode === 'function') {
+              window.MK.checkLatestCode();
+            }
 
             const firstNameInput = document.getElementById('cusFirstName');
             if (user && firstNameInput && !firstNameInput.value && user.displayName) {

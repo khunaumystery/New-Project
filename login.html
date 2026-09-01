@@ -947,15 +947,17 @@
     });
 
     // 4. Update stats from localStorage
-    function updateProfileStats() {
+    function updateProfileStats(uid) {
       try {
-        const cart = JSON.parse(localStorage.getItem('mkCart') || '[]');
+        const cartKey = uid ? ('mkCart_' + uid) : 'mkCart_guest';
+        const cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
         const totalCart = cart.reduce((sum, i) => sum + i.quantity, 0);
         document.getElementById('statCartCount').textContent = totalCart;
 
         const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
         const now = Date.now();
-        const codes = JSON.parse(localStorage.getItem('mkValidCodes') || '[]');
+        const codesKey = uid ? ('mkValidCodes_' + uid) : 'mkValidCodes_guest';
+        const codes = JSON.parse(localStorage.getItem(codesKey) || '[]');
         const validUnusedCodes = codes.filter(c => {
           if (c.used) return false;
           const expiresAt = c.expiresAt || (c.createdAt ? (c.createdAt + CODE_EXPIRY_MS) : 0);
@@ -987,7 +989,7 @@
           document.getElementById('profileImg').src = user.photoURL;
         }
 
-        updateProfileStats();
+        updateProfileStats(user.uid);
       } else {
         // User is logged out
         authSection.style.display = 'block';
