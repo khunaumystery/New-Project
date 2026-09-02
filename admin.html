@@ -181,14 +181,20 @@
       border-radius:7px; font-family:'Prompt',sans-serif; font-size:12px; outline:none;
     }
     .stock-qty-input:focus { border-color:#2563EB; }
-    .move-order-controls { display:flex; flex-direction:column; align-items:center; gap:2px; }
-    .move-btn {
-      width:26px; height:22px; display:flex; align-items:center; justify-content:center;
-      border:1.5px solid var(--border); border-radius:6px; background:#F9FAFB; color:var(--text);
-      cursor:pointer; font-size:11px; transition: background .15s, border-color .15s;
+    .order-num-input {
+      width:46px; padding:6px 4px; text-align:center; border:1.5px solid var(--border);
+      border-radius:7px; font-family:'Prompt',sans-serif; font-size:12.5px; font-weight:700; outline:none;
+      -moz-appearance: textfield; /* Firefox: hide native spinner arrows */
     }
-    .move-btn:hover:not(:disabled) { background:#F3F4F6; border-color:#D1D5DB; }
-    .move-btn:disabled { opacity:.35; cursor:not-allowed; }
+    .order-num-input:focus { border-color:#2563EB; }
+    /* Chrome/Safari/Edge: hide native spinner arrows — they always
+       increment upward regardless of list direction, which felt reversed.
+       Typing the position number directly is the only way to reorder now. */
+    .order-num-input::-webkit-inner-spin-button,
+    .order-num-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
     
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
@@ -626,6 +632,13 @@
 
       <div class="toolbar">
         <input type="text" class="search-box" id="searchCategoriesBox" placeholder="🔍 ค้นหาหมวดหมู่..." oninput="filterCategories()">
+        <select class="filter-select" id="categoryTypeFilter" onchange="filterCategories()">
+          <option value="">ประเภทหมวดหมู่สินค้าทั้งหมด</option>
+          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
+          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
+          <option value="อุลตราแมน">อุลตราแมน</option>
+          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
+        </select>
         <button class="btn-primary" onclick="openAddCategoryModal()"><i class="ph ph-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่</button>
       </div>
 
@@ -638,11 +651,11 @@
           <table>
             <thead>
               <tr>
-                <th>ลำดับ</th><th>รูป / ไอคอน</th><th>ชื่อหมวดหมู่</th><th>รหัส (Slug)</th><th>ลิงก์หน้าเว็บ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+                <th>ลำดับ</th><th>รูป / ไอคอน</th><th>ชื่อหมวดหมู่</th><th>ประเภท</th><th>รหัส (Slug)</th><th>ลิงก์หน้าเว็บ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="categoriesTableBody">
-              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-folder"></i>กำลังโหลดหมวดหมู่...</div></td></tr>
+              <tr><td colspan="8"><div class="empty-state"><i class="ph ph-folder"></i>กำลังโหลดหมวดหมู่...</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -759,6 +772,16 @@
         <input type="text" id="catSlug" class="form-control" placeholder="เช่น full-bottle, saberbook" required>
       </div>
       <div class="form-group">
+        <label>ประเภทหมวดหมู่สินค้า *</label>
+        <select id="catType" class="form-control" required>
+          <option value="">-- เลือกประเภท --</option>
+          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
+          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
+          <option value="อุลตราแมน">อุลตราแมน</option>
+          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>รูปภาพปก / ไอคอน *</label>
         <div style="display:flex; flex-direction:column; gap:6px;">
           <input type="file" id="catFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'catImage', 'catPreview')">
@@ -855,6 +878,16 @@
       <div class="form-group">
         <label>รหัสหมวดหมู่ (Slug / ID) *</label>
         <input type="text" id="editCatSlug" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>ประเภทหมวดหมู่สินค้า *</label>
+        <select id="editCatType" class="form-control" required>
+          <option value="">-- เลือกประเภท --</option>
+          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
+          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
+          <option value="อุลตราแมน">อุลตราแมน</option>
+          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
+        </select>
       </div>
       <div class="form-group">
         <label>รูปภาพปก / ไอคอน *</label>
@@ -1419,7 +1452,9 @@
 
   window.filterCategories = function() {
     const search = document.getElementById('searchCategoriesBox').value.toLowerCase().trim();
+    const catType = document.getElementById('categoryTypeFilter').value;
     let f = sortByOrder(allCategories);
+    if (catType) f = f.filter(c => c.categoryType === catType);
     if (search) {
       f = f.filter(c => 
         (c.name || '').toLowerCase().includes(search) ||
@@ -1428,31 +1463,33 @@
       );
     }
     document.getElementById('categoriesCount').textContent = f.length + ' หมวดหมู่';
-    renderCategoriesTable(f, !!search);
+    renderCategoriesTable(f, !!(search || catType));
   };
 
   function renderCategoriesTable(categories, reorderLocked) {
     const tbody = document.getElementById('categoriesTableBody');
     if (!categories.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
       return;
     }
-    const lastIdx = categories.length - 1;
     tbody.innerHTML = categories.map((c, i) => {
       const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
       const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
+      const typeBadge = c.categoryType
+        ? `<span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${c.categoryType}</span>`
+        : '<span style="font-size:11px;color:var(--muted);">-</span>';
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
-        : `<div class="move-order-controls">
-             <button class="move-btn" onclick="moveCategory('${c._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
-             <button class="move-btn" onclick="moveCategory('${c._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
-           </div>`;
+        : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${categories.length}"
+             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
+             onchange="setCategoryOrder('${c._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
       return `
         <tr>
           <td>${moveCell}</td>
           <td>${imgTag}</td>
           <td><strong>${c.name || '-'}</strong><div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
+          <td>${typeBadge}</td>
           <td><code>${c.slug || '-'}</code></td>
           <td>${pageLink}</td>
           <td><span class="date-txt">${date}</span></td>
@@ -1468,13 +1505,14 @@
   window.submitAddCategory = async function() {
     const name     = document.getElementById('catName').value.trim();
     const slug     = document.getElementById('catSlug').value.trim();
+    const categoryType = document.getElementById('catType').value;
     const image    = document.getElementById('catImage').value.trim();
     const pageLink = document.getElementById('catPageLink').value.trim();
     const desc     = document.getElementById('catDesc').value.trim();
 
     try {
       await addDoc(collection(db, 'categories'), {
-        name, slug, image, pageLink, desc,
+        name, slug, categoryType, image, pageLink, desc,
         createdAt: new Date().toISOString()
       });
       closeModal('addCategoryModal');
@@ -1491,6 +1529,7 @@
     document.getElementById('editCatId').value = cat._id;
     document.getElementById('editCatName').value = cat.name || '';
     document.getElementById('editCatSlug').value = cat.slug || '';
+    document.getElementById('editCatType').value = cat.categoryType || '';
     document.getElementById('editCatImage').value = cat.image || '';
     document.getElementById('editCatPageLink').value = cat.pageLink || '';
     document.getElementById('editCatDesc').value = cat.desc || '';
@@ -1511,13 +1550,14 @@
     const id       = document.getElementById('editCatId').value;
     const name     = document.getElementById('editCatName').value.trim();
     const slug     = document.getElementById('editCatSlug').value.trim();
+    const categoryType = document.getElementById('editCatType').value;
     const image    = document.getElementById('editCatImage').value.trim();
     const pageLink = document.getElementById('editCatPageLink').value.trim();
     const desc     = document.getElementById('editCatDesc').value.trim();
 
     try {
       await updateDoc(doc(db, 'categories', id), {
-        name, slug, image, pageLink, desc,
+        name, slug, categoryType, image, pageLink, desc,
         updatedAt: new Date().toISOString()
       });
       closeModal('editCategoryModal');
@@ -1540,17 +1580,32 @@
   // Move a category up (-1) or down (+1) one position. Renumbers the whole
   // list to clean sequential sortOrder values so ordering never ends up
   // inconsistent, even for older items that never had a sortOrder before.
-  window.moveCategory = async function(id, direction) {
+  // Move a category to whatever position number the admin typed in.
+  // Renumbers the whole list to clean sequential sortOrder values so
+  // ordering never ends up inconsistent, even for items that never had
+  // a sortOrder before.
+  window.setCategoryOrder = async function(id, newPositionRaw) {
     const sorted = sortByOrder(allCategories);
-    const idx = sorted.findIndex(c => c._id === id);
-    if (idx === -1) return;
-    const targetIdx = idx + direction;
-    if (targetIdx < 0 || targetIdx >= sorted.length) return;
+    const fromIdx = sorted.findIndex(c => c._id === id);
+    if (fromIdx === -1) return;
+
+    let newPos = parseInt(newPositionRaw, 10);
+    if (isNaN(newPos)) {
+      filterCategories(); // invalid input — just redraw to reset the box
+      return;
+    }
+    let toIdx = newPos - 1; // convert to 0-indexed
+    if (toIdx < 0) toIdx = 0;
+    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
+
+    if (toIdx === fromIdx) {
+      filterCategories(); // no actual change — just reset the displayed number
+      return;
+    }
 
     const reordered = sorted.slice();
-    const tmp = reordered[idx];
-    reordered[idx] = reordered[targetIdx];
-    reordered[targetIdx] = tmp;
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
 
     try {
       await Promise.all(reordered.map((item, i) =>
@@ -1596,7 +1651,6 @@
       tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
       return;
     }
-    const lastIdx = products.length - 1;
     tbody.innerHTML = products.map((p, i) => {
       const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
@@ -1609,10 +1663,9 @@
       const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา/<br>หมวดหมู่ก่อน</div>'
-        : `<div class="move-order-controls">
-             <button class="move-btn" onclick="moveProduct('${p._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
-             <button class="move-btn" onclick="moveProduct('${p._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
-           </div>`;
+        : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${products.length}"
+             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
+             onchange="setProductOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
       const stockCell = hasQty
         ? `<div class="stock-qty-controls">
              <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
@@ -1736,19 +1789,29 @@
     }
   };
 
-  // Move a product up (-1) or down (+1) one position, same pattern as
-  // moveCategory: renumber the whole list to clean sequential sortOrder.
-  window.moveProduct = async function(id, direction) {
+  // Move a product to whatever position number the admin typed in.
+  window.setProductOrder = async function(id, newPositionRaw) {
     const sorted = sortByOrder(allProducts);
-    const idx = sorted.findIndex(p => p._id === id);
-    if (idx === -1) return;
-    const targetIdx = idx + direction;
-    if (targetIdx < 0 || targetIdx >= sorted.length) return;
+    const fromIdx = sorted.findIndex(p => p._id === id);
+    if (fromIdx === -1) return;
+
+    let newPos = parseInt(newPositionRaw, 10);
+    if (isNaN(newPos)) {
+      filterProducts(); // invalid input — just redraw to reset the box
+      return;
+    }
+    let toIdx = newPos - 1; // convert to 0-indexed
+    if (toIdx < 0) toIdx = 0;
+    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
+
+    if (toIdx === fromIdx) {
+      filterProducts(); // no actual change — just reset the displayed number
+      return;
+    }
 
     const reordered = sorted.slice();
-    const tmp = reordered[idx];
-    reordered[idx] = reordered[targetIdx];
-    reordered[targetIdx] = tmp;
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
 
     try {
       await Promise.all(reordered.map((item, i) =>
