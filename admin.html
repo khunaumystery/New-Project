@@ -634,11 +634,8 @@
         <input type="text" class="search-box" id="searchCategoriesBox" placeholder="🔍 ค้นหาหมวดหมู่..." oninput="filterCategories()">
         <select class="filter-select" id="categoryTypeFilter" onchange="filterCategories()">
           <option value="">ประเภทหมวดหมู่สินค้าทั้งหมด</option>
-          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
-          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
-          <option value="อุลตราแมน">อุลตราแมน</option>
-          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
         </select>
+        <button class="btn-primary" style="background:#6D28D9;" onclick="openManageCategoryTypesModal()"><i class="ph ph-sliders"></i> จัดการประเภท</button>
         <button class="btn-primary" onclick="openAddCategoryModal()"><i class="ph ph-plus-circle"></i> + เพิ่มหมวดหมู่ใหม่</button>
       </div>
 
@@ -775,11 +772,8 @@
         <label>ประเภทหมวดหมู่สินค้า *</label>
         <select id="catType" class="form-control" required>
           <option value="">-- เลือกประเภท --</option>
-          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
-          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
-          <option value="อุลตราแมน">อุลตราแมน</option>
-          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
         </select>
+        <div style="margin-top:5px;"><a href="javascript:void(0)" onclick="openManageCategoryTypesModal()" style="font-size:11.5px;color:#6D28D9;text-decoration:underline;">+ จัดการ/เพิ่มประเภทหมวดหมู่</a></div>
       </div>
       <div class="form-group">
         <label>รูปภาพปก / ไอคอน *</label>
@@ -883,11 +877,8 @@
         <label>ประเภทหมวดหมู่สินค้า *</label>
         <select id="editCatType" class="form-control" required>
           <option value="">-- เลือกประเภท --</option>
-          <option value="มาสไรเดอร์">มาสไรเดอร์</option>
-          <option value="ซุปเปอร์เซ็นไต">ซุปเปอร์เซ็นไต</option>
-          <option value="อุลตราแมน">อุลตราแมน</option>
-          <option value="โมเดลและอื่นๆ">โมเดลและอื่นๆ</option>
         </select>
+        <div style="margin-top:5px;"><a href="javascript:void(0)" onclick="openManageCategoryTypesModal()" style="font-size:11.5px;color:#6D28D9;text-decoration:underline;">+ จัดการ/เพิ่มประเภทหมวดหมู่</a></div>
       </div>
       <div class="form-group">
         <label>รูปภาพปก / ไอคอน *</label>
@@ -911,6 +902,22 @@
       <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
       <button type="button" class="btn-close-modal" onclick="closeModal('editCategoryModal')">ยกเลิก</button>
     </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: MANAGE CATEGORY TYPES ===== -->
+<div class="modal-overlay" id="manageCategoryTypesModal">
+  <div class="modal-box" style="max-width:420px;">
+    <h3><i class="ph ph-sliders"></i> จัดการประเภทหมวดหมู่สินค้า</h3>
+    <div id="categoryTypesManageList" style="margin-bottom:14px;"></div>
+    <div class="form-group">
+      <label>เพิ่มประเภทใหม่</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="newCategoryTypeInput" class="form-control" placeholder="เช่น ของเล่นเด็ก" onkeydown="if(event.key==='Enter'){event.preventDefault(); submitAddCategoryType();}">
+        <button type="button" class="btn-primary" onclick="submitAddCategoryType()"><i class="ph ph-plus"></i> เพิ่ม</button>
+      </div>
+    </div>
+    <button type="button" class="btn-close-modal" onclick="closeModal('manageCategoryTypesModal')">ปิด</button>
   </div>
 </div>
 
@@ -1016,12 +1023,15 @@
   let allOrders = [];
   let allCategories = [];
   let allProducts = [];
+  let allCategoryTypes = [];
   let allChats = [];
   let activeChatId = null;
+  let seededCategoryTypes = false;
 
   let unsubsOrders = null;
   let unsubsCategories = null;
   let unsubsProducts = null;
+  let unsubsCategoryTypes = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1070,6 +1080,7 @@
     if (unsubsOrders) { unsubsOrders(); unsubsOrders = null; }
     if (unsubsCategories) { unsubsCategories(); unsubsCategories = null; }
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
+    if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1078,6 +1089,7 @@
     loadOrders();
     loadCategories();
     loadProducts();
+    loadCategoryTypes();
     loadChats();
   }
 
@@ -1617,6 +1629,117 @@
     }
   };
 
+
+  // ================= 2b. CATEGORY TYPES MODULE =================
+  // Lets the admin add/remove the options shown in "ประเภทหมวดหมู่สินค้า"
+  // (used by the category filter + add/edit category forms) instead of
+  // them being hardcoded in the page.
+  window.loadCategoryTypes = function() {
+    if (unsubsCategoryTypes) unsubsCategoryTypes();
+    const q = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
+    unsubsCategoryTypes = onSnapshot(q, async snap => {
+      allCategoryTypes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+      // First time ever loading with nothing set up yet: seed the four
+      // types that used to be hardcoded, so existing categories keep
+      // working and the admin doesn't start from a totally empty list.
+      if (allCategoryTypes.length === 0 && !seededCategoryTypes) {
+        seededCategoryTypes = true;
+        await seedDefaultCategoryTypes();
+        return; // onSnapshot will fire again once the seed docs land
+      }
+
+      updateCategoryTypeSelectOptions();
+      renderCategoryTypesManageList();
+    }, err => showToast('โหลดประเภทหมวดหมู่ไม่สำเร็จ: ' + err.message));
+  };
+
+  async function seedDefaultCategoryTypes() {
+    const defaults = ['มาสไรเดอร์', 'ซุปเปอร์เซ็นไต', 'อุลตราแมน', 'โมเดลและอื่นๆ'];
+    try {
+      await Promise.all(defaults.map(name =>
+        addDoc(collection(db, 'categoryTypes'), { name, createdAt: new Date().toISOString() })
+      ));
+    } catch (e) { /* ignore — admin can add these manually if seeding fails */ }
+  }
+
+  function updateCategoryTypeSelectOptions() {
+    const filterEl = document.getElementById('categoryTypeFilter');
+    const formEl = document.getElementById('catType');
+    const editFormEl = document.getElementById('editCatType');
+
+    // Remember the currently chosen value so re-rendering the options
+    // (e.g. after adding a new type) doesn't reset what the admin picked.
+    const filterPrev = filterEl ? filterEl.value : '';
+    const formPrev = formEl ? formEl.value : '';
+    const editPrev = editFormEl ? editFormEl.value : '';
+
+    let filterOptions = '<option value="">ประเภทหมวดหมู่สินค้าทั้งหมด</option>';
+    let formOptions = '<option value="">-- เลือกประเภท --</option>';
+    allCategoryTypes.forEach(t => {
+      filterOptions += `<option value="${t.name}">${t.name}</option>`;
+      formOptions += `<option value="${t.name}">${t.name}</option>`;
+    });
+
+    if (filterEl) { filterEl.innerHTML = filterOptions; filterEl.value = filterPrev; }
+    if (formEl) { formEl.innerHTML = formOptions; formEl.value = formPrev; }
+    if (editFormEl) { editFormEl.innerHTML = formOptions; editFormEl.value = editPrev; }
+  }
+
+  window.openManageCategoryTypesModal = function() {
+    renderCategoryTypesManageList();
+    document.getElementById('manageCategoryTypesModal').classList.add('active');
+  };
+
+  function renderCategoryTypesManageList() {
+    const listEl = document.getElementById('categoryTypesManageList');
+    if (!listEl) return;
+    if (!allCategoryTypes.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:16px 0;">ยังไม่มีประเภทหมวดหมู่ กรุณาเพิ่มด้านล่าง</div>';
+      return;
+    }
+    listEl.innerHTML = allCategoryTypes.map(t => {
+      const usedCount = allCategories.filter(c => c.categoryType === t.name).length;
+      const usedTxt = usedCount > 0
+        ? `<span style="font-size:11px;color:var(--muted);">ใช้อยู่ ${usedCount} หมวดหมู่</span>`
+        : '<span style="font-size:11px;color:var(--muted);">ยังไม่ถูกใช้งาน</span>';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+          <div><div style="font-weight:600;font-size:13.5px;">${escapeHtml(t.name)}</div>${usedTxt}</div>
+          <button type="button" class="action-btn btn-delete" onclick="deleteCategoryType('${t._id}', ${JSON.stringify(t.name)})"><i class="ph ph-trash"></i> ลบ</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.submitAddCategoryType = async function() {
+    const input = document.getElementById('newCategoryTypeInput');
+    if (!input) return;
+    const name = input.value.trim();
+    if (!name) { showToast('⚠️ กรุณากรอกชื่อประเภทหมวดหมู่'); return; }
+    if (allCategoryTypes.some(t => t.name === name)) { showToast('⚠️ มีประเภทนี้อยู่แล้ว'); return; }
+    try {
+      await addDoc(collection(db, 'categoryTypes'), { name, createdAt: new Date().toISOString() });
+      input.value = '';
+      showToast('✅ เพิ่มประเภท "' + name + '" สำเร็จ');
+    } catch (e) {
+      showToast('❌ เพิ่มไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.deleteCategoryType = async function(id, name) {
+    const usedCount = allCategories.filter(c => c.categoryType === name).length;
+    const warnTxt = usedCount > 0
+      ? `\n⚠️ มี ${usedCount} หมวดหมู่ที่ใช้ประเภทนี้อยู่ (หมวดหมู่เหล่านั้นจะไม่ถูกลบ แต่จะไม่มีประเภทนี้ให้เลือกอีก)`
+      : '';
+    if (!confirm(`ยืนยันการลบประเภท "${name}"?${warnTxt}`)) return;
+    try {
+      await deleteDoc(doc(db, 'categoryTypes', id));
+      showToast('🗑️ ลบประเภท "' + name + '" แล้ว');
+    } catch (e) {
+      showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
 
   // ================= 3. PRODUCTS MODULE =================
   window.loadProducts = function() {
