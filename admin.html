@@ -951,7 +951,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -1228,11 +1228,60 @@
 
   window.changeStatus = async function(id, status) {
     try {
-      await updateDoc(doc(db, 'orders', id), { status });
+      if (status === 'cancelled') {
+        await cancelOrderAndRestock(id);
+      } else {
+        await updateDoc(doc(db, 'orders', id), { status });
+      }
       const lbl = {paid:'ชำระแล้ว', shipped:'จัดส่งแล้ว', cancelled:'ยกเลิก'}[status] || status;
       showToast('อัปเดตสถานะเป็น: ' + lbl);
-    } catch(e) { showToast('อัปเดตไม่สำเร็จ'); }
+    } catch(e) {
+      console.error('changeStatus error:', e);
+      showToast('❌ อัปเดตไม่สำเร็จ: ' + e.message);
+    }
   };
+
+  // Cancelling an order (e.g. a fake payment slip) returns the ordered
+  // quantity back to each product's stock, atomically with marking the
+  // order cancelled — so stock and the "cancelled" status can never end
+  // up out of sync, and clicking cancel twice never double-restocks.
+  async function cancelOrderAndRestock(orderId) {
+    const orderRef = doc(db, 'orders', orderId);
+
+    await runTransaction(db, async (transaction) => {
+      const orderSnap = await transaction.get(orderRef);
+      if (!orderSnap.exists()) throw new Error('ไม่พบออเดอร์นี้');
+
+      const orderData = orderSnap.data();
+      if (orderData.status === 'cancelled') {
+        // Already cancelled (e.g. double click) — nothing left to restock.
+        return;
+      }
+
+      const items = orderData.items || [];
+      const reads = [];
+      for (const item of items) {
+        if (!item.id) continue;
+        const pRef = doc(db, 'products', item.id);
+        const pSnap = await transaction.get(pRef);
+        reads.push({ item, ref: pRef, snap: pSnap });
+      }
+
+      reads.forEach(({ item, ref, snap }) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.stockQty === undefined || data.stockQty === null) return; // stock not tracked for this product
+        const restoredQty = (Number(data.stockQty) || 0) + (Number(item.qty) || 0);
+        transaction.update(ref, {
+          stockQty: restoredQty,
+          inStock: restoredQty > 0,
+          updatedAt: new Date().toISOString()
+        });
+      });
+
+      transaction.update(orderRef, { status: 'cancelled', updatedAt: new Date().toISOString() });
+    });
+  }
 
   window.saveTrackingNumber = async function(id) {
     const input = document.getElementById('trackingInput_' + id);
