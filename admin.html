@@ -184,8 +184,17 @@
     .order-num-input {
       width:46px; padding:6px 4px; text-align:center; border:1.5px solid var(--border);
       border-radius:7px; font-family:'Prompt',sans-serif; font-size:12.5px; font-weight:700; outline:none;
+      -moz-appearance: textfield; /* Firefox: hide native spinner arrows */
     }
     .order-num-input:focus { border-color:#2563EB; }
+    /* Chrome/Safari/Edge: hide native spinner arrows — they always
+       increment upward regardless of list direction, which felt reversed.
+       Typing the position number directly is the only way to reorder now. */
+    .order-num-input::-webkit-inner-spin-button,
+    .order-num-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
     
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
@@ -1441,7 +1450,7 @@
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
         : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${categories.length}"
-             onkeydown="if(event.key==='Enter'){this.blur();}"
+             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
              onchange="setCategoryOrder('${c._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
       return `
         <tr>
@@ -1619,7 +1628,7 @@
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา/<br>หมวดหมู่ก่อน</div>'
         : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${products.length}"
-             onkeydown="if(event.key==='Enter'){this.blur();}"
+             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
              onchange="setProductOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
       const stockCell = hasQty
         ? `<div class="stock-qty-controls">
