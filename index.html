@@ -1883,6 +1883,17 @@
     let storeProducts = [];
     let selectedCategoryName = 'ALL';
 
+    // Respect the custom display order set by the admin (sortOrder). Items
+    // without a sortOrder yet fall back to the end, keeping their original
+    // order among themselves (Array.sort is stable).
+    function sortByOrder(list) {
+      return [...list].sort((a, b) => {
+        const ao = (a.sortOrder !== undefined && a.sortOrder !== null) ? a.sortOrder : Infinity;
+        const bo = (b.sortOrder !== undefined && b.sortOrder !== null) ? b.sortOrder : Infinity;
+        return ao - bo;
+      });
+    }
+
     const defaultCategories = [
       { name: 'DX Full Bottle', slug: 'full-bottle', image: 'full-bottle.jpg', pageLink: 'full-bottle.html', desc: '100-150฿' },
       { name: 'Wonder Ride Book SG', slug: 'saberbook', image: 'wondersidebookSG.jpg', pageLink: 'SaberbookSG.html', desc: 'โปรพิเศษ' },
@@ -1893,7 +1904,7 @@
     // ===== 1. LISTEN TO CATEGORIES =====
     const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
     onSnapshot(catQuery, snap => {
-      const dbCategories = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
       storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
       renderCategoryGrid(storeCategories);
       renderCategoryPills(storeCategories);
@@ -1906,7 +1917,7 @@
     // ===== 2. LISTEN TO PRODUCTS =====
     const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
     onSnapshot(prodQuery, snap => {
-      storeProducts = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      storeProducts = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
       renderProductsGrid();
     }, err => {
       console.warn('Error loading products:', err);

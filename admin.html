@@ -181,6 +181,14 @@
       border-radius:7px; font-family:'Prompt',sans-serif; font-size:12px; outline:none;
     }
     .stock-qty-input:focus { border-color:#2563EB; }
+    .move-order-controls { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .move-btn {
+      width:26px; height:22px; display:flex; align-items:center; justify-content:center;
+      border:1.5px solid var(--border); border-radius:6px; background:#F9FAFB; color:var(--text);
+      cursor:pointer; font-size:11px; transition: background .15s, border-color .15s;
+    }
+    .move-btn:hover:not(:disabled) { background:#F3F4F6; border-color:#D1D5DB; }
+    .move-btn:disabled { opacity:.35; cursor:not-allowed; }
     
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
@@ -630,11 +638,11 @@
           <table>
             <thead>
               <tr>
-                <th>รูป / ไอคอน</th><th>ชื่อหมวดหมู่</th><th>รหัส (Slug)</th><th>ลิงก์หน้าเว็บ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+                <th>ลำดับ</th><th>รูป / ไอคอน</th><th>ชื่อหมวดหมู่</th><th>รหัส (Slug)</th><th>ลิงก์หน้าเว็บ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="categoriesTableBody">
-              <tr><td colspan="6"><div class="empty-state"><i class="ph ph-folder"></i>กำลังโหลดหมวดหมู่...</div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-folder"></i>กำลังโหลดหมวดหมู่...</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -665,11 +673,11 @@
           <table>
             <thead>
               <tr>
-                <th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จำนวนสต็อก</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+                <th>ลำดับ</th><th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จำนวนสต็อก</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="productsTableBody">
-              <tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลดสินค้า...</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -983,6 +991,18 @@
   let unsubsProducts = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
+
+  // Sort by the admin-assigned custom order (sortOrder). Items that don't
+  // have a sortOrder yet (e.g. created before this feature existed) fall
+  // back to the end of the list, in their original createdAt-desc order —
+  // Array.sort is stable, so ties keep their relative order.
+  function sortByOrder(list) {
+    return [...list].sort((a, b) => {
+      const ao = (a.sortOrder !== undefined && a.sortOrder !== null) ? a.sortOrder : Infinity;
+      const bo = (b.sortOrder !== undefined && b.sortOrder !== null) ? b.sortOrder : Infinity;
+      return ao - bo;
+    });
+  }
 
   // ===== AUTH STATE =====
   onAuthStateChanged(auth, user => {
@@ -1399,7 +1419,7 @@
 
   window.filterCategories = function() {
     const search = document.getElementById('searchCategoriesBox').value.toLowerCase().trim();
-    let f = allCategories;
+    let f = sortByOrder(allCategories);
     if (search) {
       f = f.filter(c => 
         (c.name || '').toLowerCase().includes(search) ||
@@ -1408,21 +1428,29 @@
       );
     }
     document.getElementById('categoriesCount').textContent = f.length + ' หมวดหมู่';
-    renderCategoriesTable(f);
+    renderCategoriesTable(f, !!search);
   };
 
-  function renderCategoriesTable(categories) {
+  function renderCategoriesTable(categories, reorderLocked) {
     const tbody = document.getElementById('categoriesTableBody');
     if (!categories.length) {
-      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
       return;
     }
-    tbody.innerHTML = categories.map(c => {
+    const lastIdx = categories.length - 1;
+    tbody.innerHTML = categories.map((c, i) => {
       const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
       const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
+      const moveCell = reorderLocked
+        ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
+        : `<div class="move-order-controls">
+             <button class="move-btn" onclick="moveCategory('${c._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
+             <button class="move-btn" onclick="moveCategory('${c._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
+           </div>`;
       return `
         <tr>
+          <td>${moveCell}</td>
           <td>${imgTag}</td>
           <td><strong>${c.name || '-'}</strong><div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
           <td><code>${c.slug || '-'}</code></td>
@@ -1509,6 +1537,32 @@
     }
   };
 
+  // Move a category up (-1) or down (+1) one position. Renumbers the whole
+  // list to clean sequential sortOrder values so ordering never ends up
+  // inconsistent, even for older items that never had a sortOrder before.
+  window.moveCategory = async function(id, direction) {
+    const sorted = sortByOrder(allCategories);
+    const idx = sorted.findIndex(c => c._id === id);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= sorted.length) return;
+
+    const reordered = sorted.slice();
+    const tmp = reordered[idx];
+    reordered[idx] = reordered[targetIdx];
+    reordered[targetIdx] = tmp;
+
+    try {
+      await Promise.all(reordered.map((item, i) =>
+        updateDoc(doc(db, 'categories', item._id), { sortOrder: i })
+      ));
+      showToast('✅ ย้ายลำดับเรียบร้อย');
+    } catch(e) {
+      showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+
   // ================= 3. PRODUCTS MODULE =================
   window.loadProducts = function() {
     if (unsubsProducts) unsubsProducts();
@@ -1524,7 +1578,7 @@
   window.filterProducts = function() {
     const search   = document.getElementById('searchProductsBox').value.toLowerCase().trim();
     const category = document.getElementById('productCategoryFilter').value;
-    let f = allProducts;
+    let f = sortByOrder(allProducts);
     if (category) f = f.filter(p => p.category === category);
     if (search) {
       f = f.filter(p =>
@@ -1533,16 +1587,17 @@
       );
     }
     document.getElementById('productsCount').textContent = f.length + ' รายการ';
-    renderProductsTable(f);
+    renderProductsTable(f, !!(search || category));
   };
 
-  function renderProductsTable(products) {
+  function renderProductsTable(products, reorderLocked) {
     const tbody = document.getElementById('productsTableBody');
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
       return;
     }
-    tbody.innerHTML = products.map(p => {
+    const lastIdx = products.length - 1;
+    tbody.innerHTML = products.map((p, i) => {
       const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
       const inStock = (p.inStock === true || p.inStock === 'true');
@@ -1552,6 +1607,12 @@
         ? `<span class="status-badge active">✅ พร้อมขาย</span>`
         : '<span class="status-badge out">❌ หมด</span>';
       const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
+      const moveCell = reorderLocked
+        ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา/<br>หมวดหมู่ก่อน</div>'
+        : `<div class="move-order-controls">
+             <button class="move-btn" onclick="moveProduct('${p._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
+             <button class="move-btn" onclick="moveProduct('${p._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
+           </div>`;
       const stockCell = hasQty
         ? `<div class="stock-qty-controls">
              <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
@@ -1567,6 +1628,7 @@
 
       return `
         <tr>
+          <td>${moveCell}</td>
           <td>${imgTag}</td>
           <td>
             <strong>${p.name || '-'}</strong>
@@ -1671,6 +1733,30 @@
       showToast(`🗑️ ลบสินค้า "${name}" เรียบร้อยแล้ว`);
     } catch(e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // Move a product up (-1) or down (+1) one position, same pattern as
+  // moveCategory: renumber the whole list to clean sequential sortOrder.
+  window.moveProduct = async function(id, direction) {
+    const sorted = sortByOrder(allProducts);
+    const idx = sorted.findIndex(p => p._id === id);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= sorted.length) return;
+
+    const reordered = sorted.slice();
+    const tmp = reordered[idx];
+    reordered[idx] = reordered[targetIdx];
+    reordered[targetIdx] = tmp;
+
+    try {
+      await Promise.all(reordered.map((item, i) =>
+        updateDoc(doc(db, 'products', item._id), { sortOrder: i })
+      ));
+      showToast('✅ ย้ายลำดับเรียบร้อย');
+    } catch(e) {
+      showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
   };
 
