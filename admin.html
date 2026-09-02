@@ -965,6 +965,13 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
+  // Only these email addresses may access the admin dashboard.
+  // To add more admins later, just add their email to this array
+  // (and also update the matching isAdmin() list in firestore.rules,
+  // since the Firestore rules are the real security boundary — this
+  // check here is just to keep the UI from opening for anyone else).
+  const ADMIN_EMAILS = ['hhackmapp@gmail.com'];
+
   let allOrders = [];
   let allCategories = [];
   let allProducts = [];
@@ -980,6 +987,21 @@
   // ===== AUTH STATE =====
   onAuthStateChanged(auth, user => {
     if (user) {
+      const emailAllowed = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+      if (!emailAllowed) {
+        // Not an authorized admin — sign them straight back out and
+        // show an error instead of ever opening the dashboard.
+        cleanUpListeners();
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('loginGate').style.display = 'flex';
+        const errEl = document.getElementById('loginError');
+        if (errEl) {
+          errEl.textContent = 'บัญชีนี้ไม่มีสิทธิ์เข้าถึงระบบแอดมิน';
+          errEl.style.display = 'block';
+        }
+        signOut(auth);
+        return;
+      }
       document.getElementById('loginGate').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       document.getElementById('adminEmailDisplay').textContent = user.email;
