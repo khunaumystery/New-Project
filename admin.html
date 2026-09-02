@@ -181,20 +181,14 @@
       border-radius:7px; font-family:'Prompt',sans-serif; font-size:12px; outline:none;
     }
     .stock-qty-input:focus { border-color:#2563EB; }
-    .order-num-input {
-      width:46px; padding:6px 4px; text-align:center; border:1.5px solid var(--border);
-      border-radius:7px; font-family:'Prompt',sans-serif; font-size:12.5px; font-weight:700; outline:none;
-      -moz-appearance: textfield; /* Firefox: hide native spinner arrows */
+    .move-order-controls { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .move-btn {
+      width:26px; height:22px; display:flex; align-items:center; justify-content:center;
+      border:1.5px solid var(--border); border-radius:6px; background:#F9FAFB; color:var(--text);
+      cursor:pointer; font-size:11px; transition: background .15s, border-color .15s;
     }
-    .order-num-input:focus { border-color:#2563EB; }
-    /* Chrome/Safari/Edge: hide native spinner arrows — they always
-       increment upward regardless of list direction, which felt reversed.
-       Typing the position number directly is the only way to reorder now. */
-    .order-num-input::-webkit-inner-spin-button,
-    .order-num-input::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
+    .move-btn:hover:not(:disabled) { background:#F3F4F6; border-color:#D1D5DB; }
+    .move-btn:disabled { opacity:.35; cursor:not-allowed; }
     
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
@@ -1443,15 +1437,17 @@
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-folder"></i>ไม่พบหมวดหมู่ (กด "+ เพิ่มหมวดหมู่ใหม่" เพื่อสร้าง)</div></td></tr>';
       return;
     }
+    const lastIdx = categories.length - 1;
     tbody.innerHTML = categories.map((c, i) => {
       const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
       const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
-        : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${categories.length}"
-             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
-             onchange="setCategoryOrder('${c._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
+        : `<div class="move-order-controls">
+             <button class="move-btn" onclick="moveCategory('${c._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
+             <button class="move-btn" onclick="moveCategory('${c._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
+           </div>`;
       return `
         <tr>
           <td>${moveCell}</td>
@@ -1544,32 +1540,17 @@
   // Move a category up (-1) or down (+1) one position. Renumbers the whole
   // list to clean sequential sortOrder values so ordering never ends up
   // inconsistent, even for older items that never had a sortOrder before.
-  // Move a category to whatever position number the admin typed in.
-  // Renumbers the whole list to clean sequential sortOrder values so
-  // ordering never ends up inconsistent, even for items that never had
-  // a sortOrder before.
-  window.setCategoryOrder = async function(id, newPositionRaw) {
+  window.moveCategory = async function(id, direction) {
     const sorted = sortByOrder(allCategories);
-    const fromIdx = sorted.findIndex(c => c._id === id);
-    if (fromIdx === -1) return;
-
-    let newPos = parseInt(newPositionRaw, 10);
-    if (isNaN(newPos)) {
-      filterCategories(); // invalid input — just redraw to reset the box
-      return;
-    }
-    let toIdx = newPos - 1; // convert to 0-indexed
-    if (toIdx < 0) toIdx = 0;
-    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
-
-    if (toIdx === fromIdx) {
-      filterCategories(); // no actual change — just reset the displayed number
-      return;
-    }
+    const idx = sorted.findIndex(c => c._id === id);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= sorted.length) return;
 
     const reordered = sorted.slice();
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, moved);
+    const tmp = reordered[idx];
+    reordered[idx] = reordered[targetIdx];
+    reordered[targetIdx] = tmp;
 
     try {
       await Promise.all(reordered.map((item, i) =>
@@ -1615,6 +1596,7 @@
       tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
       return;
     }
+    const lastIdx = products.length - 1;
     tbody.innerHTML = products.map((p, i) => {
       const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
       const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
@@ -1627,9 +1609,10 @@
       const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
       const moveCell = reorderLocked
         ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา/<br>หมวดหมู่ก่อน</div>'
-        : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${products.length}"
-             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
-             onchange="setProductOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
+        : `<div class="move-order-controls">
+             <button class="move-btn" onclick="moveProduct('${p._id}', -1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><i class="ph ph-caret-up"></i></button>
+             <button class="move-btn" onclick="moveProduct('${p._id}', 1)" ${i === lastIdx ? 'disabled' : ''} title="เลื่อนลง"><i class="ph ph-caret-down"></i></button>
+           </div>`;
       const stockCell = hasQty
         ? `<div class="stock-qty-controls">
              <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
@@ -1753,29 +1736,19 @@
     }
   };
 
-  // Move a product to whatever position number the admin typed in.
-  window.setProductOrder = async function(id, newPositionRaw) {
+  // Move a product up (-1) or down (+1) one position, same pattern as
+  // moveCategory: renumber the whole list to clean sequential sortOrder.
+  window.moveProduct = async function(id, direction) {
     const sorted = sortByOrder(allProducts);
-    const fromIdx = sorted.findIndex(p => p._id === id);
-    if (fromIdx === -1) return;
-
-    let newPos = parseInt(newPositionRaw, 10);
-    if (isNaN(newPos)) {
-      filterProducts(); // invalid input — just redraw to reset the box
-      return;
-    }
-    let toIdx = newPos - 1; // convert to 0-indexed
-    if (toIdx < 0) toIdx = 0;
-    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
-
-    if (toIdx === fromIdx) {
-      filterProducts(); // no actual change — just reset the displayed number
-      return;
-    }
+    const idx = sorted.findIndex(p => p._id === id);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= sorted.length) return;
 
     const reordered = sorted.slice();
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, moved);
+    const tmp = reordered[idx];
+    reordered[idx] = reordered[targetIdx];
+    reordered[targetIdx] = tmp;
 
     try {
       await Promise.all(reordered.map((item, i) =>
