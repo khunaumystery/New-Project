@@ -477,7 +477,7 @@
       cursor: pointer;
     }
 
-    /* Payment (Bank Transfer) Modal */
+    /* Payment (QR + Bank Transfer) Modal */
     .qr-box {
       background: #F9FAFB;
       border: 1.5px solid var(--border-color);
@@ -485,6 +485,16 @@
       padding: 18px 16px;
       margin-bottom: 14px;
       text-align: left;
+    }
+    .qr-code-img {
+      width: 200px;
+      height: 200px;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #FFFFFF;
     }
     .bank-info-row {
       display: flex;
@@ -849,6 +859,60 @@
       // Bank transfer payment details (shown to the customer at checkout)
       const BANK_NAME = 'ธนาคารกรุงไทย';
       const BANK_ACCOUNT_NUMBER = '9835063389';
+      // This phone number is the one actually registered with PromptPay
+      // (linked to the bank account above), so we use it — not the raw
+      // account number — as the PromptPay ID for the scan-to-pay QR.
+      const PROMPTPAY_ID = '0867852708';
+
+      // ---------- PromptPay EMVCo QR payload generator ----------
+      // Generates the exact Thai PromptPay QR payload string ourselves
+      // (same algorithm used by the official promptpay-qr library),
+      // then renders it as an image via a plain QR-code renderer.
+      // This guarantees the transfer amount is embedded correctly,
+      // instead of depending on a third-party service to do it right.
+      function crc16Ccitt(str) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < str.length; i++) {
+          crc ^= str.charCodeAt(i) << 8;
+          for (let b = 0; b < 8; b++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+      }
+
+      function ppTag(id, value) {
+        return id + String(value.length).padStart(2, '0') + value;
+      }
+
+      function buildPromptPayPayload(promptPayId, amount) {
+        const digits = String(promptPayId).replace(/[^0-9]/g, '');
+        let targetType = '01'; // phone number
+        if (digits.length >= 15) targetType = '03'; // e-wallet
+        else if (digits.length >= 13) targetType = '02'; // tax id / citizen id
+        const formattedTarget = digits.replace(/^0/, '66').padStart(13, '0');
+
+        const merchantInfo = ppTag('00', 'A000000677010111') + ppTag(targetType, formattedTarget);
+
+        let payload =
+          ppTag('00', '01') +
+          ppTag('01', amount ? '12' : '11') +
+          ppTag('29', merchantInfo) +
+          ppTag('58', 'TH') +
+          ppTag('53', '764');
+
+        if (amount) {
+          payload += ppTag('54', Number(amount).toFixed(2));
+        }
+
+        payload += '6304';
+        return payload + crc16Ccitt(payload);
+      }
+
+      function buildPromptPayQrImageUrl(promptPayId, amount) {
+        const payload = buildPromptPayPayload(promptPayId, amount);
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=' + encodeURIComponent(payload);
+      }
 
       const state = {
         appliedDiscount: 0,
@@ -1465,13 +1529,15 @@
         const body = document.getElementById('paymentModalBody');
         if (!body) return;
         const amount = Number(orderData.grandTotal) || 0;
+        const qrSrc = buildPromptPayQrImageUrl(PROMPTPAY_ID, amount);
 
         body.innerHTML =
-          '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-bank"></i></div>' +
-          '<h3 class="modal-title">โอนเงินเพื่อชำระเงิน</h3>' +
+          '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-qr-code"></i></div>' +
+          '<h3 class="modal-title">สแกน QR หรือโอนเข้าบัญชีเพื่อชำระเงิน</h3>' +
           '<p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">หมายเลขออเดอร์ <strong style="color:var(--mk-red);">' + escapeAttr(orderData.orderId) + '</strong></p>' +
           '<div class="qr-box">' +
-            '<div class="bank-info-row"><span class="bank-info-label">ธนาคาร</span><span class="bank-info-value">' + escapeAttr(BANK_NAME) + '</span></div>' +
+            '<img class="qr-code-img" src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาใช้เลขบัญชีโอนแทน\');">' +
+            '<div class="bank-info-row" style="margin-top:12px;"><span class="bank-info-label">ธนาคาร</span><span class="bank-info-value">' + escapeAttr(BANK_NAME) + '</span></div>' +
             '<div class="bank-info-row">' +
               '<span class="bank-info-label">เลขที่บัญชี</span>' +
               '<span class="bank-info-value bank-account-wrap">' +
