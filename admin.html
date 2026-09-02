@@ -1706,7 +1706,7 @@
       return `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
           <div><div style="font-weight:600;font-size:13.5px;">${escapeHtml(t.name)}</div>${usedTxt}</div>
-          <button type="button" class="action-btn btn-delete" onclick="deleteCategoryType('${t._id}', ${JSON.stringify(t.name)})"><i class="ph ph-trash"></i> ลบ</button>
+          <button type="button" class="action-btn btn-delete" onclick="deleteCategoryType('${t._id}', '${escapeJsAttr(t.name)}')"><i class="ph ph-trash"></i> ลบ</button>
         </div>
       `;
     }).join('');
@@ -2214,6 +2214,18 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;")
       .replace(/\n/g, "<br>");
+  }
+
+  // Escapes a string so it can be safely embedded inside a single-quoted
+  // JS string literal within an inline onclick="..." (double-quoted) HTML
+  // attribute — prevents backslashes/quotes in category/product names from
+  // breaking the generated markup or the click handler silently.
+  function escapeJsAttr(text) {
+    return (text || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '&quot;')
+      .replace(/\n/g, ' ');
   }
 
   // Close modals on backdrop click
