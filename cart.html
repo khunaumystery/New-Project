@@ -477,18 +477,17 @@
       cursor: pointer;
     }
 
-    /* Payment (QR + Bank Transfer) Modal */
+    /* Payment QR Modal */
     .qr-box {
       background: #F9FAFB;
       border: 1.5px solid var(--border-color);
       border-radius: 16px;
       padding: 18px 16px;
       margin-bottom: 14px;
-      text-align: left;
     }
-    .qr-code-img {
-      width: 200px;
-      height: 200px;
+    .qr-box img {
+      width: 220px;
+      height: 220px;
       max-width: 100%;
       object-fit: contain;
       display: block;
@@ -496,59 +495,52 @@
       border-radius: 8px;
       background: #FFFFFF;
     }
-    .bank-info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 13.5px;
-    }
-    .bank-info-row:first-child {
-      padding-top: 0;
-    }
-    .bank-info-label {
-      color: var(--text-muted);
-      font-weight: 500;
-      flex-shrink: 0;
-    }
-    .bank-info-value {
-      font-weight: 700;
-      color: var(--text-main);
-      text-align: right;
-    }
-    .bank-account-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      letter-spacing: 0.5px;
-    }
-    .copy-account-btn {
-      width: 26px;
-      height: 26px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #BFDBFE;
-      border-radius: 8px;
-      background: #EFF6FF;
-      color: #1D4ED8;
-      cursor: pointer;
-      font-size: 12px;
-    }
     .qr-amount-label {
       font-size: 12.5px;
       color: var(--text-muted);
       margin-top: 10px;
-      text-align: center;
     }
     .qr-amount-value {
       font-size: 26px;
       font-weight: 800;
       color: var(--mk-red);
-      text-align: center;
+    }
+    .qr-timer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .qr-expired-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: #B91C1C;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 14px;
+      width: 100%;
+    }
+    .btn-regenerate-qr {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--mk-red);
+      color: white;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
     }
     .upload-slip-label {
       display: flex;
@@ -856,13 +848,9 @@
       // cart item has no image or its image fails to load.
       const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='16' fill='%23F3F4F6'/%3E%3Cpath d='M38 78l16-20 13 15 11-13 16 18z' fill='%23D1D5DB'/%3E%3Ccircle cx='46' cy='44' r='9' fill='%23D1D5DB'/%3E%3C/svg%3E";
 
-      // Bank transfer payment details (shown to the customer at checkout)
-      const BANK_NAME = 'ธนาคารกรุงไทย';
-      const BANK_ACCOUNT_NUMBER = '9835063389';
-      // This phone number is the one actually registered with PromptPay
-      // (linked to the bank account above), so we use it — not the raw
-      // account number — as the PromptPay ID for the scan-to-pay QR.
+      // PromptPay payment QR config
       const PROMPTPAY_ID = '0867852708';
+      const QR_EXPIRY_MS = 10 * 60 * 1000; // QR มีอายุ 10 นาที
 
       // ---------- PromptPay EMVCo QR payload generator ----------
       // Generates the exact Thai PromptPay QR payload string ourselves
@@ -911,7 +899,7 @@
 
       function buildPromptPayQrImageUrl(promptPayId, amount) {
         const payload = buildPromptPayPayload(promptPayId, amount);
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=' + encodeURIComponent(payload);
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(payload);
       }
 
       const state = {
@@ -925,7 +913,9 @@
       let toastTimeout = null;
 
       // Payment modal state
+      let paymentTimerInterval = null;
       let pendingOrderData = null;
+      let qrExpiresAt = null;
 
       // ---------- Storage helpers ----------
       function getCartKey() {
@@ -1518,14 +1508,23 @@
       }
 
       // ---------- Payment QR + Slip Upload ----------
-      function openPaymentModal(orderData) {
-        pendingOrderData = orderData;
-        const modal = document.getElementById('paymentModal');
-        if (modal) modal.classList.add('active');
-        renderPaymentBankState(orderData);
+      function formatQrTime(ms) {
+        const totalSecs = Math.max(0, Math.floor(ms / 1000));
+        const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+        const secs = String(totalSecs % 60).padStart(2, '0');
+        return mins + ':' + secs;
       }
 
-      function renderPaymentBankState(orderData) {
+      function openPaymentModal(orderData) {
+        pendingOrderData = orderData;
+        qrExpiresAt = Date.now() + QR_EXPIRY_MS;
+        const modal = document.getElementById('paymentModal');
+        if (modal) modal.classList.add('active');
+        renderPaymentQrState(orderData);
+        startPaymentCountdown();
+      }
+
+      function renderPaymentQrState(orderData) {
         const body = document.getElementById('paymentModalBody');
         if (!body) return;
         const amount = Number(orderData.grandTotal) || 0;
@@ -1533,21 +1532,14 @@
 
         body.innerHTML =
           '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-qr-code"></i></div>' +
-          '<h3 class="modal-title">สแกน QR หรือโอนเข้าบัญชีเพื่อชำระเงิน</h3>' +
+          '<h3 class="modal-title">สแกน QR เพื่อชำระเงิน</h3>' +
           '<p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">หมายเลขออเดอร์ <strong style="color:var(--mk-red);">' + escapeAttr(orderData.orderId) + '</strong></p>' +
           '<div class="qr-box">' +
-            '<img class="qr-code-img" src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาใช้เลขบัญชีโอนแทน\');">' +
-            '<div class="bank-info-row" style="margin-top:12px;"><span class="bank-info-label">ธนาคาร</span><span class="bank-info-value">' + escapeAttr(BANK_NAME) + '</span></div>' +
-            '<div class="bank-info-row">' +
-              '<span class="bank-info-label">เลขที่บัญชี</span>' +
-              '<span class="bank-info-value bank-account-wrap">' +
-                '<span id="bankAccountNumberText">' + escapeAttr(BANK_ACCOUNT_NUMBER) + '</span>' +
-                '<button type="button" class="copy-account-btn" onclick="MK.copyBankAccount()" title="คัดลอกเลขบัญชี"><i class="ph ph-copy"></i></button>' +
-              '</span>' +
-            '</div>' +
+            '<img src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาลองใหม่\');">' +
             '<div class="qr-amount-label">ยอดที่ต้องชำระ</div>' +
             '<div class="qr-amount-value">฿' + amount.toLocaleString() + '</div>' +
           '</div>' +
+          '<div id="qrTimerArea"></div>' +
           '<div style="margin-top:16px;">' +
             '<label class="upload-slip-label" id="uploadSlipLabel" for="slipFileInput">' +
               '<i class="ph ph-upload-simple"></i> <span>อัพโหลดสลิปการโอนเงิน</span>' +
@@ -1557,7 +1549,23 @@
           '<div id="slipUploadMsg" style="display:none; margin-top:8px; font-size:12px; color:#EF4444; font-weight:500;"></div>' +
           '<button type="button" class="modal-secondary-btn" onclick="MK.cancelPayment()">ยกเลิก</button>';
 
-        setUploadSlipEnabled(true);
+        renderQrTimerArea();
+      }
+
+      function renderQrTimerArea() {
+        const area = document.getElementById('qrTimerArea');
+        if (!area) return;
+        const remaining = qrExpiresAt - Date.now();
+        if (remaining > 0) {
+          area.innerHTML = '<span class="qr-timer-badge"><i class="ph ph-hourglass-medium"></i> QR หมดอายุใน <strong id="qrTimerText">' + formatQrTime(remaining) + '</strong></span>';
+        } else {
+          area.innerHTML =
+            '<div class="qr-expired-badge">' +
+              '<span><i class="ph ph-x-circle"></i> QR หมดอายุแล้ว (เกิน 10 นาที)</span>' +
+              '<button type="button" class="btn-regenerate-qr" onclick="MK.regenerateQR()"><i class="ph ph-arrows-clockwise"></i> สร้าง QR ใหม่</button>' +
+            '</div>';
+          setUploadSlipEnabled(false);
+        }
       }
 
       function setUploadSlipEnabled(enabled) {
@@ -1567,28 +1575,38 @@
         if (input) input.disabled = !enabled;
       }
 
-      function copyBankAccount() {
-        const text = BANK_ACCOUNT_NUMBER;
-        const btn = document.querySelector('.copy-account-btn');
-        const finish = () => {
-          showToast('📋 คัดลอกเลขบัญชีแล้ว');
-          if (btn) {
-            const original = btn.innerHTML;
-            btn.innerHTML = '<i class="ph ph-check"></i>';
-            setTimeout(() => { btn.innerHTML = original; }, 1500);
+      function startPaymentCountdown() {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+        function tick() {
+          const remaining = qrExpiresAt - Date.now();
+          const timerText = document.getElementById('qrTimerText');
+          if (remaining <= 0) {
+            clearInterval(paymentTimerInterval);
+            renderQrTimerArea();
+            return;
           }
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(finish).catch(() => {
-            window.prompt('คัดลอกเลขบัญชีนี้', text);
-          });
-        } else {
-          window.prompt('คัดลอกเลขบัญชีนี้', text);
+          if (timerText) {
+            timerText.textContent = formatQrTime(remaining);
+          } else {
+            // Timer badge not in DOM (e.g. re-rendered) - refresh area
+            renderQrTimerArea();
+          }
         }
+        tick();
+        paymentTimerInterval = setInterval(tick, 500);
+      }
+
+      function regenerateQR() {
+        if (!pendingOrderData) return;
+        qrExpiresAt = Date.now() + QR_EXPIRY_MS;
+        renderPaymentQrState(pendingOrderData);
+        startPaymentCountdown();
       }
 
       function cancelPayment() {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
         pendingOrderData = null;
+        qrExpiresAt = null;
         const modal = document.getElementById('paymentModal');
         if (modal) modal.classList.remove('active');
       }
@@ -1608,6 +1626,12 @@
 
         const errEl = document.getElementById('slipUploadMsg');
         if (errEl) errEl.style.display = 'none';
+
+        if (!qrExpiresAt || Date.now() > qrExpiresAt) {
+          showSlipError('⚠️ QR หมดอายุแล้ว กรุณากด "สร้าง QR ใหม่" ก่อนอัพโหลดสลิป');
+          input.value = '';
+          return;
+        }
 
         if (file.size > 8 * 1024 * 1024) {
           showSlipError('⚠️ ไฟล์รูปสลิปมีขนาดใหญ่เกินไป (สูงสุด 8MB)');
@@ -1656,6 +1680,8 @@
       }
 
       async function finalizeOrderWithSlip(orderData, slipDataUrl) {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+
         const body = document.getElementById('paymentModalBody');
         if (body) {
           body.innerHTML =
@@ -1693,8 +1719,13 @@
 
         if (!savedOnline) {
           showToast('❌ บันทึกคำสั่งซื้อไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
-          renderPaymentBankState(orderData);
-          showSlipError('❌ บันทึกไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          if (qrExpiresAt && qrExpiresAt > Date.now()) {
+            renderPaymentQrState(orderData);
+            startPaymentCountdown();
+            showSlipError('❌ บันทึกไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          } else {
+            regenerateQR();
+          }
           return;
         }
 
@@ -1718,6 +1749,7 @@
 
       function closePaymentModal() {
         pendingOrderData = null;
+        qrExpiresAt = null;
         const modal = document.getElementById('paymentModal');
         if (modal) modal.classList.remove('active');
         window.location.href = 'index.html';
@@ -1743,7 +1775,7 @@
         showToast,
         renderCart,
         checkLatestCode,
-        copyBankAccount,
+        regenerateQR,
         cancelPayment,
         handleSlipFileChange,
         closePaymentModal,
