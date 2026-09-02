@@ -376,6 +376,34 @@
       margin-bottom: 14px;
     }
 
+    .avatar-edit-btn {
+      position: absolute;
+      bottom: 0;
+      left: -4px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
+      color: white;
+      border: 2.5px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(211, 34, 42, 0.4);
+      transition: transform 0.15s ease;
+    }
+
+    .avatar-edit-btn:active {
+      transform: scale(0.9);
+    }
+
+    .avatar-edit-btn.uploading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
     .profile-avatar {
       width: 90px;
       height: 90px;
@@ -682,6 +710,10 @@
       <div class="profile-avatar-box">
         <img src="logo%20khunau.png" alt="Profile" class="profile-avatar" id="profileImg" onerror="this.src='logo khunau.png'">
         <span class="profile-badge-vip">👑 VIP</span>
+        <button type="button" class="avatar-edit-btn" id="btnAvatarEditIcon" onclick="document.getElementById('avatarFileInput').click()" aria-label="เปลี่ยนรูปโปรไฟล์" title="เปลี่ยนรูปโปรไฟล์">
+          <i class="ph ph-camera"></i>
+        </button>
+        <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarFileChange(event)">
       </div>
 
       <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
@@ -811,8 +843,10 @@
 
   <!-- Firebase Authentication Logic (ES Modules) -->
   <script type="module">
+    import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { 
       auth, 
+      db,
       googleProvider, 
       signInWithPopup, 
       signInWithEmailAndPassword, 
@@ -944,6 +978,114 @@
       }
     };
 
+    // ---- Edit Profile Photo ----
+    // Loads a previously-uploaded custom avatar (stored as a small
+    // compressed base64 image in Firestore) so it survives across devices.
+    async function loadCustomAvatar(uid) {
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists() && snap.data().photoDataUrl) {
+          const imgEl = document.getElementById('profileImg');
+          if (imgEl) imgEl.src = snap.data().photoDataUrl;
+        }
+      } catch (error) {
+        console.warn('Load custom avatar error:', error);
+      }
+    }
+
+    const MAX_RAW_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB raw file limit before we even try to process it
+    const AVATAR_MAX_DIMENSION = 256;              // profile photos never need to be bigger than this
+    const AVATAR_MAX_DATA_URL_LENGTH = 250000;      // keep the stored/synced image small (~180KB)
+
+    window.handleAvatarFileChange = function (event) {
+      const input = event.target;
+      const file = input.files && input.files[0];
+      if (!file || !auth.currentUser) return;
+
+      if (!file.type || !file.type.startsWith('image/')) {
+        showToast('❌ กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+        input.value = '';
+        return;
+      }
+      if (file.size > MAX_RAW_UPLOAD_BYTES) {
+        showToast('⚠️ ไฟล์รูปมีขนาดใหญ่เกินไป (สูงสุด 8MB) กรุณาเลือกไฟล์อื่น');
+        input.value = '';
+        return;
+      }
+
+      const editBtn = document.getElementById('btnAvatarEditIcon');
+      if (editBtn) editBtn.classList.add('uploading');
+      showToast('⏳ กำลังปรับขนาดรูปภาพ...');
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          // Resize down to a small square-ish thumbnail — an avatar never
+          // needs to be larger than this, which keeps the stored file tiny
+          // regardless of how large the original photo was.
+          let w = img.width;
+          let h = img.height;
+          if (w > AVATAR_MAX_DIMENSION || h > AVATAR_MAX_DIMENSION) {
+            if (w > h) {
+              h = Math.round((h * AVATAR_MAX_DIMENSION) / w);
+              w = AVATAR_MAX_DIMENSION;
+            } else {
+              w = Math.round((w * AVATAR_MAX_DIMENSION) / h);
+              h = AVATAR_MAX_DIMENSION;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // Compress further if still large, so the final image is always small.
+          let quality = 0.85;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length > AVATAR_MAX_DATA_URL_LENGTH && quality > 0.35) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+
+          saveAvatarImage(dataUrl);
+        };
+        img.onerror = function () {
+          if (editBtn) editBtn.classList.remove('uploading');
+          showToast('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () {
+        if (editBtn) editBtn.classList.remove('uploading');
+        showToast('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่');
+      };
+      reader.readAsDataURL(file);
+
+      input.value = ''; // allow re-selecting the same file again later
+    };
+
+    async function saveAvatarImage(dataUrl) {
+      const editBtn = document.getElementById('btnAvatarEditIcon');
+      try {
+        await setDoc(doc(db, 'users', auth.currentUser.uid), {
+          photoDataUrl: dataUrl,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        const imgEl = document.getElementById('profileImg');
+        if (imgEl) imgEl.src = dataUrl;
+        showToast('✅ เปลี่ยนรูปโปรไฟล์เรียบร้อยแล้ว');
+      } catch (error) {
+        console.error('Save avatar error:', error);
+        showToast('❌ ไม่สามารถบันทึกรูปโปรไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        if (editBtn) editBtn.classList.remove('uploading');
+      }
+    }
+
     // 1. Google Sign In
     document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
       if (isInAppBrowser()) {
@@ -1061,10 +1203,13 @@
 
         document.getElementById('profileName').textContent = user.displayName || 'ลูกค้า VIP';
         document.getElementById('profileEmail').textContent = user.email || '';
-        
+
+        // Show Google/Auth photo first (fast), then check for a custom
+        // uploaded avatar in Firestore which takes priority once it loads.
         if (user.photoURL) {
           document.getElementById('profileImg').src = user.photoURL;
         }
+        loadCustomAvatar(user.uid);
 
         updateProfileStats(user.uid);
       } else {
