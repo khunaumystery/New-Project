@@ -1943,7 +1943,7 @@
     // ===== 1b. LISTEN TO CATEGORY TYPES (top-level filter) =====
     const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
     onSnapshot(catTypeQuery, snap => {
-      storeCategoryTypes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      storeCategoryTypes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
       renderCategoryTypePills(storeCategoryTypes);
     }, err => {
       console.warn('Error loading category types:', err);

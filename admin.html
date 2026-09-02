@@ -1676,7 +1676,7 @@
 
     let filterOptions = '<option value="">ประเภทหมวดหมู่สินค้าทั้งหมด</option>';
     let formOptions = '<option value="">-- เลือกประเภท --</option>';
-    allCategoryTypes.forEach(t => {
+    sortByOrder(allCategoryTypes).forEach(t => {
       filterOptions += `<option value="${t.name}">${t.name}</option>`;
       formOptions += `<option value="${t.name}">${t.name}</option>`;
     });
@@ -1698,14 +1698,18 @@
       listEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:16px 0;">ยังไม่มีประเภทหมวดหมู่ กรุณาเพิ่มด้านล่าง</div>';
       return;
     }
-    listEl.innerHTML = allCategoryTypes.map(t => {
+    const sorted = sortByOrder(allCategoryTypes);
+    listEl.innerHTML = sorted.map((t, i) => {
       const usedCount = allCategories.filter(c => c.categoryType === t.name).length;
       const usedTxt = usedCount > 0
         ? `<span style="font-size:11px;color:var(--muted);">ใช้อยู่ ${usedCount} หมวดหมู่</span>`
         : '<span style="font-size:11px;color:var(--muted);">ยังไม่ถูกใช้งาน</span>';
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
-          <div><div style="font-weight:600;font-size:13.5px;">${escapeHtml(t.name)}</div>${usedTxt}</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+          <input type="number" class="order-num-input" value="${i + 1}" min="1" max="${sorted.length}"
+            onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
+            onchange="setCategoryTypeOrder('${t._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">
+          <div style="flex:1; min-width:0;"><div style="font-weight:600;font-size:13.5px;">${escapeHtml(t.name)}</div>${usedTxt}</div>
           <button type="button" class="action-btn btn-delete" onclick="deleteCategoryType('${t._id}', '${escapeJsAttr(t.name)}')"><i class="ph ph-trash"></i> ลบ</button>
         </div>
       `;
@@ -1738,6 +1742,42 @@
       showToast('🗑️ ลบประเภท "' + name + '" แล้ว');
     } catch (e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // Move a category type to whatever position number the admin typed in.
+  // Renumbers the whole list to clean sequential sortOrder values, same
+  // pattern as categories/products reordering above.
+  window.setCategoryTypeOrder = async function(id, newPositionRaw) {
+    const sorted = sortByOrder(allCategoryTypes);
+    const fromIdx = sorted.findIndex(t => t._id === id);
+    if (fromIdx === -1) return;
+
+    let newPos = parseInt(newPositionRaw, 10);
+    if (isNaN(newPos)) {
+      renderCategoryTypesManageList(); // invalid input — just redraw to reset the box
+      return;
+    }
+    let toIdx = newPos - 1; // convert to 0-indexed
+    if (toIdx < 0) toIdx = 0;
+    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
+
+    if (toIdx === fromIdx) {
+      renderCategoryTypesManageList(); // no actual change — just reset the displayed number
+      return;
+    }
+
+    const reordered = sorted.slice();
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+
+    try {
+      await Promise.all(reordered.map((item, i) =>
+        updateDoc(doc(db, 'categoryTypes', item._id), { sortOrder: i })
+      ));
+      showToast('✅ ย้ายลำดับเรียบร้อย');
+    } catch (e) {
+      showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
   };
 
