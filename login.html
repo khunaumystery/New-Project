@@ -1017,80 +1017,55 @@
       if (editBtn) editBtn.classList.add('uploading');
       showToast('⏳ กำลังปรับขนาดรูปภาพ...');
 
-      readAvatarFileAsDataUrl(file, editBtn, 1);
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          // Resize down to a small square-ish thumbnail — an avatar never
+          // needs to be larger than this, which keeps the stored file tiny
+          // regardless of how large the original photo was.
+          let w = img.width;
+          let h = img.height;
+          if (w > AVATAR_MAX_DIMENSION || h > AVATAR_MAX_DIMENSION) {
+            if (w > h) {
+              h = Math.round((h * AVATAR_MAX_DIMENSION) / w);
+              w = AVATAR_MAX_DIMENSION;
+            } else {
+              w = Math.round((w * AVATAR_MAX_DIMENSION) / h);
+              h = AVATAR_MAX_DIMENSION;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // Compress further if still large, so the final image is always small.
+          let quality = 0.85;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length > AVATAR_MAX_DATA_URL_LENGTH && quality > 0.35) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+
+          saveAvatarImage(dataUrl);
+        };
+        img.onerror = function () {
+          if (editBtn) editBtn.classList.remove('uploading');
+          showToast('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () {
+        if (editBtn) editBtn.classList.remove('uploading');
+        showToast('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่');
+      };
+      reader.readAsDataURL(file);
 
       input.value = ''; // allow re-selecting the same file again later
     };
-
-    // Reads the selected file into a data URL, automatically retrying a
-    // couple of times on failure before giving up. Mobile "cloud-optimized"
-    // photo libraries (iCloud Photos / Google Photos) sometimes haven't
-    // finished downloading the full-size original to the device yet when
-    // the picker hands the file over — the very first read can fail even
-    // though the exact same photo reads fine moments later, which is why
-    // manually re-selecting the same photo often "just works" on retry.
-    // We do that retry automatically instead of making the person do it.
-    const AVATAR_READ_MAX_ATTEMPTS = 3;
-    const AVATAR_READ_RETRY_DELAY_MS = 700;
-
-    function readAvatarFileAsDataUrl(file, editBtn, attempt) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        processAvatarImageSource(e.target.result, editBtn);
-      };
-      reader.onerror = function () {
-        if (attempt < AVATAR_READ_MAX_ATTEMPTS) {
-          setTimeout(function () {
-            readAvatarFileAsDataUrl(file, editBtn, attempt + 1);
-          }, AVATAR_READ_RETRY_DELAY_MS);
-        } else {
-          if (editBtn) editBtn.classList.remove('uploading');
-          showToast('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่อีกครั้ง');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function processAvatarImageSource(imageSrc, editBtn) {
-      const img = new Image();
-      img.onload = function () {
-        // Resize down to a small square-ish thumbnail — an avatar never
-        // needs to be larger than this, which keeps the stored file tiny
-        // regardless of how large the original photo was.
-        let w = img.width;
-        let h = img.height;
-        if (w > AVATAR_MAX_DIMENSION || h > AVATAR_MAX_DIMENSION) {
-          if (w > h) {
-            h = Math.round((h * AVATAR_MAX_DIMENSION) / w);
-            w = AVATAR_MAX_DIMENSION;
-          } else {
-            w = Math.round((w * AVATAR_MAX_DIMENSION) / h);
-            h = AVATAR_MAX_DIMENSION;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-
-        // Compress further if still large, so the final image is always small.
-        let quality = 0.85;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-        while (dataUrl.length > AVATAR_MAX_DATA_URL_LENGTH && quality > 0.35) {
-          quality -= 0.1;
-          dataUrl = canvas.toDataURL('image/jpeg', quality);
-        }
-
-        saveAvatarImage(dataUrl);
-      };
-      img.onerror = function () {
-        if (editBtn) editBtn.classList.remove('uploading');
-        showToast('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
-      };
-      img.src = imageSrc;
-    }
 
     async function saveAvatarImage(dataUrl) {
       const editBtn = document.getElementById('btnAvatarEditIcon');
