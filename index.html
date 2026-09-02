@@ -926,6 +926,17 @@
       transform: translateY(-1px);
     }
 
+    .type-pill-bar {
+      margin-bottom: 14px;
+    }
+
+    .type-pill-btn.active {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%) !important;
+      color: #3D1C00 !important;
+      border-color: rgba(245, 200, 66, 0.9) !important;
+      box-shadow: 0 4px 14px rgba(245, 200, 66, 0.5) !important;
+    }
+
     /* ===== PRODUCTS SECTION ===== */
     .products-section {
       margin-top: 10px;
@@ -1323,6 +1334,19 @@
         <span>สุ่มได้ใหม่อีกครั้งใน: <strong class="timer-pill" id="timerDisplay">05:00:00</strong></span>
       </div>
     </section>
+
+    <!-- 3a. Category Type Filter (Top-level: มาสไรเดอร์ / ซุปเปอร์เซ็นไต / อุลตราแมน ฯลฯ) -->
+    <div class="section-header-wrap" style="margin-bottom:10px;">
+      <div class="section-title-left">
+        <div class="section-icon-box">
+          <i class="ph ph-tag"></i>
+        </div>
+        <div class="section-title-text">เลือกประเภทสินค้า</div>
+      </div>
+    </div>
+    <div class="cat-pill-bar type-pill-bar" id="categoryTypeButtonsContainer">
+      <button class="cat-pill-btn type-pill-btn active" onclick="selectCategoryType('ALL', this)">🌟 ทั้งหมด</button>
+    </div>
 
     <!-- 3. Category Header & 4-Column Grid -->
     <div class="section-header-wrap">
@@ -1881,7 +1905,9 @@
 
     let storeCategories = [];
     let storeProducts = [];
+    let storeCategoryTypes = [];
     let selectedCategoryName = 'ALL';
+    let selectedCategoryTypeName = 'ALL';
 
     // Respect the custom display order set by the admin (sortOrder). Items
     // without a sortOrder yet fall back to the end, keeping their original
@@ -1906,12 +1932,21 @@
     onSnapshot(catQuery, snap => {
       const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
       storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
-      renderCategoryGrid(storeCategories);
-      renderCategoryPills(storeCategories);
+      renderCategoryGrid(getCategoriesFilteredByType());
+      renderCategoryPills(getCategoriesFilteredByType());
     }, err => {
       storeCategories = defaultCategories;
-      renderCategoryGrid(storeCategories);
-      renderCategoryPills(storeCategories);
+      renderCategoryGrid(getCategoriesFilteredByType());
+      renderCategoryPills(getCategoriesFilteredByType());
+    });
+
+    // ===== 1b. LISTEN TO CATEGORY TYPES (top-level filter) =====
+    const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
+    onSnapshot(catTypeQuery, snap => {
+      storeCategoryTypes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      renderCategoryTypePills(storeCategoryTypes);
+    }, err => {
+      console.warn('Error loading category types:', err);
     });
 
     // ===== 2. LISTEN TO PRODUCTS =====
@@ -1922,6 +1957,33 @@
     }, err => {
       console.warn('Error loading products:', err);
     });
+
+    // ===== CATEGORY TYPE HELPERS =====
+    function getCategoriesFilteredByType() {
+      if (selectedCategoryTypeName === 'ALL') return storeCategories;
+      return storeCategories.filter(c => c.categoryType === selectedCategoryTypeName);
+    }
+
+    // A product only stores its category NAME (not the type), so to filter
+    // products by type we look up that category's type via storeCategories
+    // (which always holds the full, unfiltered list).
+    function productMatchesSelectedType(productCategoryName) {
+      if (selectedCategoryTypeName === 'ALL') return true;
+      const cat = storeCategories.find(c => c.name === productCategoryName);
+      return !!(cat && cat.categoryType === selectedCategoryTypeName);
+    }
+
+    // ===== RENDER CATEGORY TYPE PILL TABS (top-level filter) =====
+    function renderCategoryTypePills(types) {
+      const container = document.getElementById('categoryTypeButtonsContainer');
+      if (!container) return;
+      let html = `<button class="cat-pill-btn type-pill-btn ${selectedCategoryTypeName === 'ALL' ? 'active' : ''}" onclick="selectCategoryType('ALL', this)">🌟 ทั้งหมด</button>`;
+      types.forEach(t => {
+        const isActive = selectedCategoryTypeName === t.name ? 'active' : '';
+        html += `<button class="cat-pill-btn type-pill-btn ${isActive}" onclick="selectCategoryType('${t.name}', this)">${t.name}</button>`;
+      });
+      container.innerHTML = html;
+    }
 
     // ===== RENDER CATEGORY 4-COLUMN GRID =====
     function renderCategoryGrid(categories) {
@@ -1962,7 +2024,7 @@
     window.selectCategory = function(catName, btnEl) {
       selectedCategoryName = catName;
       if (btnEl) {
-        document.querySelectorAll('.cat-pill-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#categoryButtonsContainer .cat-pill-btn').forEach(b => b.classList.remove('active'));
         btnEl.classList.add('active');
       }
       renderProductsGrid();
@@ -1973,7 +2035,7 @@
     };
 
     window.selectCategoryByName = function(catName) {
-      const btns = document.querySelectorAll('.cat-pill-btn');
+      const btns = document.querySelectorAll('#categoryButtonsContainer .cat-pill-btn');
       let targetBtn = null;
       btns.forEach(b => {
         if (b.textContent.includes(catName)) targetBtn = b;
@@ -1983,6 +2045,24 @@
       if (prodSec) prodSec.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // ===== CATEGORY TYPE SELECT LOGIC (top-level filter) =====
+    window.selectCategoryType = function(typeName, btnEl) {
+      selectedCategoryTypeName = typeName;
+      if (btnEl) {
+        document.querySelectorAll('#categoryTypeButtonsContainer .cat-pill-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      // Switching the top-level type resets the more specific category
+      // choice below it, since the previously-selected category may not
+      // belong to the newly chosen type.
+      selectedCategoryName = 'ALL';
+      renderCategoryGrid(getCategoriesFilteredByType());
+      renderCategoryPills(getCategoriesFilteredByType());
+      renderProductsGrid();
+      const titleEl = document.getElementById('currentCategoryTitle');
+      if (titleEl) titleEl.textContent = 'สินค้าทั้งหมด';
+    };
+
     // ===== RENDER PRODUCTS GRID =====
     function renderProductsGrid() {
       const grid = document.getElementById('productGridContainer');
@@ -1990,6 +2070,9 @@
       if (!grid) return;
 
       let filtered = storeProducts;
+      if (selectedCategoryTypeName !== 'ALL') {
+        filtered = filtered.filter(p => productMatchesSelectedType(p.category));
+      }
       if (selectedCategoryName !== 'ALL') {
         filtered = filtered.filter(p => p.category === selectedCategoryName);
       }
