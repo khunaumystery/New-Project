@@ -1793,10 +1793,15 @@
     }, err => showToast('โหลดสินค้าไม่สำเร็จ: ' + err.message));
   };
 
+  // Sorting is scoped PER CATEGORY: sortOrder only needs to be unique/meaningful
+  // among products that share the same category. That means:
+  //  - No filter active  -> table is grouped by category, each group numbered 1..N on its own
+  //  - One category picked from the dropdown -> flat list, already scoped to that category
+  //  - Searching by text -> crosses categories, so reordering is locked (as before)
   window.filterProducts = function() {
     const search   = document.getElementById('searchProductsBox').value.toLowerCase().trim();
     const category = document.getElementById('productCategoryFilter').value;
-    let f = sortByOrder(allProducts);
+    let f = allProducts;
     if (category) f = f.filter(p => p.category === category);
     if (search) {
       f = f.filter(p =>
@@ -1805,8 +1810,70 @@
       );
     }
     document.getElementById('productsCount').textContent = f.length + ' รายการ';
-    renderProductsTable(f, !!(search || category));
+
+    if (search) {
+      // Crosses categories - keep visible but reordering disabled.
+      renderProductsTable(sortByOrder(f), true);
+    } else if (category) {
+      // Already scoped to a single category - full reordering enabled.
+      renderProductsTable(sortByOrder(f), false);
+    } else {
+      // No filter at all - group by category, order independently per group.
+      renderProductsTableGrouped(f);
+    }
   };
+
+  function renderProductRow(p, positionInGroup, groupSize, reorderLocked) {
+    const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
+    const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
+    const inStock = (p.inStock === true || p.inStock === 'true');
+    const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
+    const qtyVal = hasQty ? Number(p.stockQty) : 0;
+    const statusBadge = inStock
+      ? `<span class="status-badge active">✅ พร้อมขาย</span>`
+      : '<span class="status-badge out">❌ หมด</span>';
+    const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
+    const moveCell = reorderLocked
+      ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
+      : `<input type="number" class="order-num-input" value="${positionInGroup}" min="1" max="${groupSize}"
+           onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
+           onchange="setProductOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการภายในหมวดหมู่นี้แล้วกด Enter">`;
+    const stockCell = hasQty
+      ? `<div class="stock-qty-controls">
+           <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
+           <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="${qtyVal}" min="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
+           <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', 1)" title="เพิ่ม 1 ชิ้น"><i class="ph ph-plus"></i></button>
+         </div>
+         <button class="btn-tracking" style="margin-top:4px;" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> บันทึก</button>`
+      : `<div style="font-size:11px;color:var(--muted); margin-bottom:6px;">ยังไม่ระบุจำนวน</div>
+         <div class="stock-qty-controls">
+           <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="0" min="0" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
+           <button class="btn-tracking" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> ตั้งค่า</button>
+         </div>`;
+
+    return `
+      <tr>
+        <td>${moveCell}</td>
+        <td>${imgTag}</td>
+        <td>
+          <strong>${p.name || '-'}</strong>
+          <div style="font-size:11px;color:var(--muted);">${p.desc || ''}</div>
+        </td>
+        <td><span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${p.category || '-'}</span></td>
+        <td>
+          ${origPriceTxt}
+          <span class="total-amt">฿${Number(p.price || 0).toLocaleString()}</span>
+        </td>
+        <td class="tracking-cell">${stockCell}</td>
+        <td>${statusBadge}</td>
+        <td><span class="date-txt">${date}</span></td>
+        <td>
+          <button class="action-btn btn-detail" onclick="openEditProductModal('${p._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
+          <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}', '${p.name}')"><i class="ph ph-trash"></i> ลบ</button>
+        </td>
+      </tr>
+    `;
+  }
 
   function renderProductsTable(products, reorderLocked) {
     const tbody = document.getElementById('productsTableBody');
@@ -1814,57 +1881,43 @@
       tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
       return;
     }
-    tbody.innerHTML = products.map((p, i) => {
-      const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
-      const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
-      const inStock = (p.inStock === true || p.inStock === 'true');
-      const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
-      const qtyVal = hasQty ? Number(p.stockQty) : 0;
-      const statusBadge = inStock
-        ? `<span class="status-badge active">✅ พร้อมขาย</span>`
-        : '<span class="status-badge out">❌ หมด</span>';
-      const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
-      const moveCell = reorderLocked
-        ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา/<br>หมวดหมู่ก่อน</div>'
-        : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${products.length}"
-             onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
-             onchange="setProductOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
-      const stockCell = hasQty
-        ? `<div class="stock-qty-controls">
-             <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', -1)" title="ลด 1 ชิ้น"><i class="ph ph-minus"></i></button>
-             <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="${qtyVal}" min="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
-             <button class="stock-qty-btn" onclick="adjustStockQty('${p._id}', 1)" title="เพิ่ม 1 ชิ้น"><i class="ph ph-plus"></i></button>
-           </div>
-           <button class="btn-tracking" style="margin-top:4px;" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> บันทึก</button>`
-        : `<div style="font-size:11px;color:var(--muted); margin-bottom:6px;">ยังไม่ระบุจำนวน</div>
-           <div class="stock-qty-controls">
-             <input type="number" class="stock-qty-input" id="stockQtyInput_${p._id}" value="0" min="0" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault(); setStockQty('${p._id}');}">
-             <button class="btn-tracking" onclick="setStockQty('${p._id}')"><i class="ph ph-floppy-disk"></i> ตั้งค่า</button>
-           </div>`;
+    tbody.innerHTML = products.map((p, i) => renderProductRow(p, i + 1, products.length, reorderLocked)).join('');
+  }
 
-      return `
-        <tr>
-          <td>${moveCell}</td>
-          <td>${imgTag}</td>
-          <td>
-            <strong>${p.name || '-'}</strong>
-            <div style="font-size:11px;color:var(--muted);">${p.desc || ''}</div>
-          </td>
-          <td><span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${p.category || '-'}</span></td>
-          <td>
-            ${origPriceTxt}
-            <span class="total-amt">฿${Number(p.price || 0).toLocaleString()}</span>
-          </td>
-          <td class="tracking-cell">${stockCell}</td>
-          <td>${statusBadge}</td>
-          <td><span class="date-txt">${date}</span></td>
-          <td>
-            <button class="action-btn btn-detail" onclick="openEditProductModal('${p._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
-            <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}', '${p.name}')"><i class="ph ph-trash"></i> ลบ</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+  // Groups products by category name, sorts each group by the category's own
+  // display order (falling back to alphabetical for categories not found),
+  // and numbers each group's rows starting fresh from 1 - so the "ลำดับ"
+  // typed in always means "position within this category".
+  function renderProductsTableGrouped(products) {
+    const tbody = document.getElementById('productsTableBody');
+    if (!products.length) {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบสินค้า (กด "+ เพิ่มสินค้าใหม่" เพื่อเพิ่ม)</div></td></tr>';
+      return;
+    }
+
+    const groups = {};
+    products.forEach(p => {
+      const key = p.category || '(ไม่ระบุหมวดหมู่)';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    const categoryOrderMap = {};
+    sortByOrder(allCategories).forEach((c, i) => { categoryOrderMap[c.name] = i; });
+    const groupNames = Object.keys(groups).sort((a, b) => {
+      const ao = categoryOrderMap.hasOwnProperty(a) ? categoryOrderMap[a] : Infinity;
+      const bo = categoryOrderMap.hasOwnProperty(b) ? categoryOrderMap[b] : Infinity;
+      if (ao !== bo) return ao - bo;
+      return a.localeCompare(b, 'th');
+    });
+
+    let html = '';
+    groupNames.forEach(catName => {
+      const groupProducts = sortByOrder(groups[catName]);
+      html += `<tr style="background:#F9FAFB;"><td colspan="9" style="padding:10px 14px; font-weight:700; color:#6D28D9; font-size:12.5px;"><i class="ph ph-folder"></i> ${escapeHtml(catName)} <span style="font-weight:500;color:var(--muted);">(${groupProducts.length} รายการ)</span></td></tr>`;
+      html += groupProducts.map((p, i) => renderProductRow(p, i + 1, groupProducts.length, false)).join('');
+    });
+    tbody.innerHTML = html;
   }
 
   window.submitAddProduct = async function() {
@@ -1952,10 +2005,16 @@
     }
   };
 
-  // Move a product to whatever position number the admin typed in.
+  // Move a product to whatever position number the admin typed in — scoped
+  // to just the products that share its category, so "ลำดับ" always means
+  // "position among products in this same category", not the whole store.
   window.setProductOrder = async function(id, newPositionRaw) {
-    const sorted = sortByOrder(allProducts);
-    const fromIdx = sorted.findIndex(p => p._id === id);
+    const product = allProducts.find(p => p._id === id);
+    if (!product) return;
+
+    const categoryKey = product.category || '';
+    const sameCategory = sortByOrder(allProducts.filter(p => (p.category || '') === categoryKey));
+    const fromIdx = sameCategory.findIndex(p => p._id === id);
     if (fromIdx === -1) return;
 
     let newPos = parseInt(newPositionRaw, 10);
@@ -1965,22 +2024,24 @@
     }
     let toIdx = newPos - 1; // convert to 0-indexed
     if (toIdx < 0) toIdx = 0;
-    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
+    if (toIdx > sameCategory.length - 1) toIdx = sameCategory.length - 1;
 
     if (toIdx === fromIdx) {
       filterProducts(); // no actual change — just reset the displayed number
       return;
     }
 
-    const reordered = sorted.slice();
+    const reordered = sameCategory.slice();
     const [moved] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, moved);
 
     try {
+      // Only renumbers products within this one category — other
+      // categories' sortOrder values are left untouched.
       await Promise.all(reordered.map((item, i) =>
         updateDoc(doc(db, 'products', item._id), { sortOrder: i })
       ));
-      showToast('✅ ย้ายลำดับเรียบร้อย');
+      showToast('✅ ย้ายลำดับเรียบร้อย (ภายในหมวดหมู่นี้)');
     } catch(e) {
       showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
