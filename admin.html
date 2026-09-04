@@ -1377,7 +1377,7 @@
     const addr = o.address || {};
     const full = [addr.street, addr.subdistrict, addr.district, addr.province, addr.postcode].filter(Boolean).join(' ');
     const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH') : '-';
-    const pl = { freeship:'ส่งฟรี', wonderbook:'ส่งฟรี + DX Wonderside Book', kiramai:'ส่งฟรี + DX Kiramai Changer', geartlinger:'ส่งฟรี + DX Geartlinger', no_code:'ไม่ได้รับโค้ด' };
+    const pl = { freeship:'ส่งฟรี', wonderbook:'ส่งฟรี + DX Wonderside Book', kiramai:'ส่งฟรี + DX Kiramai Changer', twosidedriver:'ส่งฟรี + DX Two Side Driver', no_code:'ไม่ได้รับโค้ด' };
     const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + i.name + ' x' + i.qty + '</span><span>฿' + (i.price * i.qty).toLocaleString() + '</span></div>').join('');
     document.getElementById('detailModalContent').innerHTML =
       '<h3>📋 รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +

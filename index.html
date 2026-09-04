@@ -1462,19 +1462,19 @@
           </tr>
           <tr>
             <td>🎁 ส่งฟรี + DX Wonderside Book</td>
-            <td class="odds-value">2%</td>
+            <td class="odds-value">1.5%</td>
           </tr>
           <tr>
             <td>🏆 ส่งฟรี + DX Kiramai Changer</td>
-            <td class="odds-value">0.5%</td>
+            <td class="odds-value">1.495%</td>
           </tr>
           <tr>
             <td>🏆 ส่งฟรี + DX Two Side Driver</td>
-            <td class="odds-value">0.5%</td>
+            <td class="odds-value">0.01%</td>
           </tr>
         </tbody>
       </table>
-      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากการสุ่ม 1 ครั้ง โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ</p>
+      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากการสุ่ม 1 ครั้ง โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* โค้ดส่งฟรีและของแถมมีเงื่อนไขยอดสั่งซื้อขั้นต่ำ (200฿ สำหรับโค้ดส่งฟรี/Wonderside Book/Kiramai Changer, 500฿ สำหรับ Two Side Driver)</p>
     </div>
   </div>
 
@@ -1512,11 +1512,11 @@
 
     function determinePrize() {
       const roll = Math.random() * 100;
-      if (roll < 49)   return 'no_code';
-      if (roll < 97)   return 'freeship';
-      if (roll < 99)   return 'wonderbook';
-      if (roll < 99.5) return 'kiramai';
-      return 'geartlinger';
+      if (roll < 49)      return 'no_code';      // 49%
+      if (roll < 97)      return 'freeship';     // 48%
+      if (roll < 98.5)    return 'wonderbook';    // 1.5%
+      if (roll < 99.995)  return 'kiramai';       // 1.495%
+      return 'twosidedriver';                      // 0.005% (ส่วนที่เหลือ)
     }
 
     function burstConfetti() {
@@ -1668,7 +1668,7 @@
             prizeBadge.className = 'prize-badge jackpot';
             prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
             copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'geartlinger') {
+          } else if (prizeType === 'twosidedriver') {
             prizeBadge.className = 'prize-badge jackpot';
             prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Two Side Driver!';
             copyBtn.style.display = 'inline-flex';

@@ -1131,7 +1131,7 @@
           freeship: '(ส่งฟรี 🚚)',
           wonderbook: '(ส่งฟรี + DX Wonderside Book 🎁)',
           kiramai: '(ส่งฟรี + DX Kiramai Changer 🏆)',
-          geartlinger: '(ส่งฟรี + DX Geartlinger 🏆)',
+          twosidedriver: '(ส่งฟรี + DX Two Side Driver 🏆)',
         };
         return labels[prize] || '(ส่งฟรี 🚚)';
       }
@@ -1254,18 +1254,37 @@
             return;
           }
 
+          // ===== เช็คยอดสั่งซื้อขั้นต่ำตามประเภทรางวัล =====
+          const MIN_ORDER_BY_PRIZE = {
+            freeship: 200,
+            wonderbook: 200,
+            kiramai: 200,
+            twosidedriver: 500,
+          };
+          const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
+          const minRequired = MIN_ORDER_BY_PRIZE[foundCode.prize] || 0;
+
+          if (minRequired > 0 && subtotalNow < minRequired) {
+            if (errorMsg && errorText) {
+              errorText.textContent = '❌ โค้ดนี้ต้องสั่งสินค้าขั้นต่ำ ฿' + minRequired.toLocaleString() + ' (ยอดปัจจุบัน ฿' + subtotalNow.toLocaleString() + ')';
+              errorMsg.style.display = 'block';
+            }
+            showToast('❌ ต้องสั่งซื้อขั้นต่ำ ฿' + minRequired.toLocaleString() + ' จึงจะใช้โค้ดนี้ได้');
+            return;
+          }
+
           state.isFreeShipping = true;
           state.appliedCodeName = code;
 
           const prizeLabels = {
-            freeship: { desc: 'ส่งฟรี ฿0 (ประหยัด ฿50)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
-            wonderbook: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
-            kiramai: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
-            geartlinger: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Geartlinger 🏆', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Geartlinger!' },
+            freeship: { desc: 'ส่งฟรี ฿0 (ขั้นต่ำ 200฿)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
+            wonderbook: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁 (ขั้นต่ำ 200฿)', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
+            kiramai: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆 (ขั้นต่ำ 200฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
+            twosidedriver: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Two Side Driver 🏆 (ขั้นต่ำ 500฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Two Side Driver!' },
           };
           const prizeInfo = prizeLabels[foundCode.prize] || { desc: 'ส่งฟรี ฿0', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' };
 
-          state.hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'geartlinger');
+          state.hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'twosidedriver');
           state.appliedDiscount = 0;
 
           const nameEl = document.getElementById('appliedCouponName');
