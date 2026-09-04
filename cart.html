@@ -823,6 +823,17 @@
       const DEFAULT_SHIPPING = 50;
       const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
 
+      // Minimum order subtotal (before shipping/discount) required to use
+      // each prize's coupon. Shared by applyCoupon (initial check),
+      // renderCart (auto re-check whenever the cart changes) and
+      // confirmOrder (final safety check right before payment).
+      const MIN_ORDER_BY_PRIZE = {
+        freeship: 200,
+        wonderbook: 200,
+        kiramai: 200,
+        twosidedriver: 500,
+      };
+
       // Inline placeholder image (no external file dependency) used when a
       // cart item has no image or its image fails to load.
       const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='16' fill='%23F3F4F6'/%3E%3Cpath d='M38 78l16-20 13 15 11-13 16 18z' fill='%23D1D5DB'/%3E%3Ccircle cx='46' cy='44' r='9' fill='%23D1D5DB'/%3E%3C/svg%3E";
@@ -937,6 +948,20 @@
         toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
       }
 
+      // Look up which prize type the currently applied coupon code maps to
+      // (master fallback codes like FREESHIP/KHUNAU/VIP have no stored
+      // prize entry and no minimum-order requirement, so they return null).
+      function getAppliedCodePrizeType() {
+        if (!state.appliedCodeName) return null;
+        try {
+          const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+          const match = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
+          return match ? match.prize : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
       // ---------- Render ----------
       function renderCart() {
         const cart = getCart();
@@ -944,8 +969,28 @@
         const cartCountTitle = document.getElementById('cartCountTitle');
         if (!listEl || !cartCountTitle) return;
 
+        // Compute the subtotal up front so the applied coupon's minimum-order
+        // requirement can be (re)validated before anything that depends on
+        // it (gift item, shipping, totals) gets rendered below. This is what
+        // catches cases like: coupon applied at ฿310, then an item removed
+        // drops the cart to ฿155 — the coupon should stop applying.
+        const subtotal = cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+
+        if (state.appliedCodeName) {
+          const prizeType = getAppliedCodePrizeType();
+          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          if (minRequired > 0 && subtotal < minRequired) {
+            state.isFreeShipping = false;
+            state.hasKeychainGift = false;
+            state.appliedDiscount = 0;
+            state.appliedCodeName = '';
+            const tag = document.getElementById('appliedCouponTag');
+            if (tag) tag.classList.remove('show');
+            showToast('⚠️ ยอดสินค้าต่ำกว่าขั้นต่ำ ฿' + minRequired.toLocaleString() + ' ระบบยกเลิกส่วนลด/สิทธิ์จากโค้ดให้อัตโนมัติ');
+          }
+        }
+
         let totalItems = 0;
-        let subtotal = 0;
 
         if (cart.length === 0) {
           listEl.innerHTML =
@@ -961,7 +1006,6 @@
             const qty = Number(item.quantity) || 0;
             const price = Number(item.price) || 0;
             totalItems += qty;
-            subtotal += price * qty;
 
             const itemEl = document.createElement('div');
             itemEl.className = 'cart-item';
@@ -1255,12 +1299,6 @@
           }
 
           // ===== เช็คยอดสั่งซื้อขั้นต่ำตามประเภทรางวัล =====
-          const MIN_ORDER_BY_PRIZE = {
-            freeship: 200,
-            wonderbook: 200,
-            kiramai: 200,
-            twosidedriver: 500,
-          };
           const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
           const minRequired = MIN_ORDER_BY_PRIZE[foundCode.prize] || 0;
 
@@ -1448,6 +1486,22 @@
         if (cart.length === 0) {
           showToast('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อ');
           return;
+        }
+
+        // Final safety check: re-verify the applied coupon (if any) still
+        // meets its minimum-order requirement right before payment. This
+        // catches cases like the cart total dropping below the minimum
+        // after the coupon was applied (e.g. removing an item), even if
+        // renderCart's live re-check somehow didn't already clear it.
+        if (state.appliedCodeName) {
+          const prizeType = getAppliedCodePrizeType();
+          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
+          if (minRequired > 0 && subtotalNow < minRequired) {
+            removeCoupon();
+            showToast('❌ ยอดสินค้า ฿' + subtotalNow.toLocaleString() + ' ไม่ถึงขั้นต่ำ ฿' + minRequired.toLocaleString() + ' ของโค้ดที่ใช้ ระบบยกเลิกส่วนลดแล้ว กรุณาตรวจสอบยอดอีกครั้ง');
+            return;
+          }
         }
 
         if (!validateCustomerInfo()) {
