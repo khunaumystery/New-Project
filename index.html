@@ -3,29 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>KHUN AU Mystery | ศูนย์รวมของเล่น & ไอเทมเสริมพลังสุดพรีเมียม</title>
+  <title>ตะกร้าสินค้า & ชำระเงิน | KHUN AU Mystery</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://unpkg.com">
-  <script defer src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
       --mk-red: #D3222A;
-      --mk-red-dark: #8F0E14;
-      --mk-red-light: #FFF2F2;
+      --mk-red-dark: #A51A20;
+      --mk-light-red: #FFF2F2;
       --gold: #F5C842;
       --gold-dark: #D4A017;
-      --gold-light: #FFF9E6;
-      --bg-dark: #120406;
-      --bg-card: #20090D;
-      --bg-card-surface: #2D0F14;
-      --text-main: #FFFFFF;
-      --text-muted: #D1A8AC;
-      --border-color: rgba(245, 200, 66, 0.2);
-      --border-radius: 20px;
-      --nav-height: 62px;
-      --bottom-nav-height: 68px;
+      --bg-color: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --text-main: #222222;
+      --text-muted: #777777;
+      --border-color: #EEEEEE;
+      --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+      --shadow-md: 0 6px 20px rgba(211, 34, 42, 0.12);
+      --border-radius: 16px;
+      --nav-height: 60px;
+      --bottom-nav-height: 70px;
     }
 
     * {
@@ -37,2189 +36,1948 @@
 
     body {
       font-family: 'Prompt', sans-serif;
-      background: radial-gradient(ellipse at top, #3A0C11 0%, #170407 65%, #0B0203 100%);
+      background-color: var(--bg-color);
       color: var(--text-main);
-      min-height: 100vh;
       line-height: 1.5;
       padding-top: var(--nav-height);
-      padding-bottom: calc(var(--bottom-nav-height) + 24px);
-      overflow-x: hidden;
-      position: relative;
+      padding-bottom: 30px;
+      min-height: 100vh;
     }
 
-    /* Ambient Sparkle Particles */
-    .particles-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .particle {
-      position: absolute;
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background: var(--gold);
-      opacity: 0.4;
-      animation: floatSparkle linear infinite;
-    }
-
-    @keyframes floatSparkle {
-      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
-      20%  { opacity: 0.7; }
-      80%  { opacity: 0.6; }
-      100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
-    }
-
-    /* Top Navigation Bar */
+    /* Top Navigation */
     .top-nav {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: var(--nav-height);
-      background: rgba(22, 5, 8, 0.85);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: var(--card-bg);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 18px;
-      z-index: 1000;
-      border-bottom: 1px solid rgba(245, 200, 66, 0.2);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      padding: 0 16px;
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
     }
 
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-
-    .brand-logo-badge {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: transparent;
-      border: 1.5px solid rgba(245, 200, 66, 0.45);
+    .back-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-      flex-shrink: 0;
-    }
-
-    .brand-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: #FFFFFF;
-      letter-spacing: 0.5px;
-    }
-
-    .brand-title span {
-      background: linear-gradient(135deg, #FFE066, #F5C842);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .cart-btn-link {
-      position: relative;
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #FFFFFF;
-      font-size: 20px;
+      background: #F3F4F6;
+      color: var(--text-main);
       text-decoration: none;
-      transition: all 0.2s ease;
+      font-size: 20px;
+      transition: background 0.2s, transform 0.2s;
     }
 
-    .cart-btn-link:active {
+    .back-btn:active {
+      background: #E5E7EB;
       transform: scale(0.92);
-      border-color: var(--gold);
     }
 
-    .cart-btn-link .badge {
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      background: linear-gradient(135deg, #FF3B30, #D3222A);
-      color: white;
-      font-size: 11px;
-      font-weight: 800;
-      min-width: 19px;
-      height: 19px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 4px;
-      border: 2px solid #160508;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    .nav-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
     }
 
-    /* Main Container */
-    .main-content {
-      position: relative;
-      z-index: 1;
-      max-width: 600px;
+    .clear-cart-btn {
+      font-size: 13px;
+      color: #EF4444;
+      background: none;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 6px 10px;
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 500px;
       margin: 0 auto;
-      padding: 12px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    /* Hero Banner */
-    .hero-banner-card {
-      position: relative;
-      width: 100%;
+    /* Section Cards */
+    .cart-section {
+      background: var(--card-bg);
       border-radius: var(--border-radius);
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      border: 1px solid rgba(245, 200, 66, 0.25);
-      margin-bottom: 18px;
-      background: var(--bg-card);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
     }
 
-    .hero-banner-card img {
-      width: 100%;
-      height: auto;
-      display: block;
-      transition: transform 0.4s ease;
-    }
-
-    .hero-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 40px 18px 14px;
-      background: linear-gradient(to top, rgba(14, 2, 4, 0.95) 0%, rgba(14, 2, 4, 0.6) 60%, transparent 100%);
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 14px;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      align-items: center;
+      gap: 8px;
     }
 
-    .hero-text h2 {
+    .section-title i {
+      color: var(--mk-red);
       font-size: 18px;
-      font-weight: 800;
-      color: #FFFFFF;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-      margin-bottom: 2px;
     }
 
-    .hero-text p {
-      font-size: 13px;
-      color: var(--gold);
-      font-weight: 500;
-    }
-
-    .hero-badge-pill {
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #3D1C00;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 5px 11px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(245, 200, 66, 0.4);
-      white-space: nowrap;
-    }
-
-    /* Section Headers */
-    .section-header-wrap {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 18px 4px 12px;
-    }
-
-    .section-title-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .section-icon-box {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: rgba(245, 200, 66, 0.15);
-      border: 1px solid rgba(245, 200, 66, 0.3);
-      color: var(--gold);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    .section-title-text {
-      font-size: 16px;
-      font-weight: 700;
-      color: #FFFFFF;
-      letter-spacing: 0.3px;
-    }
-
-    .section-link-more {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gold);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      text-decoration: none;
-      transition: opacity 0.2s;
-    }
-
-    .section-link-more:hover {
-      opacity: 0.8;
-    }
-
-    /* ===== LUCKY DRAW / MYSTERY BOX WIDGET ===== */
-    .lucky-draw-card {
-      background: linear-gradient(145deg, #260B0E, #3D1117);
-      border: 1px solid rgba(245, 200, 66, 0.35);
-      border-radius: 24px;
-      padding: 22px 18px;
-      margin-bottom: 22px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
-      position: relative;
-      overflow: hidden;
-      text-align: center;
-    }
-
-    .lucky-draw-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at center, rgba(245, 200, 66, 0.08) 0%, transparent 60%);
-      pointer-events: none;
-    }
-
-    .lucky-card-header {
-      margin-bottom: 14px;
-    }
-
-    .lucky-card-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(245, 200, 66, 0.15);
-      border: 1px solid rgba(245, 200, 66, 0.3);
-      color: var(--gold);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-bottom: 6px;
-    }
-
-    .lucky-card-title {
-      font-size: 20px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #FFF0A6, #F5C842, #E5A812);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 0.3px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .odds-info-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(245, 200, 66, 0.15);
-      border: 1px solid rgba(245, 200, 66, 0.5);
-      color: var(--gold);
-      -webkit-text-fill-color: var(--gold);
-      font-size: 12px;
-      cursor: pointer;
-      flex-shrink: 0;
-      vertical-align: middle;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-
-    .odds-info-btn:hover {
-      background: rgba(245, 200, 66, 0.3);
-    }
-
-    .odds-info-btn:active {
-      transform: scale(0.9);
-    }
-
-    .lucky-card-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* Odds Info Modal */
-    .odds-modal-box {
-      background: #1B0609;
-      border: 1.5px solid rgba(245, 200, 66, 0.4);
-      border-radius: 22px;
-      padding: 22px 20px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-    }
-
-    .odds-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-
-    .odds-modal-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #FFFFFF;
-    }
-
-    .odds-modal-close {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.08);
-      border: none;
-      color: var(--text-muted);
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .odds-modal-sub {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-      line-height: 1.5;
-    }
-
-    .odds-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-    }
-
-    .odds-table th {
-      text-align: left;
-      color: var(--gold);
-      font-weight: 700;
-      padding: 8px 6px;
-      border-bottom: 1px solid rgba(245, 200, 66, 0.3);
-    }
-
-    .odds-table th:last-child,
-    .odds-table td:last-child {
-      text-align: right;
-    }
-
-    .odds-table td {
-      padding: 9px 6px;
-      color: #F0F0F0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .odds-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .odds-table td.odds-value {
-      font-weight: 700;
-      color: var(--gold);
-    }
-
-    .odds-modal-footnote {
-      margin-top: 12px;
-      font-size: 10.5px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* Gift Box Scene */
-    .gift-stage {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 12px 0 16px;
-    }
-
-    .gift-box-interactive {
-      position: relative;
-      width: 130px;
-      height: 130px;
-      cursor: pointer;
-      user-select: none;
-      filter: drop-shadow(0 10px 25px rgba(211, 34, 42, 0.6));
-      transition: transform 0.3s ease;
-    }
-
-    .gift-box-interactive.floating {
-      animation: giftFloat 3s ease-in-out infinite;
-    }
-
-    .gift-box-interactive.shaking {
-      animation: giftShake 0.8s ease-in-out;
-    }
-
-    .gift-box-interactive.popping {
-      animation: giftPop 0.6s ease-out;
-    }
-
-    @keyframes giftFloat {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-7px); }
-    }
-
-    @keyframes giftShake {
-      0%, 100% { transform: rotate(0deg); }
-      10%  { transform: rotate(-7deg) scale(1.06); }
-      20%  { transform: rotate(7deg) scale(1.08); }
-      30%  { transform: rotate(-6deg) scale(1.06); }
-      40%  { transform: rotate(6deg) scale(1.08); }
-      50%  { transform: rotate(-5deg) scale(1.06); }
-      60%  { transform: rotate(5deg) scale(1.08); }
-      70%  { transform: rotate(-3deg) scale(1.04); }
-      80%  { transform: rotate(3deg) scale(1.02); }
-      90%  { transform: rotate(-1deg) scale(1.01); }
-    }
-
-    @keyframes giftPop {
-      0%   { transform: scale(1); }
-      35%  { transform: scale(1.3) rotate(-6deg); }
-      55%  { transform: scale(0.9) rotate(4deg); }
-      75%  { transform: scale(1.15) rotate(-2deg); }
-      100% { transform: scale(1); }
-    }
-
-    /* Confetti */
-    .confetti-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .confetti-piece {
-      position: absolute;
-      width: 7px;
-      height: 7px;
-      border-radius: 2px;
-      opacity: 0;
-    }
-
-    @keyframes confettiExplode {
-      0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
-      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(720deg) scale(0); }
-    }
-
-    .confetti-piece.burst {
-      animation: confettiExplode 1s ease-out forwards;
-    }
-
-    /* Result Box */
-    .lucky-result-panel {
-      background: rgba(18, 4, 6, 0.6);
-      border: 1px solid rgba(245, 200, 66, 0.25);
-      border-radius: 18px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
-      min-height: 90px;
+    /* Cart Items List */
+    .cart-items-list {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .lucky-result-placeholder {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .lucky-result-content {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .lucky-result-content.visible {
-      display: flex;
-      animation: fadeSlideUp 0.4s ease-out;
-    }
-
-    @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .prize-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #3B2100;
-      font-weight: 700;
-      font-size: 12.5px;
-      padding: 5px 14px;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(245, 200, 66, 0.35);
-    }
-
-    .prize-badge.special {
-      background: linear-gradient(135deg, #D946EF, #8B5CF6);
-      color: white;
-      box-shadow: 0 4px 14px rgba(217, 70, 239, 0.4);
-    }
-
-    .prize-badge.no-prize {
-      background: linear-gradient(135deg, #6B7280, #374151);
-      color: white;
-      box-shadow: none;
-    }
-
-    .prize-badge.jackpot {
-      background: linear-gradient(135deg, #FFD700, #FF6B00, #FF0055);
-      color: white;
-      animation: jackpotPulse 1.2s infinite alternate;
-      box-shadow: 0 0 18px rgba(255, 107, 0, 0.7);
-    }
-
-    @keyframes jackpotPulse {
-      from { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 200, 0, 0.6)); }
-      to   { transform: scale(1.04); filter: drop-shadow(0 0 18px rgba(255, 70, 0, 0.9)); }
-    }
-
-    .code-display-wrap {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
-      margin: 4px 0;
-    }
-
-    .code-char-box {
-      width: 38px;
-      height: 44px;
-      background: rgba(255,255,255,0.08);
-      border: 1.5px solid var(--gold);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-      font-weight: 800;
-      color: var(--gold);
-    }
-
-    .btn-copy-code {
-      background: linear-gradient(135deg, #2563EB, #1D4ED8);
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-copy-code.copied {
-      background: #10B981;
-    }
-
-    /* Active Code Expiry Bar */
-    .lucky-code-expiry-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      background: linear-gradient(135deg, rgba(28, 7, 10, 0.85), rgba(40, 10, 15, 0.95));
-      border: 1px solid rgba(245, 200, 66, 0.45);
-      border-radius: 14px;
-      padding: 8px 12px;
-      margin-bottom: 12px;
-      font-size: 12.5px;
-      color: #F3F4F6;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-    }
-
-    .expiry-bar-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-    }
-
-    .expiry-bar-right {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(245, 200, 66, 0.15);
-      border: 1px solid rgba(245, 200, 66, 0.3);
-      color: var(--gold);
-      padding: 3px 8px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 700;
-    }
-
-    .btn-use-code-quick {
-      background: linear-gradient(135deg, var(--gold), #D49A17);
-      color: #1A0B0C;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .btn-use-code-quick:hover {
-      transform: scale(1.05);
-      box-shadow: 0 2px 8px rgba(245, 200, 66, 0.5);
-    }
-
-    /* Spin Button */
-    .btn-spin-action {
-      width: 100%;
-      padding: 13px 20px;
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #D48800 100%);
-      color: #3D1C00;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 800;
-      font-family: inherit;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(245, 200, 66, 0.45);
-      transition: all 0.25s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-spin-action:hover {
-      box-shadow: 0 8px 25px rgba(245, 200, 66, 0.6);
-      transform: translateY(-1px);
-    }
-
-    .btn-spin-action:active {
-      transform: scale(0.97);
-    }
-
-    .btn-spin-action:disabled {
-      background: rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Timer section */
-    .lucky-timer-bar {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .lucky-timer-bar.active {
-      display: flex;
-    }
-
-    .timer-pill {
-      background: rgba(245, 200, 66, 0.15);
-      color: var(--gold);
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 700;
-      border: 1px solid rgba(245, 200, 66, 0.3);
-    }
-
-    /* ===== CATEGORY 4-COLUMN GRID ===== */
-    .categories-grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px 10px;
-      margin-bottom: 20px;
-    }
-
-    .cat-item-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .cat-item-card:hover {
-      transform: translateY(-3px);
-    }
-
-    .cat-item-card:active {
-      transform: scale(0.92);
-    }
-
-    .cat-thumb-box {
-      width: 100%;
-      aspect-ratio: 1;
-      max-width: 78px;
-      border-radius: 18px;
-      background: radial-gradient(circle at center, rgba(211, 34, 42, 0.2) 0%, rgba(20, 5, 8, 0.8) 100%);
-      border: 1.5px solid rgba(245, 200, 66, 0.28);
-      overflow: hidden;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .cat-item-card:hover .cat-thumb-box,
-    .cat-item-card.active .cat-thumb-box {
-      border-color: var(--gold);
-      box-shadow: 0 6px 20px rgba(245, 200, 66, 0.45);
-      transform: scale(1.03);
-    }
-
-    .cat-thumb-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      border-radius: 16px;
-      transition: transform 0.3s ease;
-    }
-
-    .cat-item-card:hover .cat-thumb-box img {
-      transform: scale(1.08);
-    }
-
-    .cat-tag-mini {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: linear-gradient(135deg, #D3222A, #A51A20);
-      color: #fff;
-      font-size: 8px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 6px;
-      border: 0.5px solid rgba(245, 200, 66, 0.6);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      max-width: 90%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .cat-item-name {
-      margin-top: 7px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.95);
-      line-height: 1.25;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: center;
-      word-break: break-word;
-    }
-
-    /* Category Pill Filter Bar */
-    .cat-pill-bar {
-      display: flex;
-      overflow-x: auto;
-      gap: 8px;
-      padding: 0 0 16px;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .cat-pill-bar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .cat-pill-btn {
-      padding: 7px 16px;
-      border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(8px);
-      color: rgba(255, 255, 255, 0.85);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .cat-pill-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-    }
-
-    .cat-pill-btn.active {
-      background: linear-gradient(135deg, var(--mk-red) 0%, var(--mk-red-dark) 100%);
-      color: #ffffff;
-      border-color: rgba(245, 200, 66, 0.7);
-      font-weight: 600;
-      box-shadow: 0 4px 14px rgba(211, 34, 42, 0.45);
-      transform: translateY(-1px);
-    }
-
-    .type-pill-bar {
-      margin-bottom: 14px;
-    }
-
-    .type-pill-btn.active {
-      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%) !important;
-      color: #3D1C00 !important;
-      border-color: rgba(245, 200, 66, 0.9) !important;
-      box-shadow: 0 4px 14px rgba(245, 200, 66, 0.5) !important;
-    }
-
-    /* ===== PRODUCTS SECTION ===== */
-    .products-section {
-      margin-top: 10px;
-      margin-bottom: 24px;
-    }
-
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
-    .product-card {
-      background: var(--bg-card);
-      border-radius: var(--border-radius);
-      overflow: hidden;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    .cart-item {
       display: flex;
-      flex-direction: column;
-      border: 1px solid rgba(245, 200, 66, 0.18);
-      transition: transform 0.2s, box-shadow 0.2s;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #F3F4F6;
     }
 
-    .product-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
-      border-color: rgba(245, 200, 66, 0.4);
+    .cart-item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
     }
 
-    .product-img-wrap {
-      width: 100%;
-      aspect-ratio: 1;
-      background: #180508;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .product-img-wrap img {
-      width: 100%;
-      height: 100%;
+    .item-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
       object-fit: cover;
-      transition: transform 0.4s ease;
+      background: #F3F4F6;
+      flex-shrink: 0;
     }
 
-    .product-card:hover .product-img-wrap img {
-      transform: scale(1.06);
+    .item-details {
+      flex-grow: 1;
+      min-width: 0;
     }
 
-    .product-cat-tag {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      background: rgba(14, 2, 4, 0.82);
-      backdrop-filter: blur(4px);
-      color: var(--gold);
-      border: 1px solid rgba(245, 200, 66, 0.3);
-      font-size: 9.5px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-      z-index: 2;
-    }
-
-    .product-body {
-      padding: 10px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      justify-content: space-between;
-    }
-
-    .product-title {
-      font-size: 13px;
+    .item-name {
+      font-size: 14px;
       font-weight: 600;
-      color: #FFFFFF;
-      line-height: 1.35;
-      margin-bottom: 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      color: var(--text-main);
+      white-space: nowrap;
       overflow: hidden;
-      min-height: 35px;
+      text-transform: capitalize;
+      text-overflow: ellipsis;
     }
 
-    .product-desc {
-      font-size: 11px;
-      color: var(--text-muted);
-      line-height: 1.3;
-      margin-bottom: 8px;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+    .item-price {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--mk-red);
+      margin-top: 2px;
     }
 
-    .product-footer {
+    .quantity-controls {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-top: auto;
-      padding-top: 6px;
+      align-items: center;
+      gap: 6px;
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 20px;
+      padding: 2px 4px;
     }
 
-    .product-price-box {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .product-old-price {
-      font-size: 10.5px;
-      color: #8E7073;
-      text-decoration: line-through;
-    }
-
-    .product-price {
-      font-size: 15.5px;
-      font-weight: 800;
-      color: var(--gold);
-    }
-
-    .btn-add-cart-mini {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));
-      border: 1px solid rgba(245, 200, 66, 0.4);
-      color: #FFF;
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(211, 34, 42, 0.4);
-      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background 0.15s;
     }
 
-    .btn-add-cart-mini:active {
-      transform: scale(0.9);
+    .qty-btn:active {
+      background: #F3F4F6;
     }
 
-    /* Store Highlights / Trust Badges */
-    .trust-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 20px 0 10px;
-    }
-
-    .trust-card {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 12px 8px;
+    .qty-num {
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 20px;
       text-align: center;
     }
 
-    .trust-card i {
-      font-size: 22px;
-      color: var(--gold);
-      margin-bottom: 4px;
+    .remove-item-btn {
+      color: #9CA3AF;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
     }
 
-    .trust-card h4 {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #FFFFFF;
+    .remove-item-btn:hover {
+      color: #EF4444;
     }
 
-    .trust-card p {
-      font-size: 10px;
+    /* Empty Cart */
+    .empty-cart {
+      text-align: center;
+      padding: 30px 10px;
       color: var(--text-muted);
     }
 
-    /* Bottom Navigation */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: var(--bottom-nav-height);
-      background: rgba(18, 4, 7, 0.92);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 1000;
-      border-top: 1px solid rgba(245, 200, 66, 0.2);
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    .empty-cart i {
+      font-size: 48px;
+      color: #D1D5DB;
+      margin-bottom: 10px;
     }
 
-    .nav-item {
+    .shop-now-btn {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 8px 20px;
+      background: var(--mk-red);
+      color: white;
+      text-decoration: none;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Discount Coupon Box */
+    .coupon-box {
       display: flex;
-      flex-direction: column;
+      gap: 8px;
+    }
+
+    .coupon-input {
+      flex-grow: 1;
+      padding: 12px 16px;
+      border: 1.5px dashed #D1D5DB;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      text-transform: uppercase;
+      transition: border-color 0.2s;
+    }
+
+    .coupon-input:focus {
+      border-color: var(--mk-red);
+      background: #FFFDFD;
+    }
+
+    .apply-coupon-btn {
+      padding: 0 18px;
+      background: linear-gradient(135deg, #E5272F, #A51A20);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .apply-coupon-btn:active {
+      transform: scale(0.95);
+    }
+
+    .applied-coupon-tag {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      border-radius: 10px;
+      color: #065F46;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .applied-coupon-tag.show {
+      display: flex;
+    }
+
+    .remove-coupon-btn {
+      background: none;
+      border: none;
+      color: #047857;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Order Summary Breakdown */
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .summary-row.discount {
+      color: #10B981;
+      font-weight: 500;
+    }
+
+    .summary-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 12px 0;
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .total-amount {
+      font-size: 22px;
+      color: var(--mk-red);
+      font-weight: 800;
+    }
+
+    /* Confirm Order Button */
+    .checkout-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #E5272F, #A51A20);
+      color: white;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(211, 34, 42, 0.35);
+      display: flex;
       align-items: center;
       justify-content: center;
-      text-decoration: none;
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 11px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      width: 70px;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
 
-    .nav-item i {
-      font-size: 22px;
-      margin-bottom: 2px;
-      transition: transform 0.2s ease;
+    .checkout-btn:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px rgba(211, 34, 42, 0.2);
     }
 
-    .nav-item.active {
-      color: var(--gold);
-      font-weight: 700;
+    .checkout-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
-    .nav-item.active i {
-      transform: translateY(-2px);
-      color: var(--gold);
-    }
-
-    /* Toast */
-    .toast {
+    /* Modal Order Success */
+    .modal-overlay {
       position: fixed;
-      bottom: calc(var(--bottom-nav-height) + 16px);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      animation: popModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popModal {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      background: #ECFDF5;
+      color: #10B981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .modal-close-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--mk-red);
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .modal-secondary-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 12px;
+      background: #F3F4F6;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Payment QR Modal */
+    .qr-box {
+      background: #F9FAFB;
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+    }
+    .qr-box img {
+      width: 220px;
+      height: 220px;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #FFFFFF;
+    }
+    .qr-box img.promptpay-logo {
+      width: auto;
+      height: 28px;
+      max-width: 160px;
+      margin: 0 auto 10px;
+      border-radius: 0;
+      background: transparent;
+    }
+    .qr-amount-label {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+    .qr-amount-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--mk-red);
+    }
+    .qr-timer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .qr-expired-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: #B91C1C;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 14px;
+      width: 100%;
+    }
+    .btn-regenerate-qr {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--mk-red);
+      color: white;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .upload-slip-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      background: #2563EB;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .upload-slip-label:active {
+      transform: scale(0.98);
+    }
+    .upload-slip-label.disabled {
+      background: #D1D5DB;
+      color: #6B7280;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    /* Toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 85px;
       left: 50%;
       transform: translateX(-50%) translateY(40px);
       opacity: 0;
       visibility: hidden;
-      background: rgba(24, 6, 9, 0.96);
-      color: #FFFFFF;
-      padding: 10px 22px;
-      border-radius: 30px;
+      background: rgba(26, 10, 11, 0.96);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 24px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       z-index: 2000;
-      border: 1px solid var(--gold);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(245, 200, 66, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease, visibility 0.35s ease;
       white-space: nowrap;
       pointer-events: none;
     }
 
-    .toast.show {
+    .toast-msg.show {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
       visibility: visible;
     }
+
+    /* Customer Info Form Inputs */
+    .info-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 14px;
+      color: var(--text-main);
+      background: #fff;
+      margin-top: 4px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .info-input:focus {
+      border-color: var(--mk-red);
+      box-shadow: 0 0 0 3px rgba(211, 34, 42, 0.08);
+    }
+    .info-input.error {
+      border-color: #EF4444;
+    }
+
+    /* Small connection notice (Firebase fallback) */
+    .conn-notice {
+      display: none;
+      font-size: 11.5px;
+      color: #92400E;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .conn-notice.show { display: block; }
   </style>
 </head>
 <body>
 
-  <!-- Ambient Particles -->
-  <div class="particles-bg" id="particlesBg"></div>
-
-  <!-- Top Navigation Header -->
+  <!-- Top Navigation -->
   <header class="top-nav">
-    <a href="index.html" class="nav-brand">
-      <div class="brand-logo-badge">
-        <img src="logo_khunau_jpg.jpg" alt="KHUN AU" width="38" height="38" style="width:100%; height:100%; object-fit:contain; border-radius:10px;">
-      </div>
-      <div class="brand-title">KHUN AU <span>MYSTERY</span></div>
+    <a href="javascript:history.back()" class="back-btn" aria-label="ย้อนกลับ">
+      <i class="ph ph-arrow-left"></i>
     </a>
-    <div class="nav-actions">
-      <a href="login.html" class="cart-btn-link" title="โปรไฟล์" style="font-size:18px;">
-        <i class="ph ph-user"></i>
-      </a>
-      <a href="cart.html" class="cart-btn-link" aria-label="ดูตะกร้าสินค้า">
-        <i class="ph ph-shopping-cart"></i>
-        <span class="badge" id="cartBadge">0</span>
-      </a>
-    </div>
+    <span class="nav-title">ตะกร้าสินค้า & ชำระเงิน</span>
+    <button class="clear-cart-btn" onclick="MK.clearCart()">ล้างตะกร้า</button>
   </header>
 
-  <!-- Main Content Layout -->
-  <main class="main-content">
+  <div class="container">
 
-    <!-- 1. Hero Promotion Banner -->
-    <section class="hero-banner-card">
-      <img src="Banner_item.jpg" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
-      <div class="hero-overlay">
-        <div class="hero-text">
-          <h2>ลุ้นรับรางวัลใหญ่‼️</h2>
-          <p>🎁พร้อมของแถมสุดพิเศษอื่นๆ</p>
-        </div>
-        <span class="hero-badge-pill">🔥 OFFICIAL</span>
+    <!-- 1. Cart Items Section -->
+    <section class="cart-section">
+      <div class="section-title">
+        <i class="ph ph-shopping-bag"></i>
+        <span>รายการสินค้าที่เลือก (<span id="cartCountTitle">0</span>)</span>
+      </div>
+      <div class="cart-items-list" id="cartItemsList">
+        <!-- Generated dynamically via JS -->
       </div>
     </section>
 
-    <!-- 2. Interactive Lucky Draw Box Section -->
-    <section class="lucky-draw-card" id="luckyDrawSection">
-      <div class="lucky-card-header">
-        <span class="lucky-card-tag"><i class="ph ph-sparkle"></i> DAILY LUCKY SPIN</span>
-        <h3 class="lucky-card-title">
-          MYSTERY BOX 🎁
-          <button type="button" class="odds-info-btn" id="oddsInfoBtn" onclick="showOddsModal()" aria-label="ดูเปอร์เซ็นต์โอกาสได้รับรางวัล" title="ดูเปอร์เซ็นต์โอกาส">
-            <i class="ph ph-question"></i>
-          </button>
-        </h3>
-        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 5 ชั่วโมง)</p>
+    <!-- 1.5 Customer Info Form -->
+    <section class="cart-section" id="customerInfoSection">
+      <div class="section-title">
+        <i class="ph ph-user"></i>
+        <span>ข้อมูลการจัดส่ง</span>
       </div>
 
-      <!-- 3D Interactive Gift Box Scene -->
-      <div class="gift-stage">
-        <div class="gift-box-interactive floating" id="giftBox" onclick="doSpin()">
-          <svg viewBox="0 0 160 160" width="130" height="130" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#E8303A"/>
-                <stop offset="50%" stop-color="#D3222A"/>
-                <stop offset="100%" stop-color="#8F0E14"/>
-              </linearGradient>
-              <linearGradient id="lidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FF4D55"/>
-                <stop offset="100%" stop-color="#B8141B"/>
-              </linearGradient>
-              <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FFE57F"/>
-                <stop offset="50%" stop-color="#F5C842"/>
-                <stop offset="100%" stop-color="#C69214"/>
-              </linearGradient>
-              <linearGradient id="bowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FFF0A6"/>
-                <stop offset="100%" stop-color="#D49A17"/>
-              </linearGradient>
-              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-              </filter>
-            </defs>
-            <!-- Shadow -->
-            <ellipse cx="80" cy="148" rx="55" ry="9" fill="rgba(0,0,0,0.4)"/>
-            <!-- Box Body -->
-            <rect x="25" y="65" width="110" height="75" rx="8" fill="url(#boxGrad)" stroke="rgba(245,200,66,0.3)" stroke-width="1.5"/>
-            <!-- Vertical Ribbon -->
-            <rect x="68" y="65" width="24" height="75" fill="url(#ribbonGrad)"/>
-            <!-- Horizontal Ribbon -->
-            <rect x="25" y="94" width="110" height="18" fill="url(#ribbonGrad)"/>
-            <!-- Box Lid -->
-            <rect x="18" y="48" width="124" height="22" rx="6" fill="url(#lidGrad)" stroke="rgba(245,200,66,0.5)" stroke-width="1.5"/>
-            <rect x="68" y="48" width="24" height="22" fill="url(#ribbonGrad)"/>
-            <!-- Bow Loops -->
-            <path d="M80 50 C65 24 35 24 50 48 C60 48 72 49 80 50 Z" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1"/>
-            <path d="M80 50 C95 24 125 24 110 48 C100 48 88 49 80 50 Z" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1"/>
-            <!-- Bow Center Knot -->
-            <circle cx="80" cy="50" r="8" fill="url(#bowGrad)" stroke="#B8860B" stroke-width="1.5" filter="url(#glow)"/>
-            <!-- Sparkles -->
-            <circle cx="34" cy="40" r="2.5" fill="#FFE57F" opacity="0.8"/>
-            <circle cx="126" cy="38" r="3" fill="#FFE57F" opacity="0.9"/>
-          </svg>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">ชื่อผู้รับ *</label>
+          <input type="text" id="cusFullName" placeholder="ชื่อ-นามสกุลผู้รับ" class="info-input" required>
         </div>
-        <div class="confetti-container" id="confetti"></div>
-      </div>
-
-      <!-- Active Code Expiry Alert Bar (Shown when user has an active code) -->
-      <div class="lucky-code-expiry-bar" id="activeCodeExpiryBar" style="display:none;">
-        <div class="expiry-bar-left">
-          <i class="ph ph-ticket" style="color:var(--gold); font-size:16px;"></i>
-          <span>โค้ด: <strong id="activeCodeName" style="color:#FFF; letter-spacing:0.5px;"></strong></span>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">เบอร์โทรศัพท์ *</label>
+          <input type="tel" id="cusPhone" placeholder="0XX-XXX-XXXX" class="info-input" maxlength="10" required>
         </div>
-        <div class="expiry-bar-right">
-          <i class="ph ph-hourglass-medium"></i>
-          <span>หมดอายุใน: <strong id="activeCodeTimer">30:00</strong></span>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">บ้านเลขที่ / หมู่ / ซอย / ถนน *</label>
+          <input type="text" id="cusAddress" placeholder="เช่น 12/3 ซ.สุขุมวิท 10 ถ.สุขุมวิท" class="info-input" required>
         </div>
-        <a href="cart.html" class="btn-use-code-quick">ใช้โค้ด ➔</a>
-      </div>
-
-      <!-- Result Panel -->
-      <div class="lucky-result-panel">
-        <div class="lucky-result-placeholder" id="luckyPlaceholder">
-          <i class="ph ph-gift" style="font-size:22px; color:var(--gold);"></i>
-          <span>กดที่กล่องของขวัญหรือปุ่มด้านล่างเพื่อลุ้นรางวัล!</span>
-        </div>
-
-        <div class="lucky-result-content" id="luckyResultContent">
-          <span class="prize-badge" id="prizeBadge">🎉 ได้รับโค้ดส่งฟรี!</span>
-          <div class="code-display-wrap" id="codeBox"></div>
-          <div style="font-size:12px; color:var(--gold); font-weight:600; margin:2px 0 6px;" id="codeExpiryDisplayWrap">
-            ⏳ โค้ดหมดอายุใน: <strong id="codeExpiryTimer" style="font-size:13.5px;">30:00</strong>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">แขวง / ตำบล *</label>
+            <input type="text" id="cusSubdistrict" placeholder="แขวง/ตำบล" class="info-input" required>
           </div>
-          <button class="btn-copy-code" id="copyBtn" onclick="copyCode()" style="display:none;">
-            <i class="ph ph-copy"></i> <span>คัดลอกโค้ด</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Action Button -->
-      <button class="btn-spin-action" id="spinBtn" onclick="doSpin()">
-        <i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>
-      </button>
-
-      <!-- Timer Bar -->
-      <div class="lucky-timer-bar" id="timerSection">
-        <i class="ph ph-timer"></i>
-        <span>สุ่มได้ใหม่อีกครั้งใน: <strong class="timer-pill" id="timerDisplay">05:00:00</strong></span>
-      </div>
-    </section>
-
-    <!-- 3a. Category Type Filter (Top-level: มาสไรเดอร์ / ซุปเปอร์เซ็นไต / อุลตราแมน ฯลฯ) -->
-    <div class="section-header-wrap" style="margin-bottom:10px;">
-      <div class="section-title-left">
-        <div class="section-icon-box">
-          <i class="ph ph-tag"></i>
-        </div>
-        <div class="section-title-text">เลือกประเภทสินค้า</div>
-      </div>
-    </div>
-    <div class="cat-pill-bar type-pill-bar" id="categoryTypeButtonsContainer">
-      <button class="cat-pill-btn type-pill-btn active" onclick="selectCategoryType('ALL', this)">🌟 ทั้งหมด</button>
-    </div>
-
-    <!-- 3. Category Header & 4-Column Grid -->
-    <div class="section-header-wrap">
-      <div class="section-title-left">
-        <div class="section-icon-box">
-          <i class="ph ph-squares-four"></i>
-        </div>
-        <div class="section-title-text">หมวดหมู่สินค้า</div>
-      </div>
-      <span class="section-link-more" onclick="selectCategory('ALL')">
-        ดูทั้งหมด <i class="ph ph-caret-right"></i>
-      </span>
-    </div>
-
-    <!-- 4-in-a-row Category Grid -->
-    <section class="categories-grid-4" id="categoryBannersContainer">
-      <!-- Dynamically Rendered -->
-    </section>
-
-    <!-- Category Pill Filter Tabs -->
-    <div class="cat-pill-bar" id="categoryButtonsContainer">
-      <button class="cat-pill-btn active" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>
-    </div>
-
-    <!-- 4. Dynamic Products Section -->
-    <section class="products-section" id="productsSection">
-      <div class="section-header-wrap" style="margin-top: 4px;">
-        <div class="section-title-left">
-          <div class="section-icon-box">
-            <i class="ph ph-shopping-bag"></i>
+          <div>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">เขต / อำเภอ *</label>
+            <input type="text" id="cusDistrict" placeholder="เขต/อำเภอ" class="info-input" required>
           </div>
-          <div class="section-title-text" id="currentCategoryTitle">สินค้าทั้งหมด</div>
         </div>
-        <span style="font-size:12px; color:var(--text-muted);" id="productCountLabel">0 รายการ</span>
-      </div>
-
-      <div class="product-grid" id="productGridContainer">
-        <!-- Dynamically Loaded Products -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">จังหวัด *</label>
+            <input type="text" id="cusProvince" placeholder="จังหวัด" class="info-input" required>
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600;">รหัสไปรษณีย์ *</label>
+            <input type="text" id="cusPostcode" placeholder="10110" class="info-input" maxlength="5" required>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-muted); font-weight:600;">หมายเหตุ (ถ้ามี)</label>
+          <input type="text" id="cusNote" placeholder="เช่น โทรก่อนส่ง, ฝากไว้ที่เพื่อนบ้าน" class="info-input">
+        </div>
       </div>
     </section>
 
-    <!-- 5. Store Trust Badges -->
-    <div class="trust-grid">
-      <div class="trust-card">
-        <i class="ph ph-seal-check"></i>
-        <h4>สินค้าคุณภาพดี</h4>
-        <p>ตรงปกไม่จกตา</p>
+    <!-- 2. Discount Code Section -->
+    <section class="cart-section">
+      <div class="section-title">
+        <i class="ph ph-tag"></i>
+        <span>โค้ดส่วนลดพิเศษ / ส่งฟรี</span>
       </div>
-      <div class="trust-card">
-        <i class="ph ph-truck"></i>
-        <h4>จัดส่งรวดเร็ว</h4>
-        <p>แพ็กกันกระแทกแน่นหนา</p>
+      <div class="coupon-box">
+        <input type="text" class="coupon-input" id="couponInput" placeholder="กรอกโค้ด 6 หลักที่ได้จากการสุ่ม" maxlength="12">
+        <button class="apply-coupon-btn" onclick="MK.applyCoupon()">ใช้โค้ด</button>
       </div>
-      <div class="trust-card">
-        <i class="ph ph-headset"></i>
-        <h4>บริการดูแล</h4>
-        <p>ใส่ใจลูกค้าทุกออเดอร์</p>
+
+      <!-- Quick Fill Chip from Lucky Draw -->
+      <div id="latestCodeChip" style="display:none; margin-top:8px; font-size:12px; color:var(--text-muted);">
+        💡 โค้ดที่คุณสุ่มได้: <span id="latestCodeText" style="color:var(--mk-red); font-weight:700; cursor:pointer; text-decoration:underline;" onclick="MK.fillLatestCode()"></span>
+        <span id="cartCodeExpiryBadge" style="cursor:pointer; margin-left:4px; font-weight:600; padding:3px 8px; border-radius:8px; background:#FEF3C7; color:#D97706; display:inline-block;" onclick="MK.fillLatestCode()">⏳ หมดอายุใน 30:00 (กดใช้)</span>
       </div>
-    </div>
 
-  </main>
-
-  <!-- Bottom Navigation Bar -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active">
-      <i class="ph ph-house"></i>
-      <span>หน้าหลัก</span>
-    </a>
-    <a href="login.html" class="nav-item">
-      <i class="ph ph-user"></i>
-      <span>โปรไฟล์</span>
-    </a>
-  </nav>
-
-  <!-- Modal: Login Required -->
-  <div class="modal-overlay" id="loginRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
-    <div style="background:#24090D;border:1.5px solid rgba(245,200,66,0.4);border-radius:24px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
-      <div style="width:62px;height:62px;border-radius:50%;background:rgba(211,34,42,0.2);border:1px solid rgba(211,34,42,0.4);color:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;">
-        <i class="ph ph-lock-key"></i>
+      <!-- Error Message -->
+      <div id="couponErrorMsg" style="display:none; margin-top:8px; font-size:12px; color:#EF4444; font-weight:500;">
+        <i class="ph ph-warning-circle"></i> <span id="couponErrorText"></span>
       </div>
-      <h3 style="font-size:18px;font-weight:700;color:#FFFFFF;margin-bottom:8px;">กรุณาเข้าสู่ระบบก่อน</h3>
-      <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;" id="loginRequiredDesc">คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถใช้งานได้ครับ</p>
-      <a href="login.html" style="display:block;width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;margin-bottom:10px;box-shadow:0 4px 15px rgba(211,34,42,0.4);">
-        <i class="ph ph-sign-in"></i> เข้าสู่ระบบ / สมัครสมาชิก
-      </a>
-      <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="width:100%;padding:10px;background:rgba(255,255,255,0.08);color:var(--text-muted);border:none;border-radius:12px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;">
-        ไว้คราวหลัง
-      </button>
-    </div>
-  </div>
 
-  <!-- Modal: Lucky Draw Odds Info -->
-  <div class="modal-overlay" id="oddsInfoModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
-    <div class="odds-modal-box">
-      <div class="odds-modal-header">
-        <span class="odds-modal-title">MYSTERY BOX (รางวัลประจำเดือน)</span>
-        <button type="button" class="odds-modal-close" onclick="closeOddsModal()" aria-label="ปิด">
+      <!-- Applied Tag -->
+      <div class="applied-coupon-tag" id="appliedCouponTag">
+        <span>🎉 โค้ดถูกต้อง: <strong id="appliedCouponName"></strong> (<span id="appliedCouponDesc"></span>)</span>
+        <button class="remove-coupon-btn" onclick="MK.removeCoupon()" title="ยกเลิกโค้ด">
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <p class="odds-modal-sub">สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง</p>
-      <table class="odds-table">
-        <thead>
-          <tr>
-            <th>รายการรางวัล</th>
-            <th>โอกาสได้รับ</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>❌ ไม่ได้รับโค้ด</td>
-            <td class="odds-value">49%</td>
-          </tr>
-          <tr>
-            <td>🚚 โค้ดส่งฟรี</td>
-            <td class="odds-value">48%</td>
-          </tr>
-          <tr>
-            <td>🎁 ส่งฟรี + DX Wonderside Book</td>
-            <td class="odds-value">1.5%</td>
-          </tr>
-          <tr>
-            <td>🏆 ส่งฟรี + DX Kiramai Changer</td>
-            <td class="odds-value">1.495%</td>
-          </tr>
-          <tr>
-            <td>🏆 ส่งฟรี + DX Two Side Driver</td>
-            <td class="odds-value">0.01%</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากการสุ่ม 1 ครั้ง โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* โค้ดส่งฟรีและของแถมมีเงื่อนไขยอดสั่งซื้อขั้นต่ำ (200฿ สำหรับโค้ดส่งฟรี/Wonderside Book/Kiramai Changer, 500฿ สำหรับ Two Side Driver)</p>
+    </section>
+
+    <!-- 3. Summary Section -->
+    <section class="cart-section">
+      <div class="section-title">
+        <i class="ph ph-receipt"></i>
+        <span>สรุปยอดชำระเงิน</span>
+      </div>
+      <div class="summary-row">
+        <span>ยอดรวมสินค้า</span>
+        <span id="subtotalText">฿0</span>
+      </div>
+      <div class="summary-row">
+        <span>ค่าจัดส่ง</span>
+        <span id="shippingText">฿50</span>
+      </div>
+      <div class="summary-row discount" id="discountRow" style="display: none;">
+        <span>ส่วนลดพิเศษ</span>
+        <span id="discountText">-฿0</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-total">
+        <span>ยอดรวมสุทธิ</span>
+        <span class="total-amount" id="grandTotalText">฿0</span>
+      </div>
+    </section>
+
+    <!-- 4. Confirm Order Button -->
+    <button class="checkout-btn" id="checkoutBtn" onclick="MK.confirmOrder()">
+      <i class="ph ph-check-circle"></i>
+      <span>ยืนยันคำสั่งซื้อ & ชำระเงิน</span>
+    </button>
+    <div class="conn-notice" id="connNotice">
+      ⚠️ ไม่สามารถเชื่อมต่อระบบสั่งซื้อได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
+    </div>
+
+  </div>
+
+  <!-- Modal: Login Required -->
+  <div class="modal-overlay" id="loginRequiredModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-icon" style="background:#FEF3C7; color:#D97706;">
+        <i class="ph ph-lock-key"></i>
+      </div>
+      <h3 class="modal-title">ไม่สามารถชำระเงินได้</h3>
+      <p class="modal-desc">กรุณาเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถยืนยันคำสั่งซื้อได้</p>
+      <a href="login.html" class="modal-close-btn" style="display:block; text-decoration:none;">
+        เข้าสู่ระบบ / สมัครสมาชิก
+      </a>
+      <button type="button" class="modal-secondary-btn" onclick="MK.closeLoginRequiredModal()">ไว้คราวหลัง</button>
     </div>
   </div>
 
-  <!-- Toast Message -->
-  <div class="toast" id="toast"></div>
+  <!-- Modal: Payment (QR Code + Upload Slip) -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="modal-content" style="max-width:380px;">
+      <div id="paymentModalBody"><!-- Rendered dynamically via JS --></div>
+    </div>
+  </div>
 
-  <!-- Lucky Draw Scripts -->
+  <!-- Toast -->
+  <div class="toast-msg" id="toastMsg">
+    <i class="ph ph-info" style="color:var(--gold); font-size: 18px;"></i>
+    <span id="toastText"></span>
+  </div>
+
+  <!-- ============================================================
+       CORE CART LOGIC (plain script, NOT a module)
+       This block never depends on Firebase, network access, or
+       any external import. As long as this file loads, the cart
+       will always read/write localStorage and render correctly -
+       even if Firebase fails to load for any reason.
+  ============================================================= -->
   <script>
-    const COOLDOWN_MS = 5 * 60 * 60 * 1000; // 5 ชั่วโมง (18,000,000 ms)
-    const TOTAL_SECS = 18000; // 18000 วินาที (5 ชั่วโมง)
-    let timerInterval = null;
-    let currentCode = '';
-    let lastSpinTime = null;
+    (function () {
+      'use strict';
 
-    function initParticles() {
-      const container = document.getElementById('particlesBg');
-      if (!container) return;
-      for (let i = 0; i < 26; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.bottom = Math.random() * 20 + '%';
-        p.style.animationDuration = (4 + Math.random() * 6) + 's';
-        p.style.animationDelay = (Math.random() * 5) + 's';
-        container.appendChild(p);
+      const DEFAULT_SHIPPING = 50;
+      const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+
+      // Minimum order subtotal (before shipping/discount) required to use
+      // each prize's coupon. Shared by applyCoupon (initial check),
+      // renderCart (auto re-check whenever the cart changes) and
+      // confirmOrder (final safety check right before payment).
+      const MIN_ORDER_BY_PRIZE = {
+        freeship: 200,
+        wonderbook: 200,
+        kiramai: 200,
+        twosidedriver: 500,
+      };
+
+      // Inline placeholder image (no external file dependency) used when a
+      // cart item has no image or its image fails to load.
+      const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='16' fill='%23F3F4F6'/%3E%3Cpath d='M38 78l16-20 13 15 11-13 16 18z' fill='%23D1D5DB'/%3E%3Ccircle cx='46' cy='44' r='9' fill='%23D1D5DB'/%3E%3C/svg%3E";
+
+      // PromptPay payment QR config
+      const PROMPTPAY_ID = '0867852708';
+      const QR_EXPIRY_MS = 10 * 60 * 1000; // QR มีอายุ 10 นาที
+
+      // ---------- PromptPay EMVCo QR payload generator ----------
+      // Generates the exact Thai PromptPay QR payload string ourselves
+      // (same algorithm used by the official promptpay-qr library),
+      // then renders it as an image via a plain QR-code renderer.
+      // This guarantees the transfer amount is embedded correctly,
+      // instead of depending on a third-party service to do it right.
+      function crc16Ccitt(str) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < str.length; i++) {
+          crc ^= str.charCodeAt(i) << 8;
+          for (let b = 0; b < 8; b++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
       }
-    }
 
-    function generateCode() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-      return code;
-    }
-
-    function determinePrize() {
-      const roll = Math.random() * 100;
-      if (roll < 49)      return 'no_code';      // 49%
-      if (roll < 97)      return 'freeship';     // 48%
-      if (roll < 98.5)    return 'wonderbook';    // 1.5%
-      if (roll < 99.995)  return 'kiramai';       // 1.495%
-      return 'twosidedriver';                      // 0.005% (ส่วนที่เหลือ)
-    }
-
-    function burstConfetti() {
-      const container = document.getElementById('confetti');
-      if (!container) return;
-      container.innerHTML = '';
-      const colors = ['#F5C842','#E74C3C','#3498DB','#2ECC71','#9B59B6','#E67E22'];
-      for (let i = 0; i < 22; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        const rad = (i / 22) * 360 * (Math.PI / 180);
-        const dist = 50 + Math.random() * 60;
-        piece.style.setProperty('--tx', (Math.cos(rad) * dist) + 'px');
-        piece.style.setProperty('--ty', (Math.sin(rad) * dist - 25) + 'px');
-        piece.style.background = colors[i % colors.length];
-        container.appendChild(piece);
-        setTimeout(() => piece.classList.add('burst'), 10);
+      function ppTag(id, value) {
+        return id + String(value.length).padStart(2, '0') + value;
       }
-    }
 
-    window.showLoginRequiredModal = function(action) {
-      const modal = document.getElementById('loginRequiredModal');
-      const desc = document.getElementById('loginRequiredDesc');
-      if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
-      if (modal) modal.style.display = 'flex';
-    };
+      function buildPromptPayPayload(promptPayId, amount) {
+        const digits = String(promptPayId).replace(/[^0-9]/g, '');
+        let targetType = '01'; // phone number
+        if (digits.length >= 15) targetType = '03'; // e-wallet
+        else if (digits.length >= 13) targetType = '02'; // tax id / citizen id
+        const formattedTarget = digits.replace(/^0/, '66').padStart(13, '0');
 
-    window.showOddsModal = function() {
-      const modal = document.getElementById('oddsInfoModal');
-      if (modal) modal.style.display = 'flex';
-    };
+        const merchantInfo = ppTag('00', 'A000000677010111') + ppTag(targetType, formattedTarget);
 
-    window.closeOddsModal = function() {
-      const modal = document.getElementById('oddsInfoModal');
-      if (modal) modal.style.display = 'none';
-    };
+        let payload =
+          ppTag('00', '01') +
+          ppTag('01', amount ? '12' : '11') +
+          ppTag('29', merchantInfo) +
+          ppTag('58', 'TH') +
+          ppTag('53', '764');
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const oddsModal = document.getElementById('oddsInfoModal');
-      if (oddsModal) {
-        oddsModal.addEventListener('click', function (e) {
-          if (e.target === oddsModal) closeOddsModal();
-        });
-      }
-    });
-
-    function getUserSpinKey() {
-      return window.currentUser ? `mkLastSpin_${window.currentUser.uid}` : 'mkLastSpin_guest';
-    }
-
-    function getCodesKey() {
-      return window.currentUser ? ('mkValidCodes_' + window.currentUser.uid) : 'mkValidCodes_guest';
-    }
-    function getCurrentPromoKey() {
-      return window.currentUser ? ('mkCurrentPromoCode_' + window.currentUser.uid) : 'mkCurrentPromoCode_guest';
-    }
-    function getCurrentPrizeKey() {
-      return window.currentUser ? ('mkCurrentPrizeType_' + window.currentUser.uid) : 'mkCurrentPrizeType_guest';
-    }
-    function getCurrentExpiryKey() {
-      return window.currentUser ? ('mkCurrentCodeExpiresAt_' + window.currentUser.uid) : 'mkCurrentCodeExpiresAt_guest';
-    }
-
-    function resetSpinUI() {
-      if (timerInterval) clearInterval(timerInterval);
-      const timerSection = document.getElementById('timerSection');
-      const spinBtn = document.getElementById('spinBtn');
-      if (timerSection) timerSection.classList.remove('active');
-      if (spinBtn) {
-        spinBtn.disabled = false;
-        spinBtn.innerHTML = '<i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>';
-      }
-    }
-
-    function doSpin() {
-      if (!window.currentUser) {
-        showLoginRequiredModal('สุ่มโค้ดส่วนลด');
-        return;
-      }
-      const spinBtn = document.getElementById('spinBtn');
-      const giftBox = document.getElementById('giftBox');
-      if (spinBtn.disabled) return;
-
-      spinBtn.disabled = true;
-      spinBtn.innerHTML = '<i class="ph ph-spinner-gap"></i> <span>กำลังลุ้นรางวัล...</span>';
-
-      giftBox.classList.remove('floating', 'shaking', 'popping');
-      void giftBox.offsetWidth;
-      giftBox.classList.add('shaking');
-
-      setTimeout(() => {
-        giftBox.classList.remove('shaking');
-        giftBox.classList.add('popping');
-        burstConfetti();
-
-        const prizeType = determinePrize();
-        if (prizeType !== 'no_code') {
-          currentCode = generateCode();
-          const nowTime = Date.now();
-          const expiresAt = nowTime + CODE_EXPIRY_MS;
-          try {
-            const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
-            validCodes.push({ 
-              code: currentCode, 
-              prize: prizeType, 
-              used: false, 
-              createdAt: nowTime,
-              expiresAt: expiresAt 
-            });
-            localStorage.setItem(getCodesKey(), JSON.stringify(validCodes));
-            localStorage.setItem(getCurrentPromoKey(), currentCode);
-            localStorage.setItem(getCurrentPrizeKey(), prizeType);
-            localStorage.setItem(getCurrentExpiryKey(), expiresAt.toString());
-          } catch (err) { console.error(err); }
-
-          startCodeExpiryCountdown(expiresAt);
-        } else {
-          currentCode = '';
-          localStorage.removeItem(getCurrentPromoKey());
-          localStorage.removeItem(getCurrentPrizeKey());
-          localStorage.removeItem(getCurrentExpiryKey());
+        if (amount) {
+          payload += ppTag('54', Number(amount).toFixed(2));
         }
 
-        document.getElementById('luckyPlaceholder').style.display = 'none';
-        const resultContent = document.getElementById('luckyResultContent');
-        resultContent.classList.remove('visible');
-        void resultContent.offsetWidth;
-        resultContent.classList.add('visible');
+        payload += '6304';
+        return payload + crc16Ccitt(payload);
+      }
 
-        const prizeBadge = document.getElementById('prizeBadge');
-        const copyBtn = document.getElementById('copyBtn');
+      function buildPromptPayQrImageUrl(promptPayId, amount) {
+        const payload = buildPromptPayPayload(promptPayId, amount);
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(payload);
+      }
 
-        if (prizeType === 'no_code') {
-          prizeBadge.className = 'prize-badge no-prize';
-          prizeBadge.innerHTML = '❌ ไม่ได้รับโค้ด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
-          copyBtn.style.display = 'none';
-          document.getElementById('codeExpiryDisplayWrap').style.display = 'none';
-        } else {
-          document.getElementById('codeExpiryDisplayWrap').style.display = 'block';
-          if (prizeType === 'freeship') {
-            prizeBadge.className = 'prize-badge';
-            prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'wonderbook') {
-            prizeBadge.className = 'prize-badge special';
-            prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book (สุ่ม)';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'kiramai') {
-            prizeBadge.className = 'prize-badge jackpot';
-            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'twosidedriver') {
-            prizeBadge.className = 'prize-badge jackpot';
-            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Two Side Driver!';
-            copyBtn.style.display = 'inline-flex';
+      const state = {
+        appliedDiscount: 0,
+        appliedCodeName: '',
+        isFreeShipping: false,
+        hasKeychainGift: false,
+      };
+
+      let cartCodeExpiryInterval = null;
+      let toastTimeout = null;
+
+      // Payment modal state
+      let paymentTimerInterval = null;
+      let pendingOrderData = null;
+      let qrExpiresAt = null;
+
+      // ---------- Storage helpers ----------
+      function getCartKey() {
+        const user = window.MK_CURRENT_USER;
+        return user && user.uid ? ('mkCart_' + user.uid) : 'mkCart_guest';
+      }
+
+      function getCodesKey() {
+        const user = window.MK_CURRENT_USER;
+        return user && user.uid ? ('mkValidCodes_' + user.uid) : 'mkValidCodes_guest';
+      }
+
+      function getCart() {
+        try {
+          const saved = localStorage.getItem(getCartKey());
+          if (saved) return JSON.parse(saved);
+        } catch (e) {
+          console.error('getCart parse error:', e);
+        }
+        return [];
+      }
+
+      function saveCart(cart) {
+        try {
+          localStorage.setItem(getCartKey(), JSON.stringify(cart));
+        } catch (e) {
+          console.error('saveCart error:', e);
+        }
+        renderCart();
+      }
+
+      // ---------- Toast ----------
+      function showToast(text) {
+        const toast = document.getElementById('toastMsg');
+        const toastText = document.getElementById('toastText');
+        if (!toast || !toastText) return;
+        toastText.textContent = text;
+        toast.classList.add('show');
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      // Look up which prize type the currently applied coupon code maps to
+      // (master fallback codes like FREESHIP/KHUNAU/VIP have no stored
+      // prize entry and no minimum-order requirement, so they return null).
+      function getAppliedCodePrizeType() {
+        if (!state.appliedCodeName) return null;
+        try {
+          const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+          const match = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
+          return match ? match.prize : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // ---------- Render ----------
+      function renderCart() {
+        const cart = getCart();
+        const listEl = document.getElementById('cartItemsList');
+        const cartCountTitle = document.getElementById('cartCountTitle');
+        if (!listEl || !cartCountTitle) return;
+
+        // Compute the subtotal up front so the applied coupon's minimum-order
+        // requirement can be (re)validated before anything that depends on
+        // it (gift item, shipping, totals) gets rendered below. This is what
+        // catches cases like: coupon applied at ฿310, then an item removed
+        // drops the cart to ฿155 — the coupon should stop applying.
+        const subtotal = cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+
+        if (state.appliedCodeName) {
+          const prizeType = getAppliedCodePrizeType();
+          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          if (minRequired > 0 && subtotal < minRequired) {
+            state.isFreeShipping = false;
+            state.hasKeychainGift = false;
+            state.appliedDiscount = 0;
+            state.appliedCodeName = '';
+            const tag = document.getElementById('appliedCouponTag');
+            if (tag) tag.classList.remove('show');
+            showToast('⚠️ ยอดสินค้าต่ำกว่าขั้นต่ำ ฿' + minRequired.toLocaleString() + ' ระบบยกเลิกส่วนลด/สิทธิ์จากโค้ดให้อัตโนมัติ');
           }
         }
 
-        const codeBox = document.getElementById('codeBox');
-        if (currentCode) {
-          codeBox.innerHTML = currentCode.split('').map(c => `<div class="code-char-box">${c}</div>`).join('');
+        let totalItems = 0;
+
+        if (cart.length === 0) {
+          listEl.innerHTML =
+            '<div class="empty-cart">' +
+            '<i class="ph ph-shopping-bag"></i>' +
+            '<p>ยังไม่มีสินค้าในตะกร้า</p>' +
+            '<a href="index.html" class="shop-now-btn">เลือกซื้อสินค้า</a>' +
+            '</div>';
+          cartCountTitle.textContent = '0';
         } else {
-          codeBox.innerHTML = '<div style="font-size:28px;margin:4px 0;">❌</div>';
+          listEl.innerHTML = '';
+          cart.forEach((item, index) => {
+            const qty = Number(item.quantity) || 0;
+            const price = Number(item.price) || 0;
+            totalItems += qty;
+
+            const itemEl = document.createElement('div');
+            itemEl.className = 'cart-item';
+
+            const img = document.createElement('img');
+            img.className = 'item-img';
+            img.src = item.image || PLACEHOLDER_IMG;
+            img.alt = item.name || 'สินค้า';
+            img.onerror = function () { this.onerror = null; this.src = PLACEHOLDER_IMG; };
+
+            const details = document.createElement('div');
+            details.className = 'item-details';
+            const nameEl = document.createElement('div');
+            nameEl.className = 'item-name';
+            nameEl.textContent = item.name || 'สินค้า';
+            const priceEl = document.createElement('div');
+            priceEl.className = 'item-price';
+            priceEl.textContent = '฿' + price.toLocaleString();
+            details.appendChild(nameEl);
+            details.appendChild(priceEl);
+
+            const controls = document.createElement('div');
+            controls.className = 'quantity-controls';
+            const minusBtn = document.createElement('button');
+            minusBtn.className = 'qty-btn';
+            minusBtn.textContent = '-';
+            minusBtn.addEventListener('click', () => updateQty(index, -1));
+            const qtyNum = document.createElement('span');
+            qtyNum.className = 'qty-num';
+            qtyNum.textContent = qty;
+            const plusBtn = document.createElement('button');
+            plusBtn.className = 'qty-btn';
+            plusBtn.textContent = '+';
+            plusBtn.addEventListener('click', () => updateQty(index, 1));
+            controls.appendChild(minusBtn);
+            controls.appendChild(qtyNum);
+            controls.appendChild(plusBtn);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-item-btn';
+            removeBtn.title = 'ลบรายการ';
+            removeBtn.innerHTML = '<i class="ph ph-trash"></i>';
+            removeBtn.addEventListener('click', () => removeItem(index));
+
+            itemEl.appendChild(img);
+            itemEl.appendChild(details);
+            itemEl.appendChild(controls);
+            itemEl.appendChild(removeBtn);
+            listEl.appendChild(itemEl);
+          });
+
+          if (state.hasKeychainGift) {
+            const giftEl = document.createElement('div');
+            giftEl.className = 'cart-item';
+            giftEl.style.background = '#FEF3C7';
+            giftEl.style.padding = '8px 12px';
+            giftEl.style.borderRadius = '12px';
+            giftEl.style.border = '1px dashed #F59E0B';
+            giftEl.innerHTML =
+              '<div style="font-size:24px;">🗝️</div>' +
+              '<div class="item-details">' +
+              '<div class="item-name" style="color:#92400E; font-weight:700;">[ของแถมพิเศษ] พวงกุญแจลิมิเต็ด</div>' +
+              '<div class="item-price" style="color:#D97706; font-size:12px;">ฟรี ฿0 (สิทธิ์พิเศษจากโค้ดสุ่ม)</div>' +
+              '</div>' +
+              '<span style="background:#F59E0B; color:white; font-size:11px; font-weight:700; padding:3px 8px; border-radius:10px;">FREE</span>';
+            listEl.appendChild(giftEl);
+          }
+
+          cartCountTitle.textContent = String(totalItems);
         }
 
-        lastSpinTime = Date.now();
-        localStorage.setItem(getUserSpinKey(), lastSpinTime.toString());
-        startCountdown();
+        const shipping = cart.length === 0 ? 0 : (state.isFreeShipping ? 0 : DEFAULT_SHIPPING);
+        const grandTotal = Math.max(0, subtotal + shipping - state.appliedDiscount);
 
-        setTimeout(() => {
-          giftBox.classList.remove('popping');
-          giftBox.classList.add('floating');
-        }, 700);
-      }, 850);
-    }
+        const subtotalEl = document.getElementById('subtotalText');
+        const shippingEl = document.getElementById('shippingText');
+        const discountRow = document.getElementById('discountRow');
+        const discountEl = document.getElementById('discountText');
+        const grandTotalEl = document.getElementById('grandTotalText');
 
-    function copyCode() {
-      if (!currentCode) return;
-      navigator.clipboard.writeText(currentCode).then(() => {
-        const btn = document.getElementById('copyBtn');
-        btn.classList.add('copied');
-        btn.innerHTML = '<i class="ph ph-check"></i> <span>คัดลอกแล้ว!</span>';
-        setTimeout(() => {
-          btn.classList.remove('copied');
-          btn.innerHTML = '<i class="ph ph-copy"></i> <span>คัดลอกโค้ด</span>';
-        }, 2000);
-        showToast('📋 คัดลอกโค้ด ' + currentCode + ' สำเร็จ');
-      });
-    }
-
-    // ===== 30-MINUTE CODE EXPIRY COUNTDOWN =====
-    const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
-    let codeExpiryInterval = null;
-
-    function startCodeExpiryCountdown(expiresAt) {
-      if (codeExpiryInterval) clearInterval(codeExpiryInterval);
-
-      function updateExpiry() {
-        const now = Date.now();
-        const remainingMs = Math.max(0, expiresAt - now);
-        const remainingSecs = Math.floor(remainingMs / 1000);
-
-        const mins = Math.floor(remainingSecs / 60).toString().padStart(2, '0');
-        const secs = (remainingSecs % 60).toString().padStart(2, '0');
-        const timeStr = `${mins}:${secs}`;
-
-        // 1. Update Active Code Expiry Bar (in Lucky Card)
-        const expiryBar = document.getElementById('activeCodeExpiryBar');
-        const codeNameEl = document.getElementById('activeCodeName');
-        const codeTimerEl = document.getElementById('activeCodeTimer');
-
-        if (expiryBar && codeNameEl && codeTimerEl) {
-          if (remainingSecs > 0 && currentCode) {
-            codeNameEl.textContent = currentCode;
-            codeTimerEl.textContent = timeStr;
-            expiryBar.style.display = 'flex';
+        if (subtotalEl) subtotalEl.textContent = '฿' + subtotal.toLocaleString();
+        if (shippingEl) {
+          shippingEl.innerHTML = state.isFreeShipping
+            ? '<span style="color:#10B981; font-weight:600;">ฟรี (฿0)</span>'
+            : '฿' + shipping.toLocaleString();
+        }
+        if (discountRow && discountEl) {
+          if (state.appliedDiscount > 0 || state.isFreeShipping) {
+            discountRow.style.display = 'flex';
+            const discountDisplay = state.appliedDiscount > 0
+              ? '฿' + state.appliedDiscount.toLocaleString()
+              : 'ส่งฟรี ฿50';
+            discountEl.textContent = '-' + discountDisplay;
           } else {
-            expiryBar.style.display = 'none';
+            discountRow.style.display = 'none';
+          }
+        }
+        if (grandTotalEl) grandTotalEl.textContent = '฿' + grandTotal.toLocaleString();
+      }
+
+      // ---------- Item mutations ----------
+      async function updateQty(index, change) {
+        const cart = getCart();
+        const item = cart[index];
+        if (!item) return;
+
+        // Block increases beyond what's actually in stock
+        if (change > 0 && item.id && typeof window.MK_GET_PRODUCT_STOCK === 'function') {
+          const available = await window.MK_GET_PRODUCT_STOCK(item.id);
+          if (available !== null) {
+            const currentQty = Number(item.quantity) || 0;
+            if (currentQty >= available) {
+              showToast(available > 0
+                ? `⚠️ สินค้า "${item.name}" เหลือเพียง ${available} ชิ้น ไม่สามารถเพิ่มได้อีก`
+                : `⚠️ สินค้า "${item.name}" หมดสต็อกแล้ว`);
+              return;
+            }
           }
         }
 
-        // 2. Update Expiry inside Result Card if visible
-        const resultTimerEl = document.getElementById('codeExpiryTimer');
-        if (resultTimerEl) {
-          resultTimerEl.textContent = timeStr;
-        }
-
-        if (remainingSecs <= 0) {
-          clearInterval(codeExpiryInterval);
-          if (expiryBar) expiryBar.style.display = 'none';
-          const prizeBadge = document.getElementById('prizeBadge');
-          if (prizeBadge && document.getElementById('luckyResultContent').classList.contains('visible')) {
-            prizeBadge.className = 'prize-badge no-prize';
-            prizeBadge.innerHTML = '❌ โค้ดหมดอายุการใช้งานแล้ว (เกิน 30 นาที)';
-          }
-          localStorage.removeItem(getCurrentPromoKey());
-          localStorage.removeItem(getCurrentPrizeKey());
-          localStorage.removeItem(getCurrentExpiryKey());
-        }
+        item.quantity = (Number(item.quantity) || 0) + change;
+        if (item.quantity <= 0) cart.splice(index, 1);
+        saveCart(cart);
       }
 
-      updateExpiry();
-      codeExpiryInterval = setInterval(updateExpiry, 500);
-    }
-
-    function startCountdown() {
-      const timerSection = document.getElementById('timerSection');
-      const timerDisplay = document.getElementById('timerDisplay');
-      const spinBtn = document.getElementById('spinBtn');
-      if (!timerSection || !timerDisplay || !spinBtn) return;
-      timerSection.classList.add('active');
-
-      function updateTimer() {
-        const now = Date.now();
-        const elapsed = Math.floor((now - lastSpinTime) / 1000);
-        const remaining = Math.max(0, TOTAL_SECS - elapsed);
-        
-        const hours = Math.floor(remaining / 3600);
-        const mins = Math.floor((remaining % 3600) / 60).toString().padStart(2, '0');
-        const secs = (remaining % 60).toString().padStart(2, '0');
-        timerDisplay.textContent = (hours > 0 ? `${hours.toString().padStart(2, '0')}:${mins}:${secs}` : `${mins}:${secs}`);
-
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          timerSection.classList.remove('active');
-          spinBtn.disabled = false;
-          spinBtn.innerHTML = '<i class="ph ph-dice-five"></i> <span>กดสุ่มโค้ดรางวัล</span>';
-          localStorage.removeItem(getUserSpinKey());
-        }
-      }
-      if (timerInterval) clearInterval(timerInterval);
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 500);
-    }
-
-    function restoreState() {
-      // 1. Restore Spin Cooldown
-      const key = getUserSpinKey();
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        lastSpinTime = parseInt(saved);
-        const elapsed = Date.now() - lastSpinTime;
-        if (elapsed < COOLDOWN_MS) {
-          const spinBtn = document.getElementById('spinBtn');
-          if (spinBtn) {
-            spinBtn.disabled = true;
-            spinBtn.innerHTML = '<i class="ph ph-clock"></i> <span>กรุณารอสักครู่...</span>';
-          }
-          startCountdown();
-        } else {
-          localStorage.removeItem(key);
-          resetSpinUI();
-        }
-      } else {
-        resetSpinUI();
-      }
-
-      // 2. Restore Active Code Expiry Countdown
-      try {
-        const promoCode = localStorage.getItem(getCurrentPromoKey());
-        const expiresAtStr = localStorage.getItem(getCurrentExpiryKey());
-        if (promoCode && expiresAtStr) {
-          const expiresAt = parseInt(expiresAtStr);
-          if (Date.now() < expiresAt) {
-            currentCode = promoCode;
-            startCodeExpiryCountdown(expiresAt);
+      // Clamp cart quantities to whatever stock actually allowed, and let the
+      // customer know. Used both for the pre-checkout check and as a fallback
+      // if the final order transaction still finds a shortage (e.g. someone
+      // else bought the last one in the meantime).
+      function applyStockShortages(shortages) {
+        if (!shortages || !shortages.length) return;
+        const cart = getCart();
+        let changed = false;
+        shortages.forEach((s) => {
+          const idx = cart.findIndex((i) => i.id === s.id);
+          if (idx === -1) return;
+          changed = true;
+          if (s.available <= 0) {
+            cart.splice(idx, 1);
           } else {
-            localStorage.removeItem(getCurrentPromoKey());
-            localStorage.removeItem(getCurrentPrizeKey());
-            localStorage.removeItem(getCurrentExpiryKey());
-          }
-        }
-      } catch(e) {}
-    }
-
-    window.restoreState = restoreState;
-
-    let toastTimer = null;
-    function showToast(text) {
-      const toast = document.getElementById('toast');
-      if (!toast) return;
-      toast.textContent = text || '✅ ดำเนินการสำเร็จ';
-      toast.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3000); // 3 วินาทีเต็มแล้วจางหายไปอัตโนมัติ
-    }
-    window.showToast = showToast;
-
-    // Defer non-critical particle animation + saved-state restore until the
-    // browser is idle, so they never compete with rendering the page itself.
-    function initNonCritical() {
-      initParticles();
-      restoreState();
-    }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(initNonCritical, { timeout: 1500 });
-    } else {
-      setTimeout(initNonCritical, 200);
-    }
-  </script>
-
-  <!-- Firebase Firestore & Shop Logic -->
-  <script type="module">
-    import { auth, db, collection, getDocs, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
-
-    function getCartKey() {
-      return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
-    }
-
-    function migrateGuestCartToUser(uid) {
-      try {
-        const guestKey = 'mkCart_guest';
-        const userKey = 'mkCart_' + uid;
-        const guestCart = JSON.parse(localStorage.getItem(guestKey) || '[]');
-        if (guestCart.length > 0 && !localStorage.getItem(userKey)) {
-          localStorage.setItem(userKey, JSON.stringify(guestCart));
-          localStorage.removeItem(guestKey);
-        }
-      } catch (e) { /* ignore */ }
-    }
-
-    function migrateGuestCodesToUser(uid) {
-      try {
-        const bases = ['mkValidCodes', 'mkCurrentPromoCode', 'mkCurrentPrizeType', 'mkCurrentCodeExpiresAt'];
-        bases.forEach(base => {
-          const guestKey = base + '_guest';
-          const userKey = base + '_' + uid;
-          const guestVal = localStorage.getItem(guestKey);
-          if (guestVal !== null && localStorage.getItem(userKey) === null) {
-            localStorage.setItem(userKey, guestVal);
-            localStorage.removeItem(guestKey);
+            cart[idx].quantity = s.available;
           }
         });
-      } catch (e) { /* ignore */ }
-    }
-
-    window.currentUser = null;
-    onAuthStateChanged(auth, user => {
-      window.currentUser = user;
-      if (user) {
-        migrateGuestCartToUser(user.uid);
-        migrateGuestCodesToUser(user.uid);
-      }
-      updateCartBadge();
-      if (typeof window.restoreState === 'function') {
-        window.restoreState();
-      }
-    });
-
-    let storeCategories = [];
-    let storeProducts = [];
-    let storeCategoryTypes = [];
-    let selectedCategoryName = 'ALL';
-    let selectedCategoryTypeName = 'ALL';
-
-    // Respect the custom display order set by the admin (sortOrder). Items
-    // without a sortOrder yet fall back to the end, keeping their original
-    // order among themselves (Array.sort is stable).
-    function sortByOrder(list) {
-      return [...list].sort((a, b) => {
-        const ao = (a.sortOrder !== undefined && a.sortOrder !== null) ? a.sortOrder : Infinity;
-        const bo = (b.sortOrder !== undefined && b.sortOrder !== null) ? b.sortOrder : Infinity;
-        return ao - bo;
-      });
-    }
-
-    const defaultCategories = [
-      { name: 'DX Full Bottle', slug: 'full-bottle', image: 'full-bottle.jpg', pageLink: 'full-bottle.html', desc: '100-150฿' },
-      { name: 'Wonder Ride Book SG', slug: 'saberbook', image: 'wondersidebookSG.jpg', pageLink: 'SaberbookSG.html', desc: 'โปรพิเศษ' },
-      { name: 'Kamen Rider OOO', slug: 'ooo', image: 'OOO.jpg', pageLink: '', desc: 'สุดคุ้ม' },
-      { name: 'Gotchard Card', slug: 'gotchard', image: 'gotchardcard.jpg', pageLink: '', desc: 'การ์ดไรเดอร์' },
-    ];
-
-    // ===== DATA LOADING =====
-    // Switched from onSnapshot (realtime, keeps a live connection open and
-    // delays first paint while it handshakes) to getDocs (one-time fetch).
-    // Categories/products don't change second-to-second, so a single fetch
-    // on page load is enough and makes the initial render noticeably
-    // faster and lighter on data/battery. Each section loads independently
-    // and in parallel so one slow query doesn't block the others.
-
-    async function loadCategoriesOnce() {
-      try {
-        const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(catQuery);
-        const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-        storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
-      } catch (err) {
-        console.warn('Error loading categories:', err);
-        storeCategories = defaultCategories;
-      }
-      renderCategoryGrid(getCategoriesFilteredByType());
-      renderCategoryPills(getCategoriesFilteredByType());
-      renderProductsGrid(); // category lookup for type-filtering may have changed
-    }
-
-    async function loadCategoryTypesOnce() {
-      try {
-        const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
-        const snap = await getDocs(catTypeQuery);
-        storeCategoryTypes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-        renderCategoryTypePills(storeCategoryTypes);
-      } catch (err) {
-        console.warn('Error loading category types:', err);
-      }
-    }
-
-    async function loadProductsOnce() {
-      try {
-        const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(prodQuery);
-        storeProducts = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-      } catch (err) {
-        console.warn('Error loading products:', err);
-      }
-      renderProductsGrid();
-    }
-
-    // Kick all three off in parallel rather than waiting on each other.
-    loadCategoriesOnce();
-    loadCategoryTypesOnce();
-    loadProductsOnce();
-
-    // ===== CATEGORY TYPE HELPERS =====
-    function getCategoriesFilteredByType() {
-      if (selectedCategoryTypeName === 'ALL') return storeCategories;
-      return storeCategories.filter(c => c.categoryType === selectedCategoryTypeName);
-    }
-
-    // A product only stores its category NAME (not the type), so to filter
-    // products by type we look up that category's type via storeCategories
-    // (which always holds the full, unfiltered list).
-    function productMatchesSelectedType(productCategoryName) {
-      if (selectedCategoryTypeName === 'ALL') return true;
-      const cat = storeCategories.find(c => c.name === productCategoryName);
-      return !!(cat && cat.categoryType === selectedCategoryTypeName);
-    }
-
-    // ===== RENDER CATEGORY TYPE PILL TABS (top-level filter) =====
-    function renderCategoryTypePills(types) {
-      const container = document.getElementById('categoryTypeButtonsContainer');
-      if (!container) return;
-      let html = `<button class="cat-pill-btn type-pill-btn ${selectedCategoryTypeName === 'ALL' ? 'active' : ''}" onclick="selectCategoryType('ALL', this)">🌟 ทั้งหมด</button>`;
-      types.forEach(t => {
-        const isActive = selectedCategoryTypeName === t.name ? 'active' : '';
-        html += `<button class="cat-pill-btn type-pill-btn ${isActive}" onclick="selectCategoryType('${t.name}', this)">${t.name}</button>`;
-      });
-      container.innerHTML = html;
-    }
-
-    // ===== RENDER CATEGORY 4-COLUMN GRID =====
-    function renderCategoryGrid(categories) {
-      const container = document.getElementById('categoryBannersContainer');
-      if (!container) return;
-      container.innerHTML = categories.map(c => {
-        const imgPath = c.image || 'Banner_item.jpg';
-        const badgeHtml = c.desc ? `<span class="cat-tag-mini">${c.desc}</span>` : '';
-        const clickAction = c.pageLink
-          ? `onclick="window.location.href='${c.pageLink}'"`
-          : `onclick="selectCategoryByName('${c.name}')"`;
-
-        return `
-          <div class="cat-item-card" ${clickAction} title="${c.name}">
-            <div class="cat-thumb-box">
-              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.src='Banner_item.jpg'">
-              ${badgeHtml}
-            </div>
-            <span class="cat-item-name">${c.name}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // ===== RENDER CATEGORY PILL TABS =====
-    function renderCategoryPills(categories) {
-      const container = document.getElementById('categoryButtonsContainer');
-      if (!container) return;
-      let html = `<button class="cat-pill-btn ${selectedCategoryName === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL', this)">🌟 ทั้งหมด</button>`;
-      categories.forEach(c => {
-        const isActive = selectedCategoryName === c.name ? 'active' : '';
-        html += `<button class="cat-pill-btn ${isActive}" onclick="selectCategory('${c.name}', this)">🏷️ ${c.name}</button>`;
-      });
-      container.innerHTML = html;
-    }
-
-    // ===== CATEGORY SELECT LOGIC =====
-    window.selectCategory = function(catName, btnEl) {
-      selectedCategoryName = catName;
-      if (btnEl) {
-        document.querySelectorAll('#categoryButtonsContainer .cat-pill-btn').forEach(b => b.classList.remove('active'));
-        btnEl.classList.add('active');
-      }
-      renderProductsGrid();
-      const titleEl = document.getElementById('currentCategoryTitle');
-      if (titleEl) {
-        titleEl.textContent = (catName === 'ALL' ? 'สินค้าทั้งหมด' : catName);
-      }
-    };
-
-    window.selectCategoryByName = function(catName) {
-      const btns = document.querySelectorAll('#categoryButtonsContainer .cat-pill-btn');
-      let targetBtn = null;
-      btns.forEach(b => {
-        if (b.textContent.includes(catName)) targetBtn = b;
-      });
-      selectCategory(catName, targetBtn);
-      const prodSec = document.getElementById('productsSection');
-      if (prodSec) prodSec.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    // ===== CATEGORY TYPE SELECT LOGIC (top-level filter) =====
-    window.selectCategoryType = function(typeName, btnEl) {
-      selectedCategoryTypeName = typeName;
-      if (btnEl) {
-        document.querySelectorAll('#categoryTypeButtonsContainer .cat-pill-btn').forEach(b => b.classList.remove('active'));
-        btnEl.classList.add('active');
-      }
-      // Switching the top-level type resets the more specific category
-      // choice below it, since the previously-selected category may not
-      // belong to the newly chosen type.
-      selectedCategoryName = 'ALL';
-      renderCategoryGrid(getCategoriesFilteredByType());
-      renderCategoryPills(getCategoriesFilteredByType());
-      renderProductsGrid();
-      const titleEl = document.getElementById('currentCategoryTitle');
-      if (titleEl) titleEl.textContent = 'สินค้าทั้งหมด';
-    };
-
-    // ===== RENDER PRODUCTS GRID =====
-    function renderProductsGrid() {
-      const grid = document.getElementById('productGridContainer');
-      const countLabel = document.getElementById('productCountLabel');
-      if (!grid) return;
-
-      let filtered = storeProducts;
-      if (selectedCategoryTypeName !== 'ALL') {
-        filtered = filtered.filter(p => productMatchesSelectedType(p.category));
-      }
-      if (selectedCategoryName !== 'ALL') {
-        filtered = filtered.filter(p => p.category === selectedCategoryName);
+        if (changed) saveCart(cart);
+        const detail = shortages.map((s) => `${s.name} (เหลือ ${s.available} ชิ้น)`).join(', ');
+        showToast('⚠️ สินค้าไม่พอ: ' + detail + ' — ระบบปรับจำนวนในตะกร้าให้แล้ว กรุณาตรวจสอบอีกครั้ง');
       }
 
-      if (countLabel) countLabel.textContent = `${filtered.length} รายการ`;
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align:center; padding:36px 12px; color:var(--text-muted);">
-            <i class="ph ph-package" style="font-size:38px; display:block; margin-bottom:8px; color:var(--gold);"></i>
-            ยังไม่มีสินค้าในหมวดหมู่นี้
-          </div>
-        `;
-        return;
+      function removeItem(index) {
+        const cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        showToast('ลบรายการสินค้าแล้ว');
       }
 
-      grid.innerHTML = filtered.map((p, idx) => {
-        const origPriceHtml = p.originalPrice ? `<span class="product-old-price">฿${Number(p.originalPrice).toLocaleString()}</span>` : '';
-        const inStock = (p.inStock === true || p.inStock === 'true');
-        const cartBtn = inStock
-          ? `<button class="btn-add-cart-mini" onclick="addToCart('${p._id}', '${p.name}', ${p.price}, '${p.image}')" title="ใส่ตะกร้า"><i class="ph ph-plus"></i></button>`
-          : `<span style="font-size:10px; color:#EF4444; font-weight:700;">สินค้าหมด</span>`;
-        // Only the first couple of product images are likely above the
-        // fold on first paint - everything else can lazy-load as the user
-        // scrolls, which is most of the grid on a typical phone screen.
-        const loadingAttr = idx < 4 ? 'eager' : 'lazy';
+      function clearCart() {
+        if (confirm('คุณต้องการล้างสินค้าทั้งหมดในตะกร้าหรือไม่?')) {
+          saveCart([]);
+          showToast('ล้างตะกร้าสินค้าเรียบร้อย');
+        }
+      }
 
-        return `
-          <div class="product-card">
-            <div class="product-img-wrap">
-              <span class="product-cat-tag">${p.category || 'สินค้า'}</span>
-              <img src="${p.image}" alt="${p.name}" loading="${loadingAttr}" decoding="async" onerror="this.src='Payment.jpg'">
-            </div>
-            <div class="product-body">
-              <div>
-                <div class="product-title">${p.name}</div>
-                <div class="product-desc">${p.desc || ''}</div>
-              </div>
-              <div class="product-footer">
-                <div class="product-price-box">
-                  ${origPriceHtml}
-                  <span class="product-price">฿${Number(p.price || 0).toLocaleString()}</span>
-                </div>
-                ${cartBtn}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+      // ---------- Lucky draw code helpers ----------
+      function getPrizeLabel(prize) {
+        const labels = {
+          no_code: '(ไม่ได้รับโค้ด)',
+          freeship: '(ส่งฟรี 🚚)',
+          wonderbook: '(ส่งฟรี + DX Wonderside Book 🎁)',
+          kiramai: '(ส่งฟรี + DX Kiramai Changer 🏆)',
+          twosidedriver: '(ส่งฟรี + DX Two Side Driver 🏆)',
+        };
+        return labels[prize] || '(ส่งฟรี 🚚)';
+      }
 
-    // ===== ADD TO CART =====
-    window.addToCart = function(id, name, price, image) {
-      let cart = [];
-      const cartKey = getCartKey();
-      try {
-        cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      } catch(e) { cart = []; }
+      function getActiveCodes() {
+        let validCodes = [];
+        try {
+          validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+        } catch (e) {
+          validCodes = [];
+        }
+        const now = Date.now();
+        return validCodes.filter((c) => {
+          if (c.used) return false;
+          const expiresAt = c.expiresAt || (c.createdAt ? c.createdAt + CODE_EXPIRY_MS : 0);
+          return expiresAt > now;
+        });
+      }
 
-      const existing = cart.find(item => item.name === name);
-      const currentQty = existing ? (Number(existing.quantity) || 0) : 0;
+      function checkLatestCode() {
+        const activeCodes = getActiveCodes();
+        const chip = document.getElementById('latestCodeChip');
+        const text = document.getElementById('latestCodeText');
+        const badge = document.getElementById('cartCodeExpiryBadge');
 
-      // Stock check: block adding beyond what's actually in stock
-      const product = storeProducts.find(p => p._id === id);
-      const hasStockLimit = product && product.stockQty !== undefined && product.stockQty !== null;
-      if (hasStockLimit) {
-        const stockLimit = Number(product.stockQty) || 0;
-        if (currentQty + 1 > stockLimit) {
-          showToast(stockLimit > 0
-            ? `⚠️ สินค้า "${name}" เหลือเพียง ${stockLimit} ชิ้น (มีในตะกร้าแล้ว ${currentQty} ชิ้น)`
-            : `⚠️ สินค้า "${name}" หมดสต็อกแล้ว`);
+        if (activeCodes.length > 0) {
+          const latest = activeCodes[activeCodes.length - 1];
+          const expiresAt = latest.expiresAt || (latest.createdAt + CODE_EXPIRY_MS);
+
+          if (chip && text) {
+            text.textContent = latest.code + ' ' + getPrizeLabel(latest.prize);
+            chip.style.display = 'block';
+          }
+
+          if (cartCodeExpiryInterval) clearInterval(cartCodeExpiryInterval);
+          function updateCartTimer() {
+            const remSecs = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+            const mins = String(Math.floor(remSecs / 60)).padStart(2, '0');
+            const secs = String(remSecs % 60).padStart(2, '0');
+            if (badge) {
+              if (remSecs > 0) {
+                badge.innerHTML = '⏳ หมดอายุใน <strong style="color:#B45309;">' + mins + ':' + secs + '</strong> (กดใช้)';
+                badge.style.background = '#FEF3C7';
+                badge.style.color = '#D97706';
+              } else {
+                badge.innerHTML = '❌ โค้ดหมดอายุแล้ว';
+                badge.style.background = '#FEE2E2';
+                badge.style.color = '#DC2626';
+                clearInterval(cartCodeExpiryInterval);
+              }
+            }
+          }
+          updateCartTimer();
+          cartCodeExpiryInterval = setInterval(updateCartTimer, 500);
+        } else if (chip) {
+          chip.style.display = 'none';
+        }
+      }
+
+      function fillLatestCode() {
+        const activeCodes = getActiveCodes();
+        if (activeCodes.length > 0) {
+          const latest = activeCodes[activeCodes.length - 1];
+          const input = document.getElementById('couponInput');
+          if (input) input.value = latest.code;
+          applyCoupon();
+        } else {
+          showToast('❌ โค้ดของคุณหมดอายุแล้ว');
+        }
+      }
+
+      // ---------- Coupon ----------
+      function applyCoupon() {
+        const input = document.getElementById('couponInput');
+        const errorMsg = document.getElementById('couponErrorMsg');
+        const errorText = document.getElementById('couponErrorText');
+        if (!input) return;
+        const code = input.value.trim().toUpperCase();
+
+        if (errorMsg) errorMsg.style.display = 'none';
+
+        if (!code) {
+          showToast('กรุณากรอกโค้ดส่วนลด');
           return;
         }
+
+        const cart = getCart();
+        if (cart.length === 0) {
+          showToast('กรุณาเลือกสินค้าก่อนใช้โค้ด');
+          return;
+        }
+
+        let validCodes = [];
+        try {
+          validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+        } catch (e) {
+          validCodes = [];
+        }
+        const foundCode = validCodes.find((item) => item.code.toUpperCase() === code);
+
+        if (foundCode) {
+          const now = Date.now();
+          const expiresAt = foundCode.expiresAt || (foundCode.createdAt ? foundCode.createdAt + CODE_EXPIRY_MS : 0);
+
+          if (expiresAt && now > expiresAt) {
+            if (errorMsg && errorText) {
+              errorText.textContent = '❌ โค้ด "' + code + '" หมดอายุการใช้งานแล้ว (มีอายุ 30 นาทีหลังจากได้รับ)';
+              errorMsg.style.display = 'block';
+            }
+            showToast('❌ โค้ด "' + code + '" หมดอายุแล้ว');
+            return;
+          }
+
+          if (foundCode.used) {
+            if (errorMsg && errorText) {
+              errorText.textContent = 'โค้ด "' + code + '" นี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้';
+              errorMsg.style.display = 'block';
+            }
+            showToast('❌ โค้ด "' + code + '" ถูกใช้งานไปแล้ว');
+            return;
+          }
+
+          // ===== เช็คยอดสั่งซื้อขั้นต่ำตามประเภทรางวัล =====
+          const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
+          const minRequired = MIN_ORDER_BY_PRIZE[foundCode.prize] || 0;
+
+          if (minRequired > 0 && subtotalNow < minRequired) {
+            if (errorMsg && errorText) {
+              errorText.textContent = '❌ โค้ดนี้ต้องสั่งสินค้าขั้นต่ำ ฿' + minRequired.toLocaleString() + ' (ยอดปัจจุบัน ฿' + subtotalNow.toLocaleString() + ')';
+              errorMsg.style.display = 'block';
+            }
+            showToast('❌ ต้องสั่งซื้อขั้นต่ำ ฿' + minRequired.toLocaleString() + ' จึงจะใช้โค้ดนี้ได้');
+            return;
+          }
+
+          state.isFreeShipping = true;
+          state.appliedCodeName = code;
+
+          const prizeLabels = {
+            freeship: { desc: 'ส่งฟรี ฿0 (ขั้นต่ำ 200฿)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
+            wonderbook: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁 (ขั้นต่ำ 200฿)', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
+            kiramai: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆 (ขั้นต่ำ 200฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
+            twosidedriver: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Two Side Driver 🏆 (ขั้นต่ำ 500฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Two Side Driver!' },
+          };
+          const prizeInfo = prizeLabels[foundCode.prize] || { desc: 'ส่งฟรี ฿0', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' };
+
+          state.hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'twosidedriver');
+          state.appliedDiscount = 0;
+
+          const nameEl = document.getElementById('appliedCouponName');
+          const descEl = document.getElementById('appliedCouponDesc');
+          if (nameEl) nameEl.textContent = code;
+          if (descEl) descEl.textContent = prizeInfo.desc;
+          showToast(prizeInfo.toast);
+
+          const tag = document.getElementById('appliedCouponTag');
+          if (tag) tag.classList.add('show');
+          input.value = '';
+          renderCart();
+          return;
+        }
+
+        // Master fallback promo codes
+        if (code === 'FREESHIP' || code === 'KHUNAU' || code === 'VIP') {
+          state.isFreeShipping = true;
+          state.hasKeychainGift = (code === 'VIP');
+          state.appliedDiscount = code === 'VIP' ? 50 : 0;
+          state.appliedCodeName = code;
+
+          const nameEl = document.getElementById('appliedCouponName');
+          const descEl = document.getElementById('appliedCouponDesc');
+          if (nameEl) nameEl.textContent = code;
+          if (descEl) descEl.textContent = code === 'VIP' ? 'ส่งฟรี + ลด ฿50' : 'ส่งฟรี ฿0';
+          const tag = document.getElementById('appliedCouponTag');
+          if (tag) tag.classList.add('show');
+          input.value = '';
+          renderCart();
+          showToast('🎉 ใช้โค้ด "' + code + '" สำเร็จ!');
+          return;
+        }
+
+        if (errorMsg && errorText) {
+          errorText.textContent = 'โค้ด "' + code + '" ไม่ถูกต้อง! กรุณากรอกโค้ดที่ได้จากการสุ่มในหน้ากิจกรรม';
+          errorMsg.style.display = 'block';
+        }
+        input.style.borderColor = '#EF4444';
+        setTimeout(() => { input.style.borderColor = ''; }, 2000);
+        showToast('❌ โค้ดไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
       }
 
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        cart.push({
-          id: id || ('p_' + Date.now()),
-          name: name,
-          price: Number(price),
-          image: image || 'Payment.jpg',
-          quantity: 1
+      function removeCoupon() {
+        state.isFreeShipping = false;
+        state.hasKeychainGift = false;
+        state.appliedDiscount = 0;
+        state.appliedCodeName = '';
+        const tag = document.getElementById('appliedCouponTag');
+        if (tag) tag.classList.remove('show');
+        renderCart();
+        showToast('ยกเลิกโค้ดส่วนลดแล้ว');
+      }
+
+      // ---------- Checkout ----------
+      function validateCustomerInfo() {
+        const fields = ['cusFullName', 'cusPhone', 'cusAddress', 'cusSubdistrict', 'cusDistrict', 'cusProvince', 'cusPostcode'];
+        let valid = true;
+        fields.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (!el.value.trim()) {
+            el.classList.add('error');
+            valid = false;
+          } else {
+            el.classList.remove('error');
+          }
+        });
+        return valid;
+      }
+
+      function buildOrderData(cart) {
+        const subtotal = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
+        const shipping = state.isFreeShipping ? 0 : DEFAULT_SHIPPING;
+        const grandTotal = Math.max(0, subtotal + shipping - state.appliedDiscount);
+        const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        let prizeType = null;
+        if (state.appliedCodeName) {
+          try {
+            const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+            const match = validCodes.find((c) => c.code === state.appliedCodeName);
+            if (match) prizeType = match.prize;
+          } catch (e) { /* ignore */ }
+        }
+
+        const user = (window.MK_CURRENT_USER || null);
+
+        return {
+          orderId,
+          userId: user ? user.uid : null,
+          userEmail: user ? user.email : null,
+          customerName: document.getElementById('cusFullName').value.trim(),
+          phone: document.getElementById('cusPhone').value.trim(),
+          address: {
+            street: document.getElementById('cusAddress').value.trim(),
+            subdistrict: document.getElementById('cusSubdistrict').value.trim(),
+            district: document.getElementById('cusDistrict').value.trim(),
+            province: document.getElementById('cusProvince').value.trim(),
+            postcode: document.getElementById('cusPostcode').value.trim(),
+          },
+          note: document.getElementById('cusNote').value.trim(),
+          items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
+          subtotal,
+          shipping,
+          discount: state.appliedDiscount,
+          grandTotal,
+          couponCode: state.appliedCodeName || null,
+          prizeType,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      function markCodeAsUsed() {
+        if (!state.appliedCodeName) return;
+        try {
+          const codesKey = getCodesKey();
+          const validCodes = JSON.parse(localStorage.getItem(codesKey) || '[]');
+          const target = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
+          if (target) {
+            target.used = true;
+            localStorage.setItem(codesKey, JSON.stringify(validCodes));
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      function showLoginRequiredModal() {
+        const modal = document.getElementById('loginRequiredModal');
+        if (modal) {
+          modal.classList.add('active');
+          modal.setAttribute('aria-hidden', 'false');
+        }
+      }
+
+      function closeLoginRequiredModal() {
+        const modal = document.getElementById('loginRequiredModal');
+        if (modal) {
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      async function confirmOrder() {
+        // Wait for Firebase Auth to finish checking the existing session.
+        // If Firebase is unavailable, fail safely and require login again.
+        if (window.MK_AUTH_READY && typeof window.MK_AUTH_READY.then === 'function') {
+          try {
+            await window.MK_AUTH_READY;
+          } catch (e) {
+            console.warn('Auth state could not be checked:', e);
+          }
+        }
+
+        if (!window.MK_CURRENT_USER) {
+          showLoginRequiredModal();
+          return;
+        }
+
+        const cart = getCart();
+        if (cart.length === 0) {
+          showToast('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อ');
+          return;
+        }
+
+        // Final safety check: re-verify the applied coupon (if any) still
+        // meets its minimum-order requirement right before payment. This
+        // catches cases like the cart total dropping below the minimum
+        // after the coupon was applied (e.g. removing an item), even if
+        // renderCart's live re-check somehow didn't already clear it.
+        if (state.appliedCodeName) {
+          const prizeType = getAppliedCodePrizeType();
+          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
+          if (minRequired > 0 && subtotalNow < minRequired) {
+            removeCoupon();
+            showToast('❌ ยอดสินค้า ฿' + subtotalNow.toLocaleString() + ' ไม่ถึงขั้นต่ำ ฿' + minRequired.toLocaleString() + ' ของโค้ดที่ใช้ ระบบยกเลิกส่วนลดแล้ว กรุณาตรวจสอบยอดอีกครั้ง');
+            return;
+          }
+        }
+
+        if (!validateCustomerInfo()) {
+          showToast('⚠️ กรุณากรอกข้อมูลการจัดส่งให้ครบ');
+          const section = document.getElementById('customerInfoSection');
+          if (section) section.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+
+        // Verify stock is still available before showing the payment QR.
+        // (The order transaction below is still the final authority.)
+        if (typeof window.MK_CHECK_STOCK === 'function') {
+          const checkoutBtn = document.getElementById('checkoutBtn');
+          if (checkoutBtn) checkoutBtn.disabled = true;
+          showToast('⏳ กำลังตรวจสอบสต็อกสินค้า...');
+          let shortages = [];
+          try {
+            shortages = await window.MK_CHECK_STOCK(cart);
+          } catch (e) { /* ignore; transaction remains the source of truth */ }
+          if (checkoutBtn) checkoutBtn.disabled = false;
+          if (shortages && shortages.length) {
+            applyStockShortages(shortages);
+            return;
+          }
+        }
+
+        const orderData = buildOrderData(cart);
+
+        // Order is NOT written to Firestore yet. We first show the
+        // payment QR + collect the payment slip, and only save the
+        // order (with the slip attached) once the slip is uploaded.
+        openPaymentModal(orderData);
+      }
+
+      // ---------- Payment QR + Slip Upload ----------
+      function formatQrTime(ms) {
+        const totalSecs = Math.max(0, Math.floor(ms / 1000));
+        const mins = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+        const secs = String(totalSecs % 60).padStart(2, '0');
+        return mins + ':' + secs;
+      }
+
+      function openPaymentModal(orderData) {
+        pendingOrderData = orderData;
+        qrExpiresAt = Date.now() + QR_EXPIRY_MS;
+        const modal = document.getElementById('paymentModal');
+        if (modal) modal.classList.add('active');
+        renderPaymentQrState(orderData);
+        startPaymentCountdown();
+      }
+
+      function renderPaymentQrState(orderData) {
+        const body = document.getElementById('paymentModalBody');
+        if (!body) return;
+        const amount = Number(orderData.grandTotal) || 0;
+        const qrSrc = buildPromptPayQrImageUrl(PROMPTPAY_ID, amount);
+
+        body.innerHTML =
+          '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-qr-code"></i></div>' +
+          '<h3 class="modal-title">สแกน QR เพื่อชำระเงิน</h3>' +
+          '<p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">หมายเลขออเดอร์ <strong style="color:var(--mk-red);">' + escapeAttr(orderData.orderId) + '</strong></p>' +
+          '<div class="qr-box">' +
+            '<img class="promptpay-logo" src="PromptPay_logo.png" alt="PromptPay" onerror="this.style.display=\'none\';">' +
+            '<img src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาลองใหม่\');">' +
+            '<div class="qr-amount-label">ยอดที่ต้องชำระ</div>' +
+            '<div class="qr-amount-value">฿' + amount.toLocaleString() + '</div>' +
+          '</div>' +
+          '<div id="qrTimerArea"></div>' +
+          '<div style="margin-top:16px;">' +
+            '<label class="upload-slip-label" id="uploadSlipLabel" for="slipFileInput">' +
+              '<i class="ph ph-upload-simple"></i> <span>อัพโหลดสลิปการโอนเงิน</span>' +
+            '</label>' +
+            '<input type="file" id="slipFileInput" accept="image/*" style="display:none;" onchange="MK.handleSlipFileChange(event)">' +
+          '</div>' +
+          '<div id="slipUploadMsg" style="display:none; margin-top:8px; font-size:12px; color:#EF4444; font-weight:500;"></div>' +
+          '<button type="button" class="modal-secondary-btn" onclick="MK.cancelPayment()">ยกเลิก</button>';
+
+        renderQrTimerArea();
+      }
+
+      function renderQrTimerArea() {
+        const area = document.getElementById('qrTimerArea');
+        if (!area) return;
+        const remaining = qrExpiresAt - Date.now();
+        if (remaining > 0) {
+          area.innerHTML = '<span class="qr-timer-badge"><i class="ph ph-hourglass-medium"></i> QR หมดอายุใน <strong id="qrTimerText">' + formatQrTime(remaining) + '</strong></span>';
+        } else {
+          area.innerHTML =
+            '<div class="qr-expired-badge">' +
+              '<span><i class="ph ph-x-circle"></i> QR หมดอายุแล้ว (เกิน 10 นาที)</span>' +
+              '<button type="button" class="btn-regenerate-qr" onclick="MK.regenerateQR()"><i class="ph ph-arrows-clockwise"></i> สร้าง QR ใหม่</button>' +
+            '</div>';
+          setUploadSlipEnabled(false);
+        }
+      }
+
+      function setUploadSlipEnabled(enabled) {
+        const label = document.getElementById('uploadSlipLabel');
+        const input = document.getElementById('slipFileInput');
+        if (label) label.classList.toggle('disabled', !enabled);
+        if (input) input.disabled = !enabled;
+      }
+
+      function startPaymentCountdown() {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+        function tick() {
+          const remaining = qrExpiresAt - Date.now();
+          const timerText = document.getElementById('qrTimerText');
+          if (remaining <= 0) {
+            clearInterval(paymentTimerInterval);
+            renderQrTimerArea();
+            return;
+          }
+          if (timerText) {
+            timerText.textContent = formatQrTime(remaining);
+          } else {
+            // Timer badge not in DOM (e.g. re-rendered) - refresh area
+            renderQrTimerArea();
+          }
+        }
+        tick();
+        paymentTimerInterval = setInterval(tick, 500);
+      }
+
+      function regenerateQR() {
+        if (!pendingOrderData) return;
+        qrExpiresAt = Date.now() + QR_EXPIRY_MS;
+        renderPaymentQrState(pendingOrderData);
+        startPaymentCountdown();
+      }
+
+      function cancelPayment() {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+        pendingOrderData = null;
+        qrExpiresAt = null;
+        const modal = document.getElementById('paymentModal');
+        if (modal) modal.classList.remove('active');
+      }
+
+      function showSlipError(msg) {
+        const el = document.getElementById('slipUploadMsg');
+        if (el) {
+          el.textContent = msg;
+          el.style.display = 'block';
+        }
+      }
+
+      function handleSlipFileChange(event) {
+        const input = event.target;
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        const errEl = document.getElementById('slipUploadMsg');
+        if (errEl) errEl.style.display = 'none';
+
+        if (!qrExpiresAt || Date.now() > qrExpiresAt) {
+          showSlipError('⚠️ QR หมดอายุแล้ว กรุณากด "สร้าง QR ใหม่" ก่อนอัพโหลดสลิป');
+          input.value = '';
+          return;
+        }
+
+        if (file.size > 8 * 1024 * 1024) {
+          showSlipError('⚠️ ไฟล์รูปสลิปมีขนาดใหญ่เกินไป (สูงสุด 8MB)');
+          input.value = '';
+          return;
+        }
+
+        setUploadSlipEnabled(false);
+        showToast('⏳ กำลังประมวลผลรูปสลิป...');
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const maxDim = 1000;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            finalizeOrderWithSlip(pendingOrderData, dataUrl);
+          };
+          img.onerror = function () {
+            setUploadSlipEnabled(true);
+            showSlipError('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
+          };
+          img.src = e.target.result;
+        };
+        reader.onerror = function () {
+          setUploadSlipEnabled(true);
+          showSlipError('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function finalizeOrderWithSlip(orderData, slipDataUrl) {
+        if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+
+        const body = document.getElementById('paymentModalBody');
+        if (body) {
+          body.innerHTML =
+            '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-spinner-gap ph-spin"></i></div>' +
+            '<h3 class="modal-title">กำลังบันทึกคำสั่งซื้อ...</h3>' +
+            '<p class="modal-desc">กรุณารอสักครู่ ระบบกำลังบันทึกสลิปและคำสั่งซื้อของคุณ</p>';
+        }
+
+        orderData.status = 'pending';
+        orderData.slipImage = slipDataUrl;
+        orderData.slipUploadedAt = new Date().toISOString();
+
+        let savedOnline = false;
+        let stockShortages = null;
+        try {
+          if (typeof window.MK_SUBMIT_ORDER !== 'function') {
+            throw new Error('Firebase order submission is unavailable');
+          }
+          await window.MK_SUBMIT_ORDER(orderData);
+          savedOnline = true;
+        } catch (err) {
+          console.error('Order submit error:', err);
+          if (typeof err.message === 'string' && err.message.indexOf('STOCK_INSUFFICIENT::') === 0) {
+            try {
+              stockShortages = JSON.parse(err.message.slice('STOCK_INSUFFICIENT::'.length));
+            } catch (parseErr) { stockShortages = null; }
+          }
+        }
+
+        if (stockShortages && stockShortages.length) {
+          applyStockShortages(stockShortages);
+          cancelPayment();
+          return;
+        }
+
+        if (!savedOnline) {
+          showToast('❌ บันทึกคำสั่งซื้อไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          if (qrExpiresAt && qrExpiresAt > Date.now()) {
+            renderPaymentQrState(orderData);
+            startPaymentCountdown();
+            showSlipError('❌ บันทึกไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          } else {
+            regenerateQR();
+          }
+          return;
+        }
+
+        // Consume the coupon only after Firestore has accepted the order.
+        markCodeAsUsed();
+        localStorage.removeItem(getCartKey());
+        renderPaymentPendingState(orderData);
+      }
+
+      function renderPaymentPendingState(orderData) {
+        const body = document.getElementById('paymentModalBody');
+        if (!body) return;
+        body.innerHTML =
+          '<div class="modal-icon" style="background:#FFFBEB; color:#D97706;"><i class="ph ph-hourglass-medium"></i></div>' +
+          '<h3 class="modal-title">รอตรวจสอบการชำระเงิน</h3>' +
+          '<p style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">หมายเลขออเดอร์ของคุณ</p>' +
+          '<p style="font-size:18px; font-weight:800; color:var(--mk-red); margin-bottom:12px; letter-spacing:1px;">' + escapeAttr(orderData.orderId) + '</p>' +
+          '<p class="modal-desc">ทางร้านได้รับสลิปการโอนเงินของคุณแล้ว แอดมินจะตรวจสอบและดำเนินการจัดส่งให้เร็วที่สุด 📦</p>' +
+          '<button type="button" class="modal-close-btn" onclick="MK.closePaymentModal()">กลับหน้าหลัก</button>';
+      }
+
+      function closePaymentModal() {
+        pendingOrderData = null;
+        qrExpiresAt = null;
+        const modal = document.getElementById('paymentModal');
+        if (modal) modal.classList.remove('active');
+        window.location.href = 'index.html';
+      }
+
+      function escapeAttr(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
         });
       }
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      updateCartBadge();
-      showToast(`🛒 เพิ่ม "${name}" ลงตะกร้าแล้ว!`);
-    };
 
-    function updateCartBadge() {
+      // ---------- Expose public API ----------
+      window.MK = {
+        updateQty,
+        removeItem,
+        clearCart,
+        applyCoupon,
+        removeCoupon,
+        fillLatestCode,
+        confirmOrder,
+        closeLoginRequiredModal,
+        showToast,
+        renderCart,
+        checkLatestCode,
+        regenerateQR,
+        cancelPayment,
+        handleSlipFileChange,
+        closePaymentModal,
+      };
+
+      // ---------- Init ----------
+      document.addEventListener('DOMContentLoaded', function () {
+        renderCart();
+        checkLatestCode();
+      });
+    })();
+  </script>
+
+  <!-- ============================================================
+       FIREBASE INTEGRATION (optional layer)
+       Runs as an ES module. If this fails to load for any reason
+       (network issue, wrong path, offline, opened via file://),
+       the cart remains viewable, but checkout requires Firebase
+       authentication and a successful Firestore write.
+  ============================================================= -->
+  <script type="module">
+    import { doc, getDoc, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    (async function () {
       try {
-        const cart = JSON.parse(localStorage.getItem(getCartKey()) || '[]');
-        const total = cart.reduce((s, i) => s + (i.quantity || 1), 0);
-        const badge = document.getElementById('cartBadge');
-        if (badge) {
-          badge.textContent = total;
-          badge.style.transform = 'scale(1.3)';
-          setTimeout(() => badge.style.transform = 'scale(1)', 200);
-        }
-      } catch(e) {}
-    }
+        const { auth, db, collection, addDoc, onAuthStateChanged } =
+          await import('./js/firebase-config.js');
 
-    document.addEventListener('DOMContentLoaded', updateCartBadge);
+        window.MK_AUTH_READY = new Promise((resolve) => {
+          let resolved = false;
+
+          onAuthStateChanged(auth, (user) => {
+            window.MK_CURRENT_USER = user;
+
+            if (user) {
+              try {
+                const guestCartKey = 'mkCart_guest';
+                const userCartKey = 'mkCart_' + user.uid;
+                const guestCart = JSON.parse(localStorage.getItem(guestCartKey) || '[]');
+                if (guestCart.length > 0 && !localStorage.getItem(userCartKey)) {
+                  localStorage.setItem(userCartKey, JSON.stringify(guestCart));
+                  localStorage.removeItem(guestCartKey);
+                }
+
+                const codeBases = ['mkValidCodes', 'mkCurrentPromoCode', 'mkCurrentPrizeType', 'mkCurrentCodeExpiresAt'];
+                codeBases.forEach(base => {
+                  const guestKey = base + '_guest';
+                  const userKey = base + '_' + user.uid;
+                  const guestVal = localStorage.getItem(guestKey);
+                  if (guestVal !== null && localStorage.getItem(userKey) === null) {
+                    localStorage.setItem(userKey, guestVal);
+                    localStorage.removeItem(guestKey);
+                  }
+                });
+              } catch (e) { /* ignore */ }
+            }
+
+            if (window.MK && typeof window.MK.renderCart === 'function') {
+              window.MK.renderCart();
+            }
+            if (window.MK && typeof window.MK.checkLatestCode === 'function') {
+              window.MK.checkLatestCode();
+            }
+
+            const fullNameInput = document.getElementById('cusFullName');
+            if (user && fullNameInput && !fullNameInput.value && user.displayName) {
+              fullNameInput.value = user.displayName;
+            }
+
+            if (!resolved) {
+              resolved = true;
+              resolve(user);
+            }
+          });
+        });
+
+        // ---- Live stock lookup for one product (used by qty +/- buttons) ----
+        // Returns available stock as a number, or null if this product doesn't track stock.
+        window.MK_GET_PRODUCT_STOCK = async function (productId) {
+          if (!productId) return null;
+          try {
+            const pSnap = await getDoc(doc(db, 'products', productId));
+            if (!pSnap.exists()) return null;
+            const data = pSnap.data();
+            if (data.stockQty === undefined || data.stockQty === null) return null;
+            return Number(data.stockQty) || 0;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        // ---- Soft pre-check before opening the payment QR (fast UX feedback) ----
+        // Real enforcement still happens in MK_SUBMIT_ORDER's transaction below.
+        window.MK_CHECK_STOCK = async function (cartItems) {
+          const shortages = [];
+          for (const item of (cartItems || [])) {
+            if (!item.id) continue;
+            try {
+              const pSnap = await getDoc(doc(db, 'products', item.id));
+              if (!pSnap.exists()) continue;
+              const data = pSnap.data();
+              if (data.stockQty === undefined || data.stockQty === null) continue;
+              const available = Number(data.stockQty) || 0;
+              const requested = Number(item.quantity) || 0;
+              if (available < requested) {
+                shortages.push({ id: item.id, name: item.name, requested, available });
+              }
+            } catch (e) { /* ignore; the transaction is the source of truth */ }
+          }
+          return shortages;
+        };
+
+        // ---- Authoritative order submission ----
+        // Runs as a Firestore transaction: verifies each item still has enough
+        // stock and decrements it atomically with creating the order, so two
+        // customers checking out the last item at the same time can't both win.
+        window.MK_SUBMIT_ORDER = async function (orderData) {
+          const orderRef = doc(collection(db, 'orders'));
+
+          await runTransaction(db, async (transaction) => {
+            const items = orderData.items || [];
+            const reads = [];
+
+            for (const item of items) {
+              if (!item.id) continue;
+              const pRef = doc(db, 'products', item.id);
+              const pSnap = await transaction.get(pRef);
+              reads.push({ item, ref: pRef, snap: pSnap });
+            }
+
+            const shortages = [];
+            reads.forEach(({ item, snap }) => {
+              if (!snap.exists()) return;
+              const data = snap.data();
+              if (data.stockQty === undefined || data.stockQty === null) return; // stock not tracked = unlimited
+              const available = Number(data.stockQty) || 0;
+              const requested = Number(item.qty) || 0;
+              if (available < requested) {
+                shortages.push({ id: item.id, name: item.name, requested, available });
+              }
+            });
+
+            if (shortages.length) {
+              // Aborts the transaction; nothing is written.
+              throw new Error('STOCK_INSUFFICIENT::' + JSON.stringify(shortages));
+            }
+
+            reads.forEach(({ item, ref, snap }) => {
+              if (!snap.exists()) return;
+              const data = snap.data();
+              if (data.stockQty === undefined || data.stockQty === null) return;
+              const newQty = (Number(data.stockQty) || 0) - (Number(item.qty) || 0);
+              transaction.update(ref, {
+                stockQty: newQty,
+                inStock: newQty > 0,
+                updatedAt: new Date().toISOString()
+              });
+            });
+
+            transaction.set(orderRef, orderData);
+          });
+        };
+      } catch (err) {
+        // Fail safely: do not show a fake success message or create an
+        // order only in localStorage when Firebase is unavailable.
+        window.MK_CURRENT_USER = null;
+        window.MK_AUTH_READY = Promise.resolve(null);
+        console.warn('Firebase module failed to load; checkout is disabled:', err);
+      }
+    })();
   </script>
 
-  <!-- Customer Live Chat Widget -->
-  <!-- Deferred until the browser is idle (or ~2.5s at worst) so the chat
-       bundle + its own Firebase usage never competes with getting the
-       storefront itself painted and interactive first. -->
-  <script>
-    function loadChatWidget() {
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'js/chat-widget.js';
-      document.body.appendChild(s);
-    }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadChatWidget, { timeout: 2500 });
-    } else {
-      window.addEventListener('load', () => setTimeout(loadChatWidget, 1500));
-    }
-  </script>
+  <!-- Customer Live Chat Widget (independent module, safe to fail silently) -->
+  <script type="module" src="js/chat-widget.js" onerror="console.warn('chat-widget.js failed to load')"></script>
 </body>
 </html>
