@@ -575,15 +575,6 @@
       cursor: not-allowed;
       pointer-events: none;
     }
-    .slip-preview-thumb {
-      width: 100%;
-      max-width: 220px;
-      border-radius: 12px;
-      margin: 12px auto 0;
-      display: block;
-      border: 1.5px solid var(--border-color);
-    }
-
     /* Toast */
     .toast-msg {
       position: fixed;
@@ -788,20 +779,6 @@
       ⚠️ ไม่สามารถเชื่อมต่อระบบสั่งซื้อได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง
     </div>
 
-  </div>
-
-  <!-- Modal Success -->
-  <div class="modal-overlay" id="successModal">
-    <div class="modal-content">
-      <div class="modal-icon">
-        <i class="ph ph-check"></i>
-      </div>
-      <h3 class="modal-title">สั่งซื้อและชำระเงินสำเร็จ!</h3>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">หมายเลขออเดอร์ของคุณ</p>
-      <p style="font-size:18px; font-weight:800; color:var(--mk-red); margin-bottom:12px; letter-spacing:1px;" id="orderIdDisplay">MK-XXXXXX</p>
-      <p class="modal-desc">ระบบได้รับข้อมูลคำสั่งซื้อของคุณเรียบร้อยแล้ว ทางร้านจะเร่งจัดส่งสินค้าให้โดยเร็วที่สุด 📦</p>
-      <button class="modal-close-btn" onclick="MK.closeSuccessModal()">กลับหน้าหลัก</button>
-    </div>
   </div>
 
   <!-- Modal: Login Required -->
@@ -1416,23 +1393,6 @@
         } catch (e) { /* ignore */ }
       }
 
-      function saveOrderLocally(orderData) {
-        try {
-          const orders = JSON.parse(localStorage.getItem('mkOrders') || '[]');
-          orders.push(orderData);
-          localStorage.setItem('mkOrders', JSON.stringify(orders));
-        } catch (e) {
-          console.error('saveOrderLocally error:', e);
-        }
-      }
-
-      function showSuccessModal(orderId) {
-        const orderIdEl = document.getElementById('orderIdDisplay');
-        if (orderIdEl) orderIdEl.textContent = orderId;
-        const modal = document.getElementById('successModal');
-        if (modal) modal.classList.add('active');
-      }
-
       function showLoginRequiredModal() {
         const modal = document.getElementById('loginRequiredModal');
         if (modal) {
@@ -1447,12 +1407,6 @@
           modal.classList.remove('active');
           modal.setAttribute('aria-hidden', 'true');
         }
-      }
-
-      function closeSuccessModal() {
-        const modal = document.getElementById('successModal');
-        if (modal) modal.classList.remove('active');
-        window.location.href = 'index.html';
       }
 
       async function confirmOrder() {
@@ -1773,8 +1727,7 @@
         removeCoupon,
         fillLatestCode,
         confirmOrder,
-        closeSuccessModal,
-         closeLoginRequiredModal,
+        closeLoginRequiredModal,
         showToast,
         renderCart,
         checkLatestCode,
