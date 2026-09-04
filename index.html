@@ -6,8 +6,9 @@
   <title>KHUN AU Mystery | ศูนย์รวมของเล่น & ไอเทมเสริมพลังสุดพรีเมียม</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://unpkg.com">
+  <script defer src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
       --mk-red: #D3222A;
@@ -1195,7 +1196,7 @@
   <header class="top-nav">
     <a href="index.html" class="nav-brand">
       <div class="brand-logo-badge">
-        <img src="logo_khunau_jpg.jpg" alt="KHUN AU" style="width:100%; height:100%; object-fit:contain; border-radius:10px;">
+        <img src="logo_khunau_jpg.jpg" alt="KHUN AU" width="38" height="38" style="width:100%; height:100%; object-fit:contain; border-radius:10px;">
       </div>
       <div class="brand-title">KHUN AU <span>MYSTERY</span></div>
     </a>
@@ -1215,7 +1216,7 @@
 
     <!-- 1. Hero Promotion Banner -->
     <section class="hero-banner-card">
-      <img src="Banner item.png" alt="KHUN AU Promotion Banner">
+      <img src="Banner item.png" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
       <div class="hero-overlay">
         <div class="hero-text">
           <h2>ลุ้นรับไอเทมสุดพิเศษ‼️</h2>
@@ -1851,13 +1852,22 @@
     }
     window.showToast = showToast;
 
-    initParticles();
-    restoreState();
+    // Defer non-critical particle animation + saved-state restore until the
+    // browser is idle, so they never compete with rendering the page itself.
+    function initNonCritical() {
+      initParticles();
+      restoreState();
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(initNonCritical, { timeout: 1500 });
+    } else {
+      setTimeout(initNonCritical, 200);
+    }
   </script>
 
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
-    import { auth, db, collection, onSnapshot, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
+    import { auth, db, collection, getDocs, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
 
     function getCartKey() {
       return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
@@ -1927,36 +1937,55 @@
       { name: 'Gotchard Card', slug: 'gotchard', image: 'gotchardcard.jpg', pageLink: '', desc: 'การ์ดไรเดอร์' },
     ];
 
-    // ===== 1. LISTEN TO CATEGORIES =====
-    const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
-    onSnapshot(catQuery, snap => {
-      const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-      storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
+    // ===== DATA LOADING =====
+    // Switched from onSnapshot (realtime, keeps a live connection open and
+    // delays first paint while it handshakes) to getDocs (one-time fetch).
+    // Categories/products don't change second-to-second, so a single fetch
+    // on page load is enough and makes the initial render noticeably
+    // faster and lighter on data/battery. Each section loads independently
+    // and in parallel so one slow query doesn't block the others.
+
+    async function loadCategoriesOnce() {
+      try {
+        const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(catQuery);
+        const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+        storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
+      } catch (err) {
+        console.warn('Error loading categories:', err);
+        storeCategories = defaultCategories;
+      }
       renderCategoryGrid(getCategoriesFilteredByType());
       renderCategoryPills(getCategoriesFilteredByType());
-    }, err => {
-      storeCategories = defaultCategories;
-      renderCategoryGrid(getCategoriesFilteredByType());
-      renderCategoryPills(getCategoriesFilteredByType());
-    });
+      renderProductsGrid(); // category lookup for type-filtering may have changed
+    }
 
-    // ===== 1b. LISTEN TO CATEGORY TYPES (top-level filter) =====
-    const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
-    onSnapshot(catTypeQuery, snap => {
-      storeCategoryTypes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-      renderCategoryTypePills(storeCategoryTypes);
-    }, err => {
-      console.warn('Error loading category types:', err);
-    });
+    async function loadCategoryTypesOnce() {
+      try {
+        const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
+        const snap = await getDocs(catTypeQuery);
+        storeCategoryTypes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+        renderCategoryTypePills(storeCategoryTypes);
+      } catch (err) {
+        console.warn('Error loading category types:', err);
+      }
+    }
 
-    // ===== 2. LISTEN TO PRODUCTS =====
-    const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-    onSnapshot(prodQuery, snap => {
-      storeProducts = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+    async function loadProductsOnce() {
+      try {
+        const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(prodQuery);
+        storeProducts = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+      } catch (err) {
+        console.warn('Error loading products:', err);
+      }
       renderProductsGrid();
-    }, err => {
-      console.warn('Error loading products:', err);
-    });
+    }
+
+    // Kick all three off in parallel rather than waiting on each other.
+    loadCategoriesOnce();
+    loadCategoryTypesOnce();
+    loadProductsOnce();
 
     // ===== CATEGORY TYPE HELPERS =====
     function getCategoriesFilteredByType() {
@@ -1999,7 +2028,7 @@
         return `
           <div class="cat-item-card" ${clickAction} title="${c.name}">
             <div class="cat-thumb-box">
-              <img src="${imgPath}" alt="${c.name}" onerror="this.src='Banner item.png'">
+              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.src='Banner item.png'">
               ${badgeHtml}
             </div>
             <span class="cat-item-name">${c.name}</span>
@@ -2089,18 +2118,22 @@
         return;
       }
 
-      grid.innerHTML = filtered.map(p => {
+      grid.innerHTML = filtered.map((p, idx) => {
         const origPriceHtml = p.originalPrice ? `<span class="product-old-price">฿${Number(p.originalPrice).toLocaleString()}</span>` : '';
         const inStock = (p.inStock === true || p.inStock === 'true');
         const cartBtn = inStock
           ? `<button class="btn-add-cart-mini" onclick="addToCart('${p._id}', '${p.name}', ${p.price}, '${p.image}')" title="ใส่ตะกร้า"><i class="ph ph-plus"></i></button>`
           : `<span style="font-size:10px; color:#EF4444; font-weight:700;">สินค้าหมด</span>`;
+        // Only the first couple of product images are likely above the
+        // fold on first paint - everything else can lazy-load as the user
+        // scrolls, which is most of the grid on a typical phone screen.
+        const loadingAttr = idx < 4 ? 'eager' : 'lazy';
 
         return `
           <div class="product-card">
             <div class="product-img-wrap">
               <span class="product-cat-tag">${p.category || 'สินค้า'}</span>
-              <img src="${p.image}" alt="${p.name}" onerror="this.src='Payment.jpg'">
+              <img src="${p.image}" alt="${p.name}" loading="${loadingAttr}" decoding="async" onerror="this.src='Payment.jpg'">
             </div>
             <div class="product-body">
               <div>
@@ -2177,6 +2210,21 @@
   </script>
 
   <!-- Customer Live Chat Widget -->
-  <script type="module" src="js/chat-widget.js"></script>
+  <!-- Deferred until the browser is idle (or ~2.5s at worst) so the chat
+       bundle + its own Firebase usage never competes with getting the
+       storefront itself painted and interactive first. -->
+  <script>
+    function loadChatWidget() {
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'js/chat-widget.js';
+      document.body.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadChatWidget, { timeout: 2500 });
+    } else {
+      window.addEventListener('load', () => setTimeout(loadChatWidget, 1500));
+    }
+  </script>
 </body>
 </html>
