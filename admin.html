@@ -1486,7 +1486,7 @@
     }
     tbody.innerHTML = categories.map((c, i) => {
       const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
-      const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
+      const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner_item.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
       const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
       const typeBadge = c.categoryType
         ? `<span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${c.categoryType}</span>`

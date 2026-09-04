@@ -1212,7 +1212,7 @@
 
     <!-- 1. Hero Promotion Banner -->
     <section class="hero-banner-card">
-      <img src="Banner item.png" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
+      <img src="Banner_item.png" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
       <div class="hero-overlay">
         <div class="hero-text">
           <h2>ลุ้นรับไอเทมสุดพิเศษ‼️</h2>
@@ -2015,7 +2015,7 @@
       const container = document.getElementById('categoryBannersContainer');
       if (!container) return;
       container.innerHTML = categories.map(c => {
-        const imgPath = c.image || 'Banner item.png';
+        const imgPath = c.image || 'Banner_item.png';
         const badgeHtml = c.desc ? `<span class="cat-tag-mini">${c.desc}</span>` : '';
         const clickAction = c.pageLink
           ? `onclick="window.location.href='${c.pageLink}'"`
@@ -2024,7 +2024,7 @@
         return `
           <div class="cat-item-card" ${clickAction} title="${c.name}">
             <div class="cat-thumb-box">
-              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.src='Banner item.png'">
+              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.src='Banner_item.png'">
               ${badgeHtml}
             </div>
             <span class="cat-item-name">${c.name}</span>
