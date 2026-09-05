@@ -384,7 +384,6 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      min-height: 0;
     }
     .admin-chat-active-header {
       padding: 12px 18px;
@@ -393,7 +392,6 @@
       justify-content: space-between;
       align-items: center;
       background: #FAFAFA;
-      flex-shrink: 0;
     }
     .admin-chat-user-meta {
       display: flex;
@@ -428,7 +426,6 @@
       flex-direction: column;
       gap: 10px;
       background: #F9FAFB;
-      min-height: 0;
     }
     .admin-msg-bubble-wrap {
       display: flex;
@@ -477,7 +474,6 @@
       gap: 6px;
       overflow-x: auto;
       scrollbar-width: none;
-      flex-shrink: 0;
     }
     .admin-quick-replies::-webkit-scrollbar {
       display: none;
@@ -504,7 +500,6 @@
       display: flex;
       gap: 10px;
       align-items: center;
-      flex-shrink: 0;
     }
     .admin-chat-input-bar input {
       flex: 1;
@@ -1004,7 +999,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, increment, runTransaction, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -2096,9 +2091,15 @@
   };
 
   // ===== LIVE CHAT MANAGEMENT =====
+  // Only pulls the 50 most-recently-active conversations instead of the
+  // entire "chats" collection. Without this, once chat history piles up,
+  // the sidebar has to download every conversation ever created just to
+  // show the list, which is what was making it slow/blank to load.
+  const CHAT_LIST_LIMIT = 50;
+
   function loadChats() {
     if (unsubsChats) unsubsChats();
-    const q = collection(db, 'chats');
+    const q = query(collection(db, 'chats'), orderBy('lastMessageAt', 'desc'), limit(CHAT_LIST_LIMIT));
     unsubsChats = onSnapshot(q, (snapshot) => {
       allChats = snapshot.docs.map(docSnap => ({ _id: docSnap.id, ...docSnap.data() }));
       
@@ -2256,6 +2257,11 @@
 
     input.value = '';
 
+    // Firestore TTL does not cascade into subcollections when a parent
+    // "chats" doc expires, so each message also carries its own expireAt
+    // — otherwise old messages would be orphaned forever under a deleted
+    // chat doc (or worse, kept alive under a re-created one with the
+    // same ID, which never happens here, but is the safer assumption).
     const messageData = {
       chatId: activeChatId,
       senderId: 'admin',
@@ -2263,19 +2269,26 @@
       senderName: 'Admin KHUN AU',
       text: text,
       createdAt: new Date().toISOString(),
-      read: false
+      read: false,
+      expireAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000)
     };
 
     try {
       // 1. Add message
       await addDoc(collection(db, 'chats', activeChatId, 'messages'), messageData);
 
-      // 2. Update parent conversation metadata
+      // 2. Update parent conversation metadata.
+      // expireAt is a native Firestore Timestamp (required for TTL — a
+      // plain ISO string like the other date fields here does NOT work
+      // with Firestore's Time-to-live policies). Every new message pushes
+      // it forward 24h, so an ACTIVE conversation never expires — only
+      // one that's gone quiet for a full day gets auto-deleted.
       await setDoc(doc(db, 'chats', activeChatId), {
         lastMessage: text,
         lastMessageAt: new Date().toISOString(),
         unreadByUser: increment(1),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        expireAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000)
       }, { merge: true });
 
     } catch (e) {
