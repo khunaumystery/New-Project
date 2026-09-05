@@ -1974,6 +1974,10 @@
       } catch (err) {
         console.warn('Error loading products:', err);
       }
+      // A fresh product list means the previous random "all products"
+      // sample no longer reflects it — clear the cache so the next
+      // render (right below) picks a new sample from the updated data.
+      cachedAllProductsSample = null;
       renderProductsGrid();
     }
 
@@ -2088,20 +2092,59 @@
     };
 
     // ===== RENDER PRODUCTS GRID =====
+    // When neither filter is active ("สินค้าทั้งหมด"), rendering every
+    // single product at once is what was slowing the page down — instead
+    // we show a random sample of this many, which keeps the homepage fast
+    // regardless of how large the catalog grows. Picking any specific
+    // category/type still shows that category's full product list.
+    const ALL_PRODUCTS_DISPLAY_LIMIT = 10;
+    let cachedAllProductsSample = null;
+
+    // Fisher–Yates partial shuffle — picks `n` random items from `arr`
+    // without mutating the original array.
+    function pickRandomSample(arr, n) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy.slice(0, n);
+    }
+
     function renderProductsGrid() {
       const grid = document.getElementById('productGridContainer');
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
-      let filtered = storeProducts;
-      if (selectedCategoryTypeName !== 'ALL') {
-        filtered = filtered.filter(p => productMatchesSelectedType(p.category));
-      }
-      if (selectedCategoryName !== 'ALL') {
-        filtered = filtered.filter(p => p.category === selectedCategoryName);
+      const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
+      let filtered;
+      let totalMatchCount;
+
+      if (noFilterActive) {
+        // Cache the sample so it doesn't reshuffle on every unrelated
+        // re-render (e.g. switching category and back) within the same
+        // page load — only a fresh product load resets it.
+        if (!cachedAllProductsSample) {
+          cachedAllProductsSample = pickRandomSample(storeProducts, ALL_PRODUCTS_DISPLAY_LIMIT);
+        }
+        filtered = cachedAllProductsSample;
+        totalMatchCount = storeProducts.length;
+      } else {
+        filtered = storeProducts;
+        if (selectedCategoryTypeName !== 'ALL') {
+          filtered = filtered.filter(p => productMatchesSelectedType(p.category));
+        }
+        if (selectedCategoryName !== 'ALL') {
+          filtered = filtered.filter(p => p.category === selectedCategoryName);
+        }
+        totalMatchCount = filtered.length;
       }
 
-      if (countLabel) countLabel.textContent = `${filtered.length} รายการ`;
+      if (countLabel) {
+        countLabel.textContent = noFilterActive
+          ? `${filtered.length} จาก ${totalMatchCount} รายการ (สุ่มแสดง)`
+          : `${filtered.length} รายการ`;
+      }
 
       if (filtered.length === 0) {
         grid.innerHTML = `
