@@ -578,6 +578,9 @@
     <button class="tab-btn" onclick="switchTab('mysteryTab', this)">
       <i class="ph ph-gift"></i> Mystery Box
     </button>
+    <button class="tab-btn" onclick="switchTab('usersTab', this)">
+      <i class="ph ph-crown"></i> ระบบ User
+    </button>
     <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
       <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
       <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
@@ -733,7 +736,42 @@
       </div>
     </div>
 
-    <!-- ================= TAB 5: LIVE CHAT ================= -->
+    <!-- ================= TAB 5: USER SYSTEM (VIP) ================= -->
+    <div id="usersTab" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card purple"><div class="stat-label">👑 VIP ทั้งหมด</div><div class="stat-value" id="statVipTotal">0</div><div class="stat-sub">คน</div></div>
+      </div>
+
+      <div class="toolbar" style="flex-wrap:wrap;">
+        <div style="flex:1 1 100%; font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:2px;">
+          👑 เพิ่ม User ID ของลูกค้าที่ต้องการให้เป็น VIP (คัดลอก User ID ได้จากตาราง "รายการออเดอร์") — <b>ยังไม่มีการจำกัดสิทธิ์ Mystery Box ตาม VIP ในตอนนี้</b> ระบบนี้เป็นแค่การเก็บรายชื่อ VIP ไว้ก่อน
+        </div>
+        <input type="text" id="vipUidInput" class="search-box" style="flex:2; min-width:220px;" placeholder="วาง User ID ของลูกค้าที่นี่...">
+        <input type="text" id="vipLabelInput" class="search-box" style="flex:1; min-width:160px;" placeholder="ชื่อ/หมายเหตุ (ถ้ามี)">
+        <button class="btn-primary" onclick="submitAddVip()"><i class="ph ph-crown"></i> + เพิ่มเป็น VIP</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-crown"></i> รายชื่อลูกค้า VIP</h2>
+          <span style="font-size:12px;color:var(--muted);" id="vipUsersCount">0 คน</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th><th>ชื่อ/หมายเหตุ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="vipUsersTableBody">
+              <tr><td colspan="4"><div class="empty-state"><i class="ph ph-crown"></i>กำลังโหลด...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 6: LIVE CHAT ================= -->
     <div id="chatTab" class="tab-content">
       <div class="admin-chat-layout">
         <!-- Customer Threads List -->
@@ -1153,6 +1191,7 @@
   let allProducts = [];
   let allCategoryTypes = [];
   let allMysteryPrizes = [];
+  let allVipUsers = [];
   let allChats = [];
   let activeChatId = null;
   let seededCategoryTypes = false;
@@ -1163,6 +1202,7 @@
   let unsubsProducts = null;
   let unsubsCategoryTypes = null;
   let unsubsMysteryPrizes = null;
+  let unsubsVipUsers = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1213,6 +1253,7 @@
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
     if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
     if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
+    if (unsubsVipUsers) { unsubsVipUsers(); unsubsVipUsers = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1223,6 +1264,7 @@
     loadProducts();
     loadCategoryTypes();
     loadMysteryPrizes();
+    loadVipUsers();
     loadChats();
   }
 
@@ -2026,6 +2068,83 @@
       `;
     }).join('');
   }
+
+  // ===== USER SYSTEM (VIP) =====
+  // Simple allowlist collection: doc ID = customer's User ID (Firebase Auth
+  // uid, the same value shown/copied from the Orders tab). For now this is
+  // just a list the admin maintains manually — it doesn't gate anything on
+  // the storefront yet (see note in the "ระบบ User" tab).
+  window.loadVipUsers = function() {
+    if (unsubsVipUsers) unsubsVipUsers();
+    const q = query(collection(db, 'vipUsers'), orderBy('addedAt', 'desc'));
+    unsubsVipUsers = onSnapshot(q, snap => {
+      allVipUsers = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      renderVipUsersTable();
+    }, err => showToast('โหลดรายชื่อ VIP ไม่สำเร็จ: ' + err.message));
+  };
+
+  function renderVipUsersTable() {
+    document.getElementById('statVipTotal').textContent = allVipUsers.length;
+    document.getElementById('vipUsersCount').textContent = allVipUsers.length + ' คน';
+
+    const tbody = document.getElementById('vipUsersTableBody');
+    if (!allVipUsers.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="ph ph-crown"></i>ยังไม่มีลูกค้า VIP (เพิ่มโดยกรอก User ID ด้านบน)</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = allVipUsers.map(v => {
+      const date = v.addedAt ? new Date(v.addedAt).toLocaleString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+      return `
+        <tr>
+          <td><span class="uid-txt" title="${escapeHtml(v._id)}">${escapeHtml(v._id.slice(0, 10))}…</span>
+            <button class="btn-tracking" style="margin-left:4px;padding:3px 7px;" onclick="copyUserId('${escapeJsAttr(v._id)}')" title="คัดลอก User ID"><i class="ph ph-copy"></i></button>
+          </td>
+          <td>${v.label ? escapeHtml(v.label) : '<span style="color:var(--muted);">-</span>'}</td>
+          <td><span class="date-txt">${date}</span></td>
+          <td><button class="action-btn btn-delete" onclick="removeVip('${escapeJsAttr(v._id)}')"><i class="ph ph-trash"></i> ลบออกจาก VIP</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.submitAddVip = async function() {
+    const uidInput = document.getElementById('vipUidInput');
+    const labelInput = document.getElementById('vipLabelInput');
+    const uid = uidInput.value.trim();
+    const label = labelInput.value.trim();
+
+    if (!uid) {
+      showToast('❌ กรุณากรอก User ID ของลูกค้าก่อน');
+      return;
+    }
+    if (allVipUsers.some(v => v._id === uid)) {
+      showToast('⚠️ User ID นี้เป็น VIP อยู่แล้ว');
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'vipUsers', uid), {
+        label: label || null,
+        addedAt: new Date().toISOString()
+      });
+      uidInput.value = '';
+      labelInput.value = '';
+      showToast('✅ เพิ่มเป็น VIP เรียบร้อย');
+    } catch (e) {
+      showToast('❌ ไม่สามารถเพิ่ม VIP ได้: ' + e.message);
+    }
+  };
+
+  window.removeVip = async function(uid) {
+    if (!confirm('ต้องการลบลูกค้าคนนี้ออกจากรายชื่อ VIP หรือไม่?')) return;
+    try {
+      await deleteDoc(doc(db, 'vipUsers', uid));
+      showToast('🗑️ ลบออกจาก VIP แล้ว');
+    } catch (e) {
+      showToast('❌ ไม่สามารถลบได้: ' + e.message);
+    }
+  };
 
   window.openAddPrizeModal = function() {
     document.getElementById('addPrizeForm').reset();
