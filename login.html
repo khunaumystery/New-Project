@@ -848,7 +848,8 @@
       auth, 
       db,
       googleProvider, 
-      signInWithPopup, 
+      signInWithRedirect,
+      getRedirectResult,
       signInWithEmailAndPassword, 
       createUserWithEmailAndPassword, 
       signOut, 
@@ -1086,7 +1087,27 @@
       }
     }
 
+    function mapGoogleAuthError(error) {
+      let msg = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ';
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        msg = 'ยกเลิกการเข้าสู่ระบบ';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        msg = 'กรุณาเพิ่มโดเมนนี้ใน Firebase Console (Authorized Domains)';
+      }
+      return msg;
+    }
+
     // 1. Google Sign In
+    //
+    // Uses signInWithRedirect (a full-page redirect to accounts.google.com
+    // and back) instead of signInWithPopup. The popup flow relies on a
+    // cross-window/third-party storage relay to sync the signed-in session
+    // back to this tab, which browsers with strict tracking-prevention
+    // (Safari ITP, Chrome's stricter third-party storage rules, some
+    // in-app webviews) can silently block or wipe right after — that's
+    // what caused login to appear to succeed for a moment and then bounce
+    // straight back to logged-out. Redirect avoids that because the whole
+    // sign-in happens as a normal top-level, first-party navigation.
     document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
       if (isInAppBrowser()) {
         document.getElementById('inAppGuideModal').style.display = 'flex';
@@ -1095,23 +1116,29 @@
 
       try {
         showToast('กำลังเชื่อมต่อ Google Sign-In...');
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        showToast(`🎉 ยินดีต้อนรับคุณ ${user.displayName || 'ลูกค้า VIP'}!`);
+        await signInWithRedirect(auth, googleProvider);
+        // Execution stops here — the page navigates away to Google and
+        // back. The result is picked up by getRedirectResult() on load.
       } catch (error) {
         console.error("Google login error:", error);
         if (isInAppBrowser() || error.message?.includes('missing initial state') || error.code === 'auth/operation-not-supported-in-this-environment') {
           document.getElementById('inAppGuideModal').style.display = 'flex';
           return;
         }
-        let msg = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ';
-        if (error.code === 'auth/popup-closed-by-user') {
-          msg = 'ยกเลิกการเข้าสู่ระบบ';
-        } else if (error.code === 'auth/unauthorized-domain') {
-          msg = 'กรุณาเพิ่มโดเมนนี้ใน Firebase Console (Authorized Domains)';
-        }
-        showToast(`❌ ${msg}`);
+        showToast(`❌ ${mapGoogleAuthError(error)}`);
       }
+    });
+
+    // Picks up the result after being redirected back from Google. Runs
+    // once on every page load; resolves with null if the user didn't just
+    // come back from a redirect sign-in (the normal case for most visits).
+    getRedirectResult(auth).then(result => {
+      if (result && result.user) {
+        showToast(`🎉 ยินดีต้อนรับคุณ ${result.user.displayName || 'ลูกค้า VIP'}!`);
+      }
+    }).catch(error => {
+      console.error("Google redirect result error:", error);
+      showToast(`❌ ${mapGoogleAuthError(error)}`);
     });
 
     // 2. Email & Password Auth
