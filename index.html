@@ -442,6 +442,12 @@
       text-align: right;
     }
 
+    .odds-table th:nth-child(3),
+    .odds-table td:nth-child(3) {
+      text-align: center;
+      white-space: nowrap;
+    }
+
     .odds-table td {
       padding: 9px 6px;
       color: #F0F0F0;
@@ -1449,11 +1455,12 @@
           <tr>
             <th>รายการรางวัล</th>
             <th>โอกาสได้รับ</th>
+            <th>จำนวนคงเหลือ</th>
             <th>ขั้นต่ำสั่งซื้อ</th>
           </tr>
         </thead>
         <tbody id="oddsTableBody">
-          <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
         </tbody>
       </table>
       <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
@@ -2003,7 +2010,7 @@
       const totalWeight = active.reduce((s, p) => s + (Number(p.weight) || 0), 0);
 
       if (!active.length) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
         return;
       }
 
@@ -2011,13 +2018,19 @@
         const weight = Number(p.weight) || 0;
         const pct = totalWeight > 0 ? (weight / totalWeight) * 100 : 0;
         const pctTxt = pct < 1 ? pct.toFixed(3) : pct.toFixed(2);
-        const soldOut = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
         const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
         const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
         const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
+        const hasQty = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && p.remainingQuantity !== '');
+        const qtyTxt = hasQty
+          ? (Number(p.remainingQuantity) > 0
+              ? `${Number(p.remainingQuantity).toLocaleString()} ชิ้น`
+              : '<span style="color:#EF4444;font-weight:700;">หมดแล้ว</span>')
+          : 'ไม่จำกัด';
         return `<tr>
-          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}${soldOut ? ' <span style="color:#EF4444;font-size:10px;">(หมดแล้ว)</span>' : ''}</td>
+          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}</td>
           <td class="odds-value">${pctTxt}%</td>
+          <td>${qtyTxt}</td>
           <td>${minTxt}</td>
         </tr>`;
       }).join('');
