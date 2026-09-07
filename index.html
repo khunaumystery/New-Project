@@ -1449,32 +1449,14 @@
           <tr>
             <th>รายการรางวัล</th>
             <th>โอกาสได้รับ</th>
+            <th>ขั้นต่ำสั่งซื้อ</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>❌ ไม่ได้รับโค้ด</td>
-            <td class="odds-value">49%</td>
-          </tr>
-          <tr>
-            <td>🚚 โค้ดส่งฟรี</td>
-            <td class="odds-value">48%</td>
-          </tr>
-          <tr>
-            <td>🎁 ส่งฟรี + DX Wonderside Book</td>
-            <td class="odds-value">1.5%</td>
-          </tr>
-          <tr>
-            <td>🏆 ส่งฟรี + DX Kiramai Changer</td>
-            <td class="odds-value">1.495%</td>
-          </tr>
-          <tr>
-            <td>🏆 ส่งฟรี + DX Two Side Driver</td>
-            <td class="odds-value">0.01%</td>
-          </tr>
+        <tbody id="oddsTableBody">
+          <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
         </tbody>
       </table>
-      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากการสุ่ม 1 ครั้ง โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* โค้ดส่งฟรีและของแถมมีเงื่อนไขยอดสั่งซื้อขั้นต่ำ (200฿ สำหรับโค้ดส่งฟรี/Wonderside Book/Kiramai Changer, 500฿ สำหรับ Two Side Driver)</p>
+      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
     </div>
   </div>
 
@@ -1508,15 +1490,6 @@
       let code = '';
       for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
       return code;
-    }
-
-    function determinePrize() {
-      const roll = Math.random() * 100;
-      if (roll < 49)      return 'no_code';      // 49%
-      if (roll < 97)      return 'freeship';     // 48%
-      if (roll < 98.5)    return 'wonderbook';    // 1.5%
-      if (roll < 99.995)  return 'kiramai';       // 1.495%
-      return 'twosidedriver';                      // 0.005% (ส่วนที่เหลือ)
     }
 
     function burstConfetti() {
@@ -1596,6 +1569,10 @@
         showLoginRequiredModal('สุ่มโค้ดส่วนลด');
         return;
       }
+      if (typeof window.MK_PICK_PRIZE !== 'function' || !window.MK_PRIZES || !window.MK_PRIZES.length) {
+        showToast('⚠️ ระบบของรางวัลยังไม่พร้อม กรุณาลองใหม่อีกครั้งในอีกสักครู่');
+        return;
+      }
       const spinBtn = document.getElementById('spinBtn');
       const giftBox = document.getElementById('giftBox');
       if (spinBtn.disabled) return;
@@ -1607,90 +1584,112 @@
       void giftBox.offsetWidth;
       giftBox.classList.add('shaking');
 
+      setTimeout(() => { finishSpin(); }, 850);
+    }
+
+    async function finishSpin() {
+      const giftBox = document.getElementById('giftBox');
+      giftBox.classList.remove('shaking');
+      giftBox.classList.add('popping');
+      burstConfetti();
+
+      let prize;
+      try {
+        prize = await window.MK_PICK_PRIZE();
+      } catch (e) {
+        prize = { isNoPrize: true, name: 'ไม่ได้รับโค้ด' };
+      }
+
+      const isNoPrize = !!prize.isNoPrize;
+
+      if (!isNoPrize) {
+        currentCode = generateCode();
+        const nowTime = Date.now();
+        const expiresAt = nowTime + CODE_EXPIRY_MS;
+        try {
+          const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
+          validCodes.push({
+            code: currentCode,
+            prizeId: prize._id || null,
+            prizeName: prize.name || 'รางวัลพิเศษ',
+            freeShipping: !!prize.freeShipping,
+            giftItem: prize.giftItem || '',
+            minOrderAmount: Number(prize.minOrderAmount) || 0,
+            used: false,
+            createdAt: nowTime,
+            expiresAt: expiresAt
+          });
+          localStorage.setItem(getCodesKey(), JSON.stringify(validCodes));
+          localStorage.setItem(getCurrentPromoKey(), currentCode);
+          localStorage.setItem(getCurrentPrizeKey(), prize.name || '');
+          localStorage.setItem(getCurrentExpiryKey(), expiresAt.toString());
+        } catch (err) { console.error(err); }
+
+        startCodeExpiryCountdown(expiresAt);
+      } else {
+        currentCode = '';
+        localStorage.removeItem(getCurrentPromoKey());
+        localStorage.removeItem(getCurrentPrizeKey());
+        localStorage.removeItem(getCurrentExpiryKey());
+      }
+
+      document.getElementById('luckyPlaceholder').style.display = 'none';
+      const resultContent = document.getElementById('luckyResultContent');
+      resultContent.classList.remove('visible');
+      void resultContent.offsetWidth;
+      resultContent.classList.add('visible');
+
+      const prizeBadge = document.getElementById('prizeBadge');
+      const copyBtn = document.getElementById('copyBtn');
+      const prizeImgHtml = prize.image ? `<img src="${prize.image}" alt="" style="width:18px;height:18px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:4px;">` : '';
+
+      if (isNoPrize) {
+        prizeBadge.className = 'prize-badge no-prize';
+        prizeBadge.innerHTML = prize.soldOutRace
+          ? '😢 ของรางวัลเพิ่งหมดพอดี ลองใหม่ได้ในครั้งถัดไป'
+          : '❌ ไม่ได้รับโค้ด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
+        copyBtn.style.display = 'none';
+        document.getElementById('codeExpiryDisplayWrap').style.display = 'none';
+      } else {
+        document.getElementById('codeExpiryDisplayWrap').style.display = 'block';
+        const label = prize.name || 'รางวัลพิเศษ';
+        if (prize.giftItem) {
+          prizeBadge.className = 'prize-badge jackpot';
+          prizeBadge.innerHTML = `🏆 JACKPOT! ${prizeImgHtml}${escapeHtmlLocal(label)}`;
+        } else if (prize.freeShipping) {
+          prizeBadge.className = 'prize-badge';
+          prizeBadge.innerHTML = `🚚 ยินดีด้วย! ${prizeImgHtml}${escapeHtmlLocal(label)}`;
+        } else {
+          prizeBadge.className = 'prize-badge special';
+          prizeBadge.innerHTML = `🎉 ยินดีด้วย! ${prizeImgHtml}${escapeHtmlLocal(label)}`;
+        }
+        copyBtn.style.display = 'inline-flex';
+      }
+
+      const codeBox = document.getElementById('codeBox');
+      if (currentCode) {
+        codeBox.innerHTML = currentCode.split('').map(c => `<div class="code-char-box">${c}</div>`).join('');
+      } else {
+        codeBox.innerHTML = '<div style="font-size:28px;margin:4px 0;">❌</div>';
+      }
+
+      lastSpinTime = Date.now();
+      localStorage.setItem(getUserSpinKey(), lastSpinTime.toString());
+      startCountdown();
+
       setTimeout(() => {
-        giftBox.classList.remove('shaking');
-        giftBox.classList.add('popping');
-        burstConfetti();
+        giftBox.classList.remove('popping');
+        giftBox.classList.add('floating');
+      }, 700);
+    }
 
-        const prizeType = determinePrize();
-        if (prizeType !== 'no_code') {
-          currentCode = generateCode();
-          const nowTime = Date.now();
-          const expiresAt = nowTime + CODE_EXPIRY_MS;
-          try {
-            const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
-            validCodes.push({ 
-              code: currentCode, 
-              prize: prizeType, 
-              used: false, 
-              createdAt: nowTime,
-              expiresAt: expiresAt 
-            });
-            localStorage.setItem(getCodesKey(), JSON.stringify(validCodes));
-            localStorage.setItem(getCurrentPromoKey(), currentCode);
-            localStorage.setItem(getCurrentPrizeKey(), prizeType);
-            localStorage.setItem(getCurrentExpiryKey(), expiresAt.toString());
-          } catch (err) { console.error(err); }
-
-          startCodeExpiryCountdown(expiresAt);
-        } else {
-          currentCode = '';
-          localStorage.removeItem(getCurrentPromoKey());
-          localStorage.removeItem(getCurrentPrizeKey());
-          localStorage.removeItem(getCurrentExpiryKey());
-        }
-
-        document.getElementById('luckyPlaceholder').style.display = 'none';
-        const resultContent = document.getElementById('luckyResultContent');
-        resultContent.classList.remove('visible');
-        void resultContent.offsetWidth;
-        resultContent.classList.add('visible');
-
-        const prizeBadge = document.getElementById('prizeBadge');
-        const copyBtn = document.getElementById('copyBtn');
-
-        if (prizeType === 'no_code') {
-          prizeBadge.className = 'prize-badge no-prize';
-          prizeBadge.innerHTML = '❌ ไม่ได้รับโค้ด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
-          copyBtn.style.display = 'none';
-          document.getElementById('codeExpiryDisplayWrap').style.display = 'none';
-        } else {
-          document.getElementById('codeExpiryDisplayWrap').style.display = 'block';
-          if (prizeType === 'freeship') {
-            prizeBadge.className = 'prize-badge';
-            prizeBadge.innerHTML = '🚚 ยินดีด้วย! ได้รับโค้ดส่งฟรี!';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'wonderbook') {
-            prizeBadge.className = 'prize-badge special';
-            prizeBadge.innerHTML = '🚚 โค้ดส่งฟรี + 🎁 DX Wonderside Book (สุ่ม)';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'kiramai') {
-            prizeBadge.className = 'prize-badge jackpot';
-            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Kiramai Changer!';
-            copyBtn.style.display = 'inline-flex';
-          } else if (prizeType === 'twosidedriver') {
-            prizeBadge.className = 'prize-badge jackpot';
-            prizeBadge.innerHTML = '🏆 JACKPOT! โค้ดส่งฟรี + 🎁 ฟรี DX Two Side Driver!';
-            copyBtn.style.display = 'inline-flex';
-          }
-        }
-
-        const codeBox = document.getElementById('codeBox');
-        if (currentCode) {
-          codeBox.innerHTML = currentCode.split('').map(c => `<div class="code-char-box">${c}</div>`).join('');
-        } else {
-          codeBox.innerHTML = '<div style="font-size:28px;margin:4px 0;">❌</div>';
-        }
-
-        lastSpinTime = Date.now();
-        localStorage.setItem(getUserSpinKey(), lastSpinTime.toString());
-        startCountdown();
-
-        setTimeout(() => {
-          giftBox.classList.remove('popping');
-          giftBox.classList.add('floating');
-        }, 700);
-      }, 850);
+    function escapeHtmlLocal(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     function copyCode() {
@@ -1862,7 +1861,7 @@
 
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
-    import { auth, db, collection, getDocs, query, orderBy, onAuthStateChanged } from "./js/firebase-config.js";
+    import { auth, db, collection, getDocs, doc, query, orderBy, onAuthStateChanged, runTransaction } from "./js/firebase-config.js";
 
     function getCartKey() {
       return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
@@ -1981,10 +1980,108 @@
       renderProductsGrid();
     }
 
-    // Kick all three off in parallel rather than waiting on each other.
+    // ===== MYSTERY BOX PRIZES (admin-editable, from luckyDrawPrizes) =====
+    let storeMysteryPrizes = [];
+
+    async function loadMysteryPrizesOnce() {
+      try {
+        const prizeQuery = query(collection(db, 'luckyDrawPrizes'), orderBy('createdAt', 'asc'));
+        const snap = await getDocs(prizeQuery);
+        storeMysteryPrizes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+      } catch (err) {
+        console.warn('Error loading mystery box prizes:', err);
+        storeMysteryPrizes = [];
+      }
+      window.MK_PRIZES = storeMysteryPrizes;
+      renderOddsTable(storeMysteryPrizes);
+    }
+
+    function renderOddsTable(prizes) {
+      const tbody = document.getElementById('oddsTableBody');
+      if (!tbody) return;
+      const active = (prizes || []).filter(p => p.active !== false);
+      const totalWeight = active.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+
+      if (!active.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = active.map(p => {
+        const weight = Number(p.weight) || 0;
+        const pct = totalWeight > 0 ? (weight / totalWeight) * 100 : 0;
+        const pctTxt = pct < 1 ? pct.toFixed(3) : pct.toFixed(2);
+        const soldOut = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
+        const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
+        const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
+        const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
+        return `<tr>
+          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}${soldOut ? ' <span style="color:#EF4444;font-size:10px;">(หมดแล้ว)</span>' : ''}</td>
+          <td class="odds-value">${pctTxt}%</td>
+          <td>${minTxt}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Weighted random pick over currently-eligible prizes (active + in
+    // stock). If the chosen prize has a limited remainingQuantity, this
+    // atomically decrements it in Firestore (same pattern as product
+    // stock) so two people spinning at once can't both win the last one.
+    window.MK_PICK_PRIZE = async function () {
+      const pool = (storeMysteryPrizes || []).filter(p =>
+        p.active !== false &&
+        (p.remainingQuantity === undefined || p.remainingQuantity === null || Number(p.remainingQuantity) > 0)
+      );
+      const fallbackNoPrize = { isNoPrize: true, name: 'ไม่ได้รับโค้ด' };
+      if (!pool.length) return fallbackNoPrize;
+
+      const totalWeight = pool.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+      if (totalWeight <= 0) return fallbackNoPrize;
+
+      let roll = Math.random() * totalWeight;
+      let chosen = pool[pool.length - 1];
+      for (const p of pool) {
+        const w = Number(p.weight) || 0;
+        if (roll < w) { chosen = p; break; }
+        roll -= w;
+      }
+
+      if (chosen.isNoPrize) return chosen;
+
+      const hasLimitedStock = (chosen.remainingQuantity !== undefined && chosen.remainingQuantity !== null);
+      if (hasLimitedStock) {
+        const claimed = await claimLimitedPrize(chosen._id);
+        if (!claimed) {
+          // Someone else grabbed the last one between the pick and now —
+          // fail safely to "no prize" for this spin rather than error out.
+          return { isNoPrize: true, name: 'ไม่ได้รับโค้ด', soldOutRace: true };
+        }
+        chosen = { ...chosen, remainingQuantity: Number(chosen.remainingQuantity) - 1 };
+      }
+      return chosen;
+    };
+
+    async function claimLimitedPrize(prizeId) {
+      const pRef = doc(db, 'luckyDrawPrizes', prizeId);
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(pRef);
+          if (!snap.exists()) throw new Error('not found');
+          const remain = Number(snap.data().remainingQuantity);
+          if (!(remain > 0)) throw new Error('sold out');
+          transaction.update(pRef, { remainingQuantity: remain - 1 });
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Kick all off in parallel rather than waiting on each other.
     loadCategoriesOnce();
     loadCategoryTypesOnce();
     loadProductsOnce();
+    loadMysteryPrizesOnce();
 
     // ===== CATEGORY TYPE HELPERS =====
     function getCategoriesFilteredByType() {

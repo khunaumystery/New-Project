@@ -574,6 +574,9 @@
     <button class="tab-btn" onclick="switchTab('productsTab', this)">
       <i class="ph ph-package"></i> จัดการสินค้า
     </button>
+    <button class="tab-btn" onclick="switchTab('mysteryTab', this)">
+      <i class="ph ph-gift"></i> Mystery Box
+    </button>
     <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
       <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
       <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
@@ -694,7 +697,42 @@
       </div>
     </div>
 
-    <!-- ================= TAB 4: LIVE CHAT ================= -->
+    <!-- ================= TAB 4: MYSTERY BOX PRIZES ================= -->
+    <div id="mysteryTab" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card purple"><div class="stat-label">🎁 รางวัลทั้งหมด</div><div class="stat-value" id="statMysteryTotal">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card gold"><div class="stat-label">⚖️ น้ำหนักรวม (ที่เปิดใช้งาน)</div><div class="stat-value" id="statMysteryWeight">0</div><div class="stat-sub">ใช้คำนวณ % โอกาส</div></div>
+        <div class="stat-card green"><div class="stat-label">✅ เปิดใช้งานอยู่</div><div class="stat-value" id="statMysteryActive">0</div><div class="stat-sub">รายการ</div></div>
+      </div>
+
+      <div class="toolbar">
+        <div style="flex:1; min-width:180px; font-size:12.5px; color:var(--muted); line-height:1.5;">
+          ⚙️ ตั้งค่ารางวัลที่จะออกในกล่องสุ่ม Mystery Box หน้าแรก — % โอกาสคำนวณจาก "น้ำหนัก" ของแต่ละรางวัลเทียบกับผลรวมของรางวัลที่เปิดใช้งาน (ยิ่งเลขมาก ยิ่งมีโอกาสออกมากขึ้น)
+        </div>
+        <button class="btn-primary" onclick="openAddPrizeModal()"><i class="ph ph-plus-circle"></i> + เพิ่มรางวัลใหม่</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-gift"></i> รายการรางวัล Mystery Box</h2>
+          <span style="font-size:12px;color:var(--muted);" id="mysteryPrizesCount">0 รายการ</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ลำดับ</th><th>รูปภาพ</th><th>ชื่อรางวัล</th><th>น้ำหนัก / โอกาส</th><th>จำนวนคงเหลือ</th><th>ของแถม / ส่งฟรี</th><th>ขั้นต่ำสั่งซื้อ</th><th>สถานะ</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="mysteryPrizesTableBody">
+              <tr><td colspan="9"><div class="empty-state"><i class="ph ph-gift"></i>กำลังโหลดรางวัล...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 5: LIVE CHAT ================= -->
     <div id="chatTab" class="tab-content">
       <div class="admin-chat-layout">
         <!-- Customer Threads List -->
@@ -981,6 +1019,117 @@
   </div>
 </div>
 
+<!-- ===== MODAL: ADD MYSTERY BOX PRIZE ===== -->
+<div class="modal-overlay" id="addPrizeModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-gift"></i> เพิ่มรางวัล Mystery Box</h3>
+    <form id="addPrizeForm" onsubmit="event.preventDefault(); submitAddPrize();">
+      <div class="form-group">
+        <label>ชื่อรางวัล *</label>
+        <input type="text" id="prizeName" class="form-control" placeholder="เช่น ส่งฟรี, ไม่ได้รับโค้ด, DX Wonderside Book" required>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพรางวัล (ถ้ามี)</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="prizeFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'prizeImage', 'prizePreview')">
+          <input type="text" id="prizeImage" class="form-control" placeholder="หรือกรอก URL / Path ไฟล์ (ไม่ใส่ก็ได้)" oninput="updatePreview('prizeImage', 'prizePreview')">
+        </div>
+        <div id="prizePreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="prizePreviewImg" src="" style="width:56px; height:56px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>น้ำหนักโอกาสออก (ตัวเลข) *</label>
+          <input type="number" id="prizeWeight" class="form-control" placeholder="เช่น 48" min="0" step="0.001" value="1" required>
+        </div>
+        <div class="form-group">
+          <label>จำนวนรางวัล (เว้นว่าง = ไม่จำกัด)</label>
+          <input type="number" id="prizeQty" class="form-control" placeholder="เช่น 10" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ยอดสั่งซื้อขั้นต่ำที่ใช้สิทธิ์ได้ (บาท)</label>
+        <input type="number" id="prizeMinOrder" class="form-control" placeholder="เช่น 200 (ไม่ใส่ = ไม่มีขั้นต่ำ)" min="0">
+      </div>
+      <div class="form-group">
+        <label>ของแถมพิเศษ (ข้อความ, เว้นว่างถ้าไม่มี)</label>
+        <input type="text" id="prizeGiftItem" class="form-control" placeholder="เช่น DX Kiramai Changer">
+      </div>
+      <div class="form-group" style="display:flex; gap:18px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="prizeFreeShipping" style="width:16px;height:16px;"> ส่งฟรีเมื่อได้รางวัลนี้
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="prizeIsNoPrize" style="width:16px;height:16px;"> เป็นรางวัล "ไม่ได้รับโค้ด" (ไม่สร้างโค้ดส่วนลด)
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="prizeActive" checked style="width:16px;height:16px;"> เปิดใช้งาน
+        </label>
+      </div>
+      <button type="submit" class="btn-submit"><i class="ph ph-check-circle"></i> บันทึกรางวัล</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('addPrizeModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: EDIT MYSTERY BOX PRIZE ===== -->
+<div class="modal-overlay" id="editPrizeModal">
+  <div class="modal-box">
+    <h3><i class="ph ph-pencil-simple"></i> แก้ไขรางวัล Mystery Box</h3>
+    <form id="editPrizeForm" onsubmit="event.preventDefault(); submitEditPrize();">
+      <input type="hidden" id="editPrizeId">
+      <div class="form-group">
+        <label>ชื่อรางวัล *</label>
+        <input type="text" id="editPrizeName" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพรางวัล (ถ้ามี)</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="editPrizeFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'editPrizeImage', 'editPrizePreview')">
+          <input type="text" id="editPrizeImage" class="form-control" placeholder="URL / Path ไฟล์ (ไม่ใส่ก็ได้)" oninput="updatePreview('editPrizeImage', 'editPrizePreview')">
+        </div>
+        <div id="editPrizePreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="editPrizePreviewImg" src="" style="width:56px; height:56px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>น้ำหนักโอกาสออก (ตัวเลข) *</label>
+          <input type="number" id="editPrizeWeight" class="form-control" min="0" step="0.001" required>
+        </div>
+        <div class="form-group">
+          <label>จำนวนรางวัล (เว้นว่าง = ไม่จำกัด)</label>
+          <input type="number" id="editPrizeQty" class="form-control" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ยอดสั่งซื้อขั้นต่ำที่ใช้สิทธิ์ได้ (บาท)</label>
+        <input type="number" id="editPrizeMinOrder" class="form-control" min="0">
+      </div>
+      <div class="form-group">
+        <label>ของแถมพิเศษ (ข้อความ, เว้นว่างถ้าไม่มี)</label>
+        <input type="text" id="editPrizeGiftItem" class="form-control">
+      </div>
+      <div class="form-group" style="display:flex; gap:18px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="editPrizeFreeShipping" style="width:16px;height:16px;"> ส่งฟรีเมื่อได้รางวัลนี้
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="editPrizeIsNoPrize" style="width:16px;height:16px;"> เป็นรางวัล "ไม่ได้รับโค้ด" (ไม่สร้างโค้ดส่วนลด)
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="editPrizeActive" style="width:16px;height:16px;"> เปิดใช้งาน
+        </label>
+      </div>
+      <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
+      <button type="button" class="btn-close-modal" onclick="closeModal('editPrizeModal')">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+
 <!-- ===== MODAL: ORDER DETAIL ===== -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box" id="detailModalContent"></div>
@@ -1024,14 +1173,17 @@
   let allCategories = [];
   let allProducts = [];
   let allCategoryTypes = [];
+  let allMysteryPrizes = [];
   let allChats = [];
   let activeChatId = null;
   let seededCategoryTypes = false;
+  let seededMysteryPrizes = false;
 
   let unsubsOrders = null;
   let unsubsCategories = null;
   let unsubsProducts = null;
   let unsubsCategoryTypes = null;
+  let unsubsMysteryPrizes = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1081,6 +1233,7 @@
     if (unsubsCategories) { unsubsCategories(); unsubsCategories = null; }
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
     if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
+    if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1090,6 +1243,7 @@
     loadCategories();
     loadProducts();
     loadCategoryTypes();
+    loadMysteryPrizes();
     loadChats();
   }
 
@@ -1266,8 +1420,9 @@
     };
     tbody.innerHTML = orders.map(o => {
       const items   = (o.items || []).map(i => i.name + ' x' + i.qty).join(', ');
-      const prize   = o.prizeType && o.prizeType !== 'freeship' && o.prizeType !== 'no_code'
-                      ? '<span class="prize-chip">🎁 ' + o.prizeType + '</span>' : '';
+      const prize   = o.giftItem
+                      ? '<span class="prize-chip">🎁 ' + escapeHtml(o.giftItem) + '</span>'
+                      : (o.prizeType ? '<span class="prize-chip">🚚 ' + escapeHtml(o.prizeType) + '</span>' : '');
       const date    = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
       const badge   = statusMap[o.status] || '<span class="status-badge">' + o.status + '</span>';
       const tracking = escapeHtml(o.trackingNumber || '');
@@ -1377,7 +1532,6 @@
     const addr = o.address || {};
     const full = [addr.street, addr.subdistrict, addr.district, addr.province, addr.postcode].filter(Boolean).join(' ');
     const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH') : '-';
-    const pl = { freeship:'ส่งฟรี', wonderbook:'ส่งฟรี + DX Wonderside Book', kiramai:'ส่งฟรี + DX Kiramai Changer', twosidedriver:'ส่งฟรี + DX Two Side Driver', no_code:'ไม่ได้รับโค้ด' };
     const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + i.name + ' x' + i.qty + '</span><span>฿' + (i.price * i.qty).toLocaleString() + '</span></div>').join('');
     document.getElementById('detailModalContent').innerHTML =
       '<h3>📋 รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +
@@ -1395,7 +1549,7 @@
       '<div class="detail-row"><span class="detail-label">ค่าส่ง</span><span class="detail-value">฿' + (o.shipping || 0).toLocaleString() + '</span></div>' +
       '<div class="detail-row"><span class="detail-label">ส่วนลด</span><span class="detail-value">-฿' + (o.discount || 0).toLocaleString() + '</span></div>' +
       '<div class="detail-row"><span class="detail-label" style="font-weight:800;">ยอดรวมสุทธิ</span><span class="detail-value" style="color:var(--mk-red);font-size:16px;">฿' + (o.grandTotal || 0).toLocaleString() + '</span></div>' +
-      (o.couponCode ? '<div class="detail-row"><span class="detail-label">โค้ดที่ใช้</span><span class="detail-value">' + o.couponCode + ' — ' + (pl[o.prizeType] || o.prizeType || '') + '</span></div>' : '') +
+      (o.couponCode ? '<div class="detail-row"><span class="detail-label">โค้ดที่ใช้</span><span class="detail-value">' + escapeHtml(o.couponCode) + ' — ' + escapeHtml(o.prizeType || '') + (o.giftItem ? ' + ' + escapeHtml(o.giftItem) : '') + '</span></div>' : '') +
       '<div class="detail-row"><span class="detail-label">สถานะ</span><span class="detail-value">' + (o.status || '-') + '</span></div>' +
        '<div class="form-group" style="margin-top:14px;"><label for="trackingDetailInput">เลขพัสดุ</label><div style="display:flex;gap:6px;"><input type="text" id="trackingDetailInput" class="form-control" value="' + escapeHtml(o.trackingNumber || '') + '" placeholder="เช่น TH123456789"><button type="button" class="btn-tracking" style="margin-left:0;padding:0 12px;" onclick="saveTrackingNumberFromDetail(\'' + o._id + '\')"><i class="ph ph-floppy-disk"></i> บันทึก</button></div></div>' +
       '<div class="detail-row"><span class="detail-label">วันที่สั่ง</span><span class="detail-value">' + date + '</span></div>' +
@@ -1774,6 +1928,244 @@
     try {
       await Promise.all(reordered.map((item, i) =>
         updateDoc(doc(db, 'categoryTypes', item._id), { sortOrder: i })
+      ));
+      showToast('✅ ย้ายลำดับเรียบร้อย');
+    } catch (e) {
+      showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= 2c. MYSTERY BOX PRIZES MODULE =================
+  // Lets the admin fully control what the homepage Lucky Draw / Mystery
+  // Box can award: image, display name, relative odds ("weight"), a
+  // limited stock count (remainingQuantity — null means unlimited), an
+  // optional free-shipping flag, an optional physical gift item, and a
+  // minimum order amount required to redeem it. The storefront reads this
+  // collection directly instead of using a hardcoded prize table.
+  window.loadMysteryPrizes = function() {
+    if (unsubsMysteryPrizes) unsubsMysteryPrizes();
+    const q = query(collection(db, 'luckyDrawPrizes'), orderBy('createdAt', 'asc'));
+    unsubsMysteryPrizes = onSnapshot(q, async snap => {
+      allMysteryPrizes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+
+      // First time ever loading with nothing set up yet: seed the same
+      // 5 prizes that used to be hardcoded on the homepage, so the box
+      // keeps working exactly as before until the admin edits them.
+      if (allMysteryPrizes.length === 0 && !seededMysteryPrizes) {
+        seededMysteryPrizes = true;
+        await seedDefaultMysteryPrizes();
+        return; // onSnapshot will fire again once the seed docs land
+      }
+
+      renderMysteryPrizesTable();
+    }, err => showToast('โหลดรางวัล Mystery Box ไม่สำเร็จ: ' + err.message));
+  };
+
+  async function seedDefaultMysteryPrizes() {
+    const defaults = [
+      { name: 'ไม่ได้รับโค้ด', weight: 49, remainingQuantity: null, isNoPrize: true, freeShipping: false, giftItem: '', minOrderAmount: 0, active: true, image: '' },
+      { name: 'ส่งฟรี', weight: 48, remainingQuantity: null, isNoPrize: false, freeShipping: true, giftItem: '', minOrderAmount: 200, active: true, image: '' },
+      { name: 'ส่งฟรี + DX Wonderside Book', weight: 1.5, remainingQuantity: null, isNoPrize: false, freeShipping: true, giftItem: 'DX Wonderside Book (แบบสุ่ม)', minOrderAmount: 200, active: true, image: '' },
+      { name: 'ส่งฟรี + DX Kiramai Changer', weight: 1.495, remainingQuantity: null, isNoPrize: false, freeShipping: true, giftItem: 'DX Kiramai Changer', minOrderAmount: 200, active: true, image: '' },
+      { name: 'ส่งฟรี + DX Two Side Driver', weight: 0.01, remainingQuantity: null, isNoPrize: false, freeShipping: true, giftItem: 'DX Two Side Driver', minOrderAmount: 500, active: true, image: '' },
+    ];
+    try {
+      await Promise.all(defaults.map((p, i) =>
+        addDoc(collection(db, 'luckyDrawPrizes'), { ...p, sortOrder: i, createdAt: new Date().toISOString() })
+      ));
+    } catch (e) { /* ignore — admin can add these manually if seeding fails */ }
+  }
+
+  function renderMysteryPrizesTable() {
+    const sorted = sortByOrder(allMysteryPrizes);
+    const activePrizes = sorted.filter(p => p.active !== false);
+    const totalWeight = activePrizes.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+
+    document.getElementById('statMysteryTotal').textContent = sorted.length;
+    document.getElementById('statMysteryActive').textContent = activePrizes.length;
+    document.getElementById('statMysteryWeight').textContent = totalWeight.toLocaleString(undefined, { maximumFractionDigits: 3 });
+    document.getElementById('mysteryPrizesCount').textContent = sorted.length + ' รายการ';
+
+    const tbody = document.getElementById('mysteryPrizesTableBody');
+    if (!sorted.length) {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-gift"></i>ยังไม่มีรางวัล (กด "+ เพิ่มรางวัลใหม่" เพื่อสร้าง)</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sorted.map((p, i) => {
+      const weight = Number(p.weight) || 0;
+      const pct = (p.active !== false && totalWeight > 0) ? ((weight / totalWeight) * 100) : 0;
+      const pctTxt = (p.active !== false) ? pct.toFixed(pct < 1 ? 3 : 2) + '%' : '<span style="color:var(--muted);">ปิดใช้งาน</span>';
+      const imgTag = p.image
+        ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Banner_item.jpg'">`
+        : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-gift" style="font-size:20px;color:var(--muted);"></i></div>';
+      const hasQty = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && p.remainingQuantity !== '');
+      const qtyTxt = hasQty
+        ? (Number(p.remainingQuantity) > 0
+            ? '<strong>' + Number(p.remainingQuantity).toLocaleString() + '</strong> ชิ้น'
+            : '<span style="color:#DC2626;font-weight:700;">หมดแล้ว</span>')
+        : '<span style="color:var(--muted);">ไม่จำกัด</span>';
+      const extras = [];
+      if (p.isNoPrize) extras.push('<span class="status-badge" style="background:#F3F4F6;color:#374151;">❌ ไม่ได้รับโค้ด</span>');
+      if (p.freeShipping) extras.push('<span class="status-badge" style="background:#DBEAFE;color:#1E40AF;">🚚 ส่งฟรี</span>');
+      if (p.giftItem) extras.push('<span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">🎁 ' + escapeHtml(p.giftItem) + '</span>');
+      const extrasHtml = extras.length ? extras.join(' ') : '<span style="font-size:11px;color:var(--muted);">-</span>';
+      const minOrderTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0)
+        ? '฿' + Number(p.minOrderAmount).toLocaleString()
+        : '<span style="color:var(--muted);">ไม่มี</span>';
+      const statusBadge = (p.active !== false)
+        ? '<span class="status-badge active">✅ เปิดใช้งาน</span>'
+        : '<span class="status-badge out">⏸️ ปิดใช้งาน</span>';
+      const moveCell = `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${sorted.length}"
+           onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
+           onchange="setPrizeOrder('${p._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
+
+      return `
+        <tr>
+          <td>${moveCell}</td>
+          <td>${imgTag}</td>
+          <td><strong>${escapeHtml(p.name || '-')}</strong></td>
+          <td><div style="font-weight:700;color:var(--mk-red);">${pctTxt}</div><div style="font-size:10.5px;color:var(--muted);">น้ำหนัก ${weight}</div></td>
+          <td>${qtyTxt}</td>
+          <td>${extrasHtml}</td>
+          <td>${minOrderTxt}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="action-btn btn-detail" onclick="openEditPrizeModal('${p._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
+            <button class="action-btn ${p.active !== false ? 'btn-cancel' : 'btn-paid'}" onclick="togglePrizeActive('${p._id}')"><i class="ph ph-power"></i> ${p.active !== false ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}</button>
+            <button class="action-btn btn-delete" onclick="deletePrize('${p._id}', '${escapeJsAttr(p.name)}')"><i class="ph ph-trash"></i> ลบ</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.openAddPrizeModal = function() {
+    document.getElementById('addPrizeForm').reset();
+    document.getElementById('prizeActive').checked = true;
+    document.getElementById('prizePreview').style.display = 'none';
+    document.getElementById('addPrizeModal').classList.add('active');
+  };
+
+  window.submitAddPrize = async function() {
+    const name = document.getElementById('prizeName').value.trim();
+    const image = document.getElementById('prizeImage').value.trim();
+    const weight = Number(document.getElementById('prizeWeight').value) || 0;
+    const qtyRaw = document.getElementById('prizeQty').value;
+    const remainingQuantity = qtyRaw !== '' ? Number(qtyRaw) : null;
+    const minOrderRaw = document.getElementById('prizeMinOrder').value;
+    const minOrderAmount = minOrderRaw !== '' ? Number(minOrderRaw) : 0;
+    const giftItem = document.getElementById('prizeGiftItem').value.trim();
+    const freeShipping = document.getElementById('prizeFreeShipping').checked;
+    const isNoPrize = document.getElementById('prizeIsNoPrize').checked;
+    const active = document.getElementById('prizeActive').checked;
+
+    try {
+      await addDoc(collection(db, 'luckyDrawPrizes'), {
+        name, image, weight, remainingQuantity, minOrderAmount, giftItem,
+        freeShipping, isNoPrize, active,
+        sortOrder: allMysteryPrizes.length,
+        createdAt: new Date().toISOString()
+      });
+      closeModal('addPrizeModal');
+      showToast('✅ เพิ่มรางวัล "' + name + '" สำเร็จ');
+    } catch (e) {
+      showToast('❌ ไม่สามารถเพิ่มรางวัลได้: ' + e.message);
+    }
+  };
+
+  window.openEditPrizeModal = function(id) {
+    const p = allMysteryPrizes.find(x => x._id === id);
+    if (!p) return;
+    document.getElementById('editPrizeId').value = p._id;
+    document.getElementById('editPrizeName').value = p.name || '';
+    document.getElementById('editPrizeImage').value = p.image || '';
+    document.getElementById('editPrizeWeight').value = (p.weight !== undefined && p.weight !== null) ? p.weight : 1;
+    document.getElementById('editPrizeQty').value = (p.remainingQuantity !== undefined && p.remainingQuantity !== null) ? p.remainingQuantity : '';
+    document.getElementById('editPrizeMinOrder').value = p.minOrderAmount || '';
+    document.getElementById('editPrizeGiftItem').value = p.giftItem || '';
+    document.getElementById('editPrizeFreeShipping').checked = !!p.freeShipping;
+    document.getElementById('editPrizeIsNoPrize').checked = !!p.isNoPrize;
+    document.getElementById('editPrizeActive').checked = p.active !== false;
+
+    const previewBox = document.getElementById('editPrizePreview');
+    const previewImg = document.getElementById('editPrizePreviewImg');
+    if (p.image) {
+      previewImg.src = p.image;
+      previewBox.style.display = 'flex';
+    } else {
+      previewBox.style.display = 'none';
+    }
+    document.getElementById('editPrizeModal').classList.add('active');
+  };
+
+  window.submitEditPrize = async function() {
+    const id = document.getElementById('editPrizeId').value;
+    const name = document.getElementById('editPrizeName').value.trim();
+    const image = document.getElementById('editPrizeImage').value.trim();
+    const weight = Number(document.getElementById('editPrizeWeight').value) || 0;
+    const qtyRaw = document.getElementById('editPrizeQty').value;
+    const remainingQuantity = qtyRaw !== '' ? Number(qtyRaw) : null;
+    const minOrderRaw = document.getElementById('editPrizeMinOrder').value;
+    const minOrderAmount = minOrderRaw !== '' ? Number(minOrderRaw) : 0;
+    const giftItem = document.getElementById('editPrizeGiftItem').value.trim();
+    const freeShipping = document.getElementById('editPrizeFreeShipping').checked;
+    const isNoPrize = document.getElementById('editPrizeIsNoPrize').checked;
+    const active = document.getElementById('editPrizeActive').checked;
+
+    try {
+      await updateDoc(doc(db, 'luckyDrawPrizes', id), {
+        name, image, weight, remainingQuantity, minOrderAmount, giftItem,
+        freeShipping, isNoPrize, active,
+        updatedAt: new Date().toISOString()
+      });
+      closeModal('editPrizeModal');
+      showToast('✅ แก้ไขรางวัล "' + name + '" เรียบร้อย');
+    } catch (e) {
+      showToast('❌ ไม่สามารถแก้ไขรางวัลได้: ' + e.message);
+    }
+  };
+
+  window.togglePrizeActive = async function(id) {
+    const p = allMysteryPrizes.find(x => x._id === id);
+    if (!p) return;
+    try {
+      await updateDoc(doc(db, 'luckyDrawPrizes', id), { active: !(p.active !== false), updatedAt: new Date().toISOString() });
+      showToast(p.active !== false ? '⏸️ ปิดใช้งานรางวัลแล้ว' : '✅ เปิดใช้งานรางวัลแล้ว');
+    } catch (e) {
+      showToast('❌ อัปเดตไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.deletePrize = async function(id, name) {
+    if (!confirm(`⚠️ ยืนยันการลบรางวัล "${name}"?\nไม่สามารถกู้คืนได้`)) return;
+    try {
+      await deleteDoc(doc(db, 'luckyDrawPrizes', id));
+      showToast(`🗑️ ลบรางวัล "${name}" เรียบร้อยแล้ว`);
+    } catch (e) {
+      showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.setPrizeOrder = async function(id, newPositionRaw) {
+    const sorted = sortByOrder(allMysteryPrizes);
+    const fromIdx = sorted.findIndex(p => p._id === id);
+    if (fromIdx === -1) return;
+
+    let newPos = parseInt(newPositionRaw, 10);
+    if (isNaN(newPos)) { renderMysteryPrizesTable(); return; }
+    let toIdx = newPos - 1;
+    if (toIdx < 0) toIdx = 0;
+    if (toIdx > sorted.length - 1) toIdx = sorted.length - 1;
+    if (toIdx === fromIdx) { renderMysteryPrizesTable(); return; }
+
+    const reordered = sorted.slice();
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+
+    try {
+      await Promise.all(reordered.map((item, i) =>
+        updateDoc(doc(db, 'luckyDrawPrizes', item._id), { sortOrder: i })
       ));
       showToast('✅ ย้ายลำดับเรียบร้อย');
     } catch (e) {

@@ -823,16 +823,19 @@
       const DEFAULT_SHIPPING = 50;
       const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
 
-      // Minimum order subtotal (before shipping/discount) required to use
-      // each prize's coupon. Shared by applyCoupon (initial check),
-      // renderCart (auto re-check whenever the cart changes) and
-      // confirmOrder (final safety check right before payment).
-      const MIN_ORDER_BY_PRIZE = {
-        freeship: 200,
-        wonderbook: 200,
-        kiramai: 200,
-        twosidedriver: 500,
-      };
+      // Minimum order subtotal is no longer a hardcoded per-prize-type
+      // table — each code now carries its own `minOrderAmount` (set by
+      // the admin per prize in the Mystery Box manager), read directly
+      // off the stored code entry by getAppliedCodeMeta() below.
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
 
       // Inline placeholder image (no external file dependency) used when a
       // cart item has no image or its image fails to load.
@@ -897,6 +900,7 @@
         appliedCodeName: '',
         isFreeShipping: false,
         hasKeychainGift: false,
+        appliedGiftItem: '',
       };
 
       let cartCodeExpiryInterval = null;
@@ -948,15 +952,15 @@
         toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
       }
 
-      // Look up which prize type the currently applied coupon code maps to
+      // Look up the full stored entry for the currently applied coupon code
       // (master fallback codes like FREESHIP/KHUNAU/VIP have no stored
-      // prize entry and no minimum-order requirement, so they return null).
-      function getAppliedCodePrizeType() {
+      // entry — the caller should treat a null return as "no min-order
+      // requirement", since those codes aren't tied to a Mystery Box prize).
+      function getAppliedCodeMeta() {
         if (!state.appliedCodeName) return null;
         try {
           const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
-          const match = validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase());
-          return match ? match.prize : null;
+          return validCodes.find((c) => c.code.toUpperCase() === state.appliedCodeName.toUpperCase()) || null;
         } catch (e) {
           return null;
         }
@@ -977,11 +981,12 @@
         const subtotal = cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
 
         if (state.appliedCodeName) {
-          const prizeType = getAppliedCodePrizeType();
-          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          const meta = getAppliedCodeMeta();
+          const minRequired = meta ? (Number(meta.minOrderAmount) || 0) : 0;
           if (minRequired > 0 && subtotal < minRequired) {
             state.isFreeShipping = false;
             state.hasKeychainGift = false;
+            state.appliedGiftItem = '';
             state.appliedDiscount = 0;
             state.appliedCodeName = '';
             const tag = document.getElementById('appliedCouponTag');
@@ -1065,9 +1070,9 @@
             giftEl.style.borderRadius = '12px';
             giftEl.style.border = '1px dashed #F59E0B';
             giftEl.innerHTML =
-              '<div style="font-size:24px;">🗝️</div>' +
+              '<div style="font-size:24px;">🎁</div>' +
               '<div class="item-details">' +
-              '<div class="item-name" style="color:#92400E; font-weight:700;">[ของแถมพิเศษ] พวงกุญแจลิมิเต็ด</div>' +
+              '<div class="item-name" style="color:#92400E; font-weight:700;">[ของแถมพิเศษ] ' + escapeHtml(state.appliedGiftItem || 'ของแถมจากโค้ดสุ่ม') + '</div>' +
               '<div class="item-price" style="color:#D97706; font-size:12px;">ฟรี ฿0 (สิทธิ์พิเศษจากโค้ดสุ่ม)</div>' +
               '</div>' +
               '<span style="background:#F59E0B; color:white; font-size:11px; font-weight:700; padding:3px 8px; border-radius:10px;">FREE</span>';
@@ -1169,15 +1174,16 @@
       }
 
       // ---------- Lucky draw code helpers ----------
-      function getPrizeLabel(prize) {
-        const labels = {
-          no_code: '(ไม่ได้รับโค้ด)',
-          freeship: '(ส่งฟรี 🚚)',
-          wonderbook: '(ส่งฟรี + DX Wonderside Book 🎁)',
-          kiramai: '(ส่งฟรี + DX Kiramai Changer 🏆)',
-          twosidedriver: '(ส่งฟรี + DX Two Side Driver 🏆)',
-        };
-        return labels[prize] || '(ส่งฟรี 🚚)';
+      // Prize labels now come straight off the code entry itself
+      // (prizeName / giftItem, snapshotted at spin time from the admin's
+      // Mystery Box settings) instead of a hardcoded lookup table.
+      function getPrizeLabel(codeEntry) {
+        if (!codeEntry) return '';
+        const parts = [];
+        if (codeEntry.freeShipping) parts.push('ส่งฟรี 🚚');
+        if (codeEntry.giftItem) parts.push(codeEntry.giftItem + ' 🎁');
+        if (!parts.length && codeEntry.prizeName) parts.push(codeEntry.prizeName);
+        return parts.length ? '(' + parts.join(' + ') + ')' : '';
       }
 
       function getActiveCodes() {
@@ -1206,7 +1212,7 @@
           const expiresAt = latest.expiresAt || (latest.createdAt + CODE_EXPIRY_MS);
 
           if (chip && text) {
-            text.textContent = latest.code + ' ' + getPrizeLabel(latest.prize);
+            text.textContent = latest.code + ' ' + getPrizeLabel(latest);
             chip.style.display = 'block';
           }
 
@@ -1298,9 +1304,9 @@
             return;
           }
 
-          // ===== เช็คยอดสั่งซื้อขั้นต่ำตามประเภทรางวัล =====
+          // ===== เช็คยอดสั่งซื้อขั้นต่ำของรางวัลนี้ (ตั้งค่าโดยแอดมิน) =====
           const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
-          const minRequired = MIN_ORDER_BY_PRIZE[foundCode.prize] || 0;
+          const minRequired = Number(foundCode.minOrderAmount) || 0;
 
           if (minRequired > 0 && subtotalNow < minRequired) {
             if (errorMsg && errorText) {
@@ -1311,25 +1317,26 @@
             return;
           }
 
-          state.isFreeShipping = true;
+          state.isFreeShipping = !!foundCode.freeShipping;
           state.appliedCodeName = code;
-
-          const prizeLabels = {
-            freeship: { desc: 'ส่งฟรี ฿0 (ขั้นต่ำ 200฿)', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' },
-            wonderbook: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Wonderside Book 1 ชิ้น (แบบสุ่ม) 🎁 (ขั้นต่ำ 200฿)', toast: '🎁 โค้ดถูกต้อง! ได้รับส่งฟรี + DX Wonderside Book!' },
-            kiramai: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Kiramai Changer 🏆 (ขั้นต่ำ 200฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Kiramai Changer!' },
-            twosidedriver: { desc: 'ส่งฟรี ฿0 + แถมฟรี DX Two Side Driver 🏆 (ขั้นต่ำ 500฿)', toast: '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับส่งฟรี + DX Two Side Driver!' },
-          };
-          const prizeInfo = prizeLabels[foundCode.prize] || { desc: 'ส่งฟรี ฿0', toast: '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' };
-
-          state.hasKeychainGift = (foundCode.prize === 'wonderbook' || foundCode.prize === 'kiramai' || foundCode.prize === 'twosidedriver');
+          state.hasKeychainGift = !!foundCode.giftItem;
+          state.appliedGiftItem = foundCode.giftItem || '';
           state.appliedDiscount = 0;
+
+          const descParts = [];
+          if (state.isFreeShipping) descParts.push('ส่งฟรี ฿0');
+          if (foundCode.giftItem) descParts.push('แถม ' + foundCode.giftItem + ' 🎁');
+          if (minRequired > 0) descParts.push('(ขั้นต่ำ ' + minRequired.toLocaleString() + '฿)');
+          const descText = descParts.length ? descParts.join(' + ') : (foundCode.prizeName || 'สิทธิพิเศษ');
+          const toastText = foundCode.giftItem
+            ? '🏆 แจ็คพอต! โค้ดถูกต้อง! ได้รับ ' + foundCode.giftItem + '!'
+            : (state.isFreeShipping ? '🎉 โค้ดถูกต้อง! ได้รับสิทธิ์ส่งฟรี 🚚' : '🎉 โค้ดถูกต้อง! ได้รับ ' + (foundCode.prizeName || 'สิทธิพิเศษ'));
 
           const nameEl = document.getElementById('appliedCouponName');
           const descEl = document.getElementById('appliedCouponDesc');
           if (nameEl) nameEl.textContent = code;
-          if (descEl) descEl.textContent = prizeInfo.desc;
-          showToast(prizeInfo.toast);
+          if (descEl) descEl.textContent = descText;
+          showToast(toastText);
 
           const tag = document.getElementById('appliedCouponTag');
           if (tag) tag.classList.add('show');
@@ -1342,6 +1349,7 @@
         if (code === 'FREESHIP' || code === 'KHUNAU' || code === 'VIP') {
           state.isFreeShipping = true;
           state.hasKeychainGift = (code === 'VIP');
+          state.appliedGiftItem = (code === 'VIP') ? 'ของแถม VIP' : '';
           state.appliedDiscount = code === 'VIP' ? 50 : 0;
           state.appliedCodeName = code;
 
@@ -1369,6 +1377,7 @@
       function removeCoupon() {
         state.isFreeShipping = false;
         state.hasKeychainGift = false;
+        state.appliedGiftItem = '';
         state.appliedDiscount = 0;
         state.appliedCodeName = '';
         const tag = document.getElementById('appliedCouponTag');
@@ -1401,11 +1410,17 @@
         const orderId = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
         let prizeType = null;
+        let giftItem = null;
+        let prizeId = null;
         if (state.appliedCodeName) {
           try {
             const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
             const match = validCodes.find((c) => c.code === state.appliedCodeName);
-            if (match) prizeType = match.prize;
+            if (match) {
+              prizeType = match.prizeName || null;
+              giftItem = match.giftItem || null;
+              prizeId = match.prizeId || null;
+            }
           } catch (e) { /* ignore */ }
         }
 
@@ -1432,6 +1447,8 @@
           grandTotal,
           couponCode: state.appliedCodeName || null,
           prizeType,
+          giftItem,
+          prizeId,
           status: 'pending',
           createdAt: new Date().toISOString(),
         };
@@ -1494,8 +1511,8 @@
         // after the coupon was applied (e.g. removing an item), even if
         // renderCart's live re-check somehow didn't already clear it.
         if (state.appliedCodeName) {
-          const prizeType = getAppliedCodePrizeType();
-          const minRequired = prizeType ? (MIN_ORDER_BY_PRIZE[prizeType] || 0) : 0;
+          const meta = getAppliedCodeMeta();
+          const minRequired = meta ? (Number(meta.minOrderAmount) || 0) : 0;
           const subtotalNow = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0);
           if (minRequired > 0 && subtotalNow < minRequired) {
             removeCoupon();
