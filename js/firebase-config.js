@@ -40,6 +40,7 @@ import {
   orderBy,
   where,
   increment,
+  runTransaction,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Same Firebase project used by admin.html, so customer orders/data
@@ -85,4 +86,5 @@ export {
   orderBy,
   where,
   increment,
+  runTransaction,
 };
