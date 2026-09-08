@@ -740,6 +740,32 @@
     <div id="usersTab" class="tab-content">
       <div class="stats-grid">
         <div class="stat-card purple"><div class="stat-label">👑 VIP ทั้งหมด</div><div class="stat-value" id="statVipTotal">0</div><div class="stat-sub">คน</div></div>
+        <div class="stat-card"><div class="stat-label">📝 สมัครสมาชิกแล้ว (นับโดยระบบ)</div><div class="stat-value" id="statVipAutoRegistered">0</div><div class="stat-sub">คน</div></div>
+      </div>
+
+      <div class="content-card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <h2><i class="ph ph-crown-simple"></i> ตั้งค่า VIP อัตโนมัติ</h2>
+        </div>
+        <div style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-size:12.5px; color:var(--muted); line-height:1.5;">
+            เมื่อเปิดใช้งาน ระบบจะให้สถานะ VIP กับลูกค้า <b>N คนแรก</b> ที่สมัครสมาชิกหรือเข้าสู่ระบบครั้งแรก (นับที่ฝั่ง Server ผ่าน Cloud Function <code>autoAssignVip</code> ทันทีที่บัญชีถูกสร้าง — ปลอดภัยกว่านับที่ฝั่งเว็บ) หลังจากคนที่เกินจำนวนที่กำหนดจะเป็น User ปกติ
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13.5px;">
+              <input type="checkbox" id="vipAutoEnabledInput" style="width:16px;height:16px;">
+              เปิดใช้งาน VIP อัตโนมัติ
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13.5px;">
+              จำนวนคนแรกที่ได้ VIP:
+              <input type="number" id="vipAutoLimitInput" class="search-box" style="width:90px; min-width:0;" min="0" step="1" value="200">
+            </label>
+            <button class="btn-primary" onclick="submitVipAutoSettings()"><i class="ph ph-floppy-disk"></i> บันทึกการตั้งค่า</button>
+          </div>
+          <div style="font-size:12.5px; color:var(--muted);">
+            สถานะปัจจุบัน: <b id="vipAutoStatusText">-</b>
+          </div>
+        </div>
       </div>
 
       <div class="toolbar" style="flex-wrap:wrap;">
@@ -1192,6 +1218,7 @@
   let allCategoryTypes = [];
   let allMysteryPrizes = [];
   let allVipUsers = [];
+  let vipAutoSettings = { enabled: true, limit: 200, registeredCount: 0 };
   let allChats = [];
   let activeChatId = null;
   let seededCategoryTypes = false;
@@ -1203,6 +1230,7 @@
   let unsubsCategoryTypes = null;
   let unsubsMysteryPrizes = null;
   let unsubsVipUsers = null;
+  let unsubsVipAutoSettings = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1254,6 +1282,7 @@
     if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
     if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
     if (unsubsVipUsers) { unsubsVipUsers(); unsubsVipUsers = null; }
+    if (unsubsVipAutoSettings) { unsubsVipAutoSettings(); unsubsVipAutoSettings = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1265,6 +1294,7 @@
     loadCategoryTypes();
     loadMysteryPrizes();
     loadVipUsers();
+    loadVipAutoSettings();
     loadChats();
   }
 
@@ -2143,6 +2173,70 @@
       showToast('🗑️ ลบออกจาก VIP แล้ว');
     } catch (e) {
       showToast('❌ ไม่สามารถลบได้: ' + e.message);
+    }
+  };
+
+  // ===== VIP AUTO SETTINGS (settings/vipAuto) =====
+  // The actual "give VIP to the first N sign-ups" counting happens
+  // server-side in the autoAssignVip Cloud Function (functions/index.js),
+  // which fires on every new Firebase Auth account and atomically bumps
+  // registeredCount / adds the user to vipUsers. This panel only lets the
+  // admin toggle it on/off and change the limit — it never writes
+  // registeredCount itself, so it can't clash with the function's counter.
+  window.loadVipAutoSettings = function() {
+    if (unsubsVipAutoSettings) unsubsVipAutoSettings();
+    unsubsVipAutoSettings = onSnapshot(doc(db, 'settings', 'vipAuto'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        vipAutoSettings = {
+          enabled: d.enabled !== false,
+          limit: typeof d.limit === 'number' ? d.limit : 200,
+          registeredCount: typeof d.registeredCount === 'number' ? d.registeredCount : 0
+        };
+      } else {
+        // No doc yet (no one has signed up since this feature was added).
+        vipAutoSettings = { enabled: true, limit: 200, registeredCount: 0 };
+      }
+      renderVipAutoSettings();
+    }, err => showToast('โหลดการตั้งค่า VIP อัตโนมัติไม่สำเร็จ: ' + err.message));
+  };
+
+  function renderVipAutoSettings() {
+    document.getElementById('vipAutoEnabledInput').checked = vipAutoSettings.enabled;
+    document.getElementById('vipAutoLimitInput').value = vipAutoSettings.limit;
+    document.getElementById('statVipAutoRegistered').textContent = vipAutoSettings.registeredCount;
+
+    const remaining = Math.max(0, vipAutoSettings.limit - vipAutoSettings.registeredCount);
+    const statusEl = document.getElementById('vipAutoStatusText');
+    if (!vipAutoSettings.enabled) {
+      statusEl.textContent = 'ปิดใช้งานอยู่ — สมาชิกใหม่จะเป็น User ปกติทั้งหมด';
+    } else if (remaining > 0) {
+      statusEl.textContent = `เปิดใช้งานอยู่ — เหลือโควต้า VIP อัตโนมัติอีก ${remaining} คน (สมัครแล้ว ${vipAutoSettings.registeredCount}/${vipAutoSettings.limit})`;
+    } else {
+      statusEl.textContent = `เปิดใช้งานอยู่ — ครบโควต้า ${vipAutoSettings.limit} คนแล้ว สมาชิกใหม่จะเป็น User ปกติ`;
+    }
+  }
+
+  window.submitVipAutoSettings = async function() {
+    const enabled = document.getElementById('vipAutoEnabledInput').checked;
+    const limitRaw = document.getElementById('vipAutoLimitInput').value;
+    const limit = parseInt(limitRaw, 10);
+
+    if (isNaN(limit) || limit < 0) {
+      showToast('❌ กรุณากรอกจำนวนคนเป็นตัวเลขที่ถูกต้อง');
+      return;
+    }
+
+    try {
+      // merge:true so we never overwrite registeredCount, which only the
+      // Cloud Function should update.
+      await setDoc(doc(db, 'settings', 'vipAuto'), {
+        enabled,
+        limit
+      }, { merge: true });
+      showToast('✅ บันทึกการตั้งค่า VIP อัตโนมัติเรียบร้อย');
+    } catch (e) {
+      showToast('❌ ไม่สามารถบันทึกการตั้งค่าได้: ' + e.message);
     }
   };
 
