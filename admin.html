@@ -199,7 +199,6 @@
     .order-id  { font-weight:700; color:var(--mk-red); font-size:12px; }
     .cus-name  { font-weight:600; }
     .cus-phone { font-size:12px; color:var(--muted); }
-    .uid-txt   { font-family:monospace; font-size:11.5px; color:var(--muted); cursor:help; }
     .item-list { font-size:11px; color:var(--muted); max-width:160px; }
     .prize-chip { display:inline-block; font-size:10px; padding:2px 7px; border-radius:10px; background:#EDE9FE; color:#6D28D9; font-weight:600; margin-top:3px; }
     .total-amt { font-weight:700; color:var(--mk-red); }
@@ -578,9 +577,6 @@
     <button class="tab-btn" onclick="switchTab('mysteryTab', this)">
       <i class="ph ph-gift"></i> Mystery Box
     </button>
-    <button class="tab-btn" onclick="switchTab('usersTab', this)">
-      <i class="ph ph-crown"></i> ระบบ User
-    </button>
     <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
       <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
       <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
@@ -619,12 +615,12 @@
           <table>
             <thead>
               <tr>
-                <th>หมายเลขออเดอร์</th><th>ลูกค้า</th><th>User ID</th><th>สินค้า</th>
+                <th>หมายเลขออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th>
                  <th>ยอดรวม</th><th>สถานะ</th><th>เลขพัสดุ</th><th>วันที่</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="ordersTableBody">
-               <tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลด...</div></td></tr>
+               <tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>กำลังโหลด...</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -725,83 +721,18 @@
           <table>
             <thead>
               <tr>
-                <th>ลำดับ</th><th>ชื่อรางวัล</th><th>น้ำหนัก / โอกาส</th><th>จำนวนคงเหลือ</th><th>ของแถม / ส่งฟรี</th><th>ขั้นต่ำสั่งซื้อ</th><th>สถานะ</th><th>จัดการ</th>
+                <th>ลำดับ</th><th>รูปภาพ</th><th>ชื่อรางวัล</th><th>น้ำหนัก / โอกาส</th><th>จำนวนคงเหลือ</th><th>ของแถม / ส่งฟรี</th><th>ขั้นต่ำสั่งซื้อ</th><th>สถานะ</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="mysteryPrizesTableBody">
-              <tr><td colspan="8"><div class="empty-state"><i class="ph ph-gift"></i>กำลังโหลดรางวัล...</div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><i class="ph ph-gift"></i>กำลังโหลดรางวัล...</div></td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ================= TAB 5: USER SYSTEM (VIP) ================= -->
-    <div id="usersTab" class="tab-content">
-      <div class="stats-grid">
-        <div class="stat-card purple"><div class="stat-label">👑 VIP ทั้งหมด</div><div class="stat-value" id="statVipTotal">0</div><div class="stat-sub">คน</div></div>
-        <div class="stat-card"><div class="stat-label">📝 สมัครสมาชิกแล้ว (นับโดยระบบ)</div><div class="stat-value" id="statVipAutoRegistered">0</div><div class="stat-sub">คน</div></div>
-      </div>
-
-      <div class="content-card" style="margin-bottom:16px;">
-        <div class="card-header">
-          <h2><i class="ph ph-crown-simple"></i> ตั้งค่า VIP อัตโนมัติ</h2>
-        </div>
-        <div style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
-          <div style="font-size:12.5px; color:var(--muted); line-height:1.5;">
-            เมื่อเปิดใช้งาน ระบบจะให้สถานะ VIP กับลูกค้า <b>N คนแรก</b> ที่สมัครสมาชิกหรือเข้าสู่ระบบครั้งแรก (นับที่ฝั่ง Server ผ่าน Cloud Function <code>autoAssignVip</code> ทันทีที่บัญชีถูกสร้าง — ปลอดภัยกว่านับที่ฝั่งเว็บ) หลังจากคนที่เกินจำนวนที่กำหนดจะเป็น User ปกติ
-          </div>
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <label style="display:flex; align-items:center; gap:6px; font-size:13.5px;">
-              <input type="checkbox" id="vipAutoEnabledInput" style="width:16px;height:16px;">
-              เปิดใช้งาน VIP อัตโนมัติ
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; font-size:13.5px;">
-              จำนวนคนแรกที่ได้ VIP:
-              <input type="number" id="vipAutoLimitInput" class="search-box" style="width:90px; min-width:0;" min="0" step="1" value="200">
-            </label>
-            <button class="btn-primary" onclick="submitVipAutoSettings()"><i class="ph ph-floppy-disk"></i> บันทึกการตั้งค่า</button>
-          </div>
-          <div style="font-size:12.5px; color:var(--muted);">
-            สถานะปัจจุบัน: <b id="vipAutoStatusText">-</b>
-          </div>
-          <div style="border-top:1px solid var(--border, #2a2a2a); margin-top:6px; padding-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <button class="btn-primary" id="btnBackfillVip" onclick="submitBackfillVipAuto()"><i class="ph ph-users-three"></i> ดึงข้อมูล 200 คนแรกมาเป็น VIP ทันที</button>
-            <span style="font-size:12px; color:var(--muted);">ใช้ครั้งแรกครั้งเดียว — ดึงบัญชีที่สมัครไว้แล้วทั้งหมด เรียงตามวันที่สมัคร แล้วตั้ง VIP ให้คนแรกสุดตามจำนวนด้านบน (ใช้ยอดปัจจุบันในช่องด้านบน ไม่ต้องกดบันทึกก่อน)</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="toolbar" style="flex-wrap:wrap;">
-        <div style="flex:1 1 100%; font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:2px;">
-          👑 เพิ่ม User ID ของลูกค้าที่ต้องการให้เป็น VIP (คัดลอก User ID ได้จากตาราง "รายการออเดอร์") — <b>ยังไม่มีการจำกัดสิทธิ์ Mystery Box ตาม VIP ในตอนนี้</b> ระบบนี้เป็นแค่การเก็บรายชื่อ VIP ไว้ก่อน
-        </div>
-        <input type="text" id="vipUidInput" class="search-box" style="flex:2; min-width:220px;" placeholder="วาง User ID ของลูกค้าที่นี่...">
-        <input type="text" id="vipLabelInput" class="search-box" style="flex:1; min-width:160px;" placeholder="ชื่อ/หมายเหตุ (ถ้ามี)">
-        <button class="btn-primary" onclick="submitAddVip()"><i class="ph ph-crown"></i> + เพิ่มเป็น VIP</button>
-      </div>
-
-      <div class="content-card">
-        <div class="card-header">
-          <h2><i class="ph ph-crown"></i> รายชื่อลูกค้า VIP</h2>
-          <span style="font-size:12px;color:var(--muted);" id="vipUsersCount">0 คน</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>User ID</th><th>ชื่อ/หมายเหตุ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
-              </tr>
-            </thead>
-            <tbody id="vipUsersTableBody">
-              <tr><td colspan="4"><div class="empty-state"><i class="ph ph-crown"></i>กำลังโหลด...</div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 6: LIVE CHAT ================= -->
+    <!-- ================= TAB 5: LIVE CHAT ================= -->
     <div id="chatTab" class="tab-content">
       <div class="admin-chat-layout">
         <!-- Customer Threads List -->
@@ -1097,6 +1028,17 @@
         <label>ชื่อรางวัล *</label>
         <input type="text" id="prizeName" class="form-control" placeholder="เช่น ส่งฟรี, ไม่ได้รับโค้ด, DX Wonderside Book" required>
       </div>
+      <div class="form-group">
+        <label>รูปภาพรางวัล (ถ้ามี)</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="prizeFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'prizeImage', 'prizePreview')">
+          <input type="text" id="prizeImage" class="form-control" placeholder="หรือกรอก URL / Path ไฟล์ (ไม่ใส่ก็ได้)" oninput="updatePreview('prizeImage', 'prizePreview')">
+        </div>
+        <div id="prizePreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="prizePreviewImg" src="" style="width:56px; height:56px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
+      </div>
       <div class="form-grid-2">
         <div class="form-group">
           <label>น้ำหนักโอกาสออก (ตัวเลข) *</label>
@@ -1141,6 +1083,17 @@
       <div class="form-group">
         <label>ชื่อรางวัล *</label>
         <input type="text" id="editPrizeName" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>รูปภาพรางวัล (ถ้ามี)</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <input type="file" id="editPrizeFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'editPrizeImage', 'editPrizePreview')">
+          <input type="text" id="editPrizeImage" class="form-control" placeholder="URL / Path ไฟล์ (ไม่ใส่ก็ได้)" oninput="updatePreview('editPrizeImage', 'editPrizePreview')">
+        </div>
+        <div id="editPrizePreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+          <img id="editPrizePreviewImg" src="" style="width:56px; height:56px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+          <span style="font-size:11px; color:var(--muted);">ตัวอย่างรูปภาพ</span>
+        </div>
       </div>
       <div class="form-grid-2">
         <div class="form-group">
@@ -1196,7 +1149,6 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, increment, runTransaction, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -1209,7 +1161,6 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
-  const cloudFunctions = getFunctions(app, 'us-central1'); // change region here if functions are deployed elsewhere
 
   // Only these email addresses may access the admin dashboard.
   // To add more admins later, just add their email to this array
@@ -1223,8 +1174,6 @@
   let allProducts = [];
   let allCategoryTypes = [];
   let allMysteryPrizes = [];
-  let allVipUsers = [];
-  let vipAutoSettings = { enabled: true, limit: 200, registeredCount: 0 };
   let allChats = [];
   let activeChatId = null;
   let seededCategoryTypes = false;
@@ -1235,8 +1184,6 @@
   let unsubsProducts = null;
   let unsubsCategoryTypes = null;
   let unsubsMysteryPrizes = null;
-  let unsubsVipUsers = null;
-  let unsubsVipAutoSettings = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1287,8 +1234,6 @@
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
     if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
     if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
-    if (unsubsVipUsers) { unsubsVipUsers(); unsubsVipUsers = null; }
-    if (unsubsVipAutoSettings) { unsubsVipAutoSettings(); unsubsVipAutoSettings = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1299,8 +1244,6 @@
     loadProducts();
     loadCategoryTypes();
     loadMysteryPrizes();
-    loadVipUsers();
-    loadVipAutoSettings();
     loadChats();
   }
 
@@ -1466,7 +1409,7 @@
   function renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTableBody');
     if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบออเดอร์</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ph ph-package"></i>ไม่พบออเดอร์</div></td></tr>';
       return;
     }
     const statusMap = {
@@ -1483,10 +1426,6 @@
       const date    = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
       const badge   = statusMap[o.status] || '<span class="status-badge">' + o.status + '</span>';
       const tracking = escapeHtml(o.trackingNumber || '');
-      const userIdCell = o.userId
-        ? '<span class="uid-txt" title="' + escapeHtml(o.userId) + '">' + escapeHtml(o.userId.slice(0, 8)) + '…</span>' +
-          '<button class="btn-tracking" style="margin-left:4px;padding:3px 7px;" onclick="copyUserId(\'' + escapeJsAttr(o.userId) + '\')" title="คัดลอก User ID"><i class="ph ph-copy"></i></button>'
-        : '<span style="color:var(--muted);font-size:11.5px;">ผู้เยี่ยมชม (Guest)</span>';
       const slipBadge = o.slipImage
         ? '<div style="margin-top:4px;"><span class="prize-chip" style="background:#DBEAFE;color:#1D4ED8;"><i class="ph ph-image"></i> มีสลิปแนบ</span></div>'
         : '';
@@ -1497,7 +1436,6 @@
       btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + o._id + '\')"><i class="ph ph-trash"></i> ลบ</button>';
       return '<tr><td><div class="order-id">' + (o.orderId || '-') + '</div>' + slipBadge + '</td>' +
              '<td><div class="cus-name">' + (o.customerName || '-') + '</div><div class="cus-phone">' + (o.phone || '') + '</div></td>' +
-             '<td>' + userIdCell + '</td>' +
              '<td><div class="item-list">' + items + '</div>' + prize + '</td>' +
              '<td><span class="total-amt">฿' + (o.grandTotal || 0).toLocaleString() + '</span></td>' +
              '<td>' + badge + '</td>' +
@@ -1507,13 +1445,6 @@
              '<td>' + btns + '</td></tr>';
     }).join('');
   }
-
-  window.copyUserId = function(uid) {
-    if (!uid) return;
-    navigator.clipboard.writeText(uid)
-      .then(() => showToast('📋 คัดลอก User ID แล้ว'))
-      .catch(() => showToast('❌ คัดลอกไม่สำเร็จ'));
-  };
 
   window.changeStatus = async function(id, status) {
     try {
@@ -2057,7 +1988,7 @@
 
     const tbody = document.getElementById('mysteryPrizesTableBody');
     if (!sorted.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ph ph-gift"></i>ยังไม่มีรางวัล (กด "+ เพิ่มรางวัลใหม่" เพื่อสร้าง)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-gift"></i>ยังไม่มีรางวัล (กด "+ เพิ่มรางวัลใหม่" เพื่อสร้าง)</div></td></tr>';
       return;
     }
 
@@ -2065,6 +1996,9 @@
       const weight = Number(p.weight) || 0;
       const pct = (p.active !== false && totalWeight > 0) ? ((weight / totalWeight) * 100) : 0;
       const pctTxt = (p.active !== false) ? pct.toFixed(pct < 1 ? 3 : 2) + '%' : '<span style="color:var(--muted);">ปิดใช้งาน</span>';
+      const imgTag = p.image
+        ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Banner_item.jpg'">`
+        : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-gift" style="font-size:20px;color:var(--muted);"></i></div>';
       const hasQty = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && p.remainingQuantity !== '');
       const qtyTxt = hasQty
         ? (Number(p.remainingQuantity) > 0
@@ -2089,6 +2023,7 @@
       return `
         <tr>
           <td>${moveCell}</td>
+          <td>${imgTag}</td>
           <td><strong>${escapeHtml(p.name || '-')}</strong></td>
           <td><div style="font-weight:700;color:var(--mk-red);">${pctTxt}</div><div style="font-size:10.5px;color:var(--muted);">น้ำหนัก ${weight}</div></td>
           <td>${qtyTxt}</td>
@@ -2105,186 +2040,16 @@
     }).join('');
   }
 
-  // ===== USER SYSTEM (VIP) =====
-  // Simple allowlist collection: doc ID = customer's User ID (Firebase Auth
-  // uid, the same value shown/copied from the Orders tab). For now this is
-  // just a list the admin maintains manually — it doesn't gate anything on
-  // the storefront yet (see note in the "ระบบ User" tab).
-  window.loadVipUsers = function() {
-    if (unsubsVipUsers) unsubsVipUsers();
-    const q = query(collection(db, 'vipUsers'), orderBy('addedAt', 'desc'));
-    unsubsVipUsers = onSnapshot(q, snap => {
-      allVipUsers = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      renderVipUsersTable();
-    }, err => showToast('โหลดรายชื่อ VIP ไม่สำเร็จ: ' + err.message));
-  };
-
-  function renderVipUsersTable() {
-    document.getElementById('statVipTotal').textContent = allVipUsers.length;
-    document.getElementById('vipUsersCount').textContent = allVipUsers.length + ' คน';
-
-    const tbody = document.getElementById('vipUsersTableBody');
-    if (!allVipUsers.length) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="ph ph-crown"></i>ยังไม่มีลูกค้า VIP (เพิ่มโดยกรอก User ID ด้านบน)</div></td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = allVipUsers.map(v => {
-      const date = v.addedAt ? new Date(v.addedAt).toLocaleString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-      return `
-        <tr>
-          <td><span class="uid-txt" title="${escapeHtml(v._id)}">${escapeHtml(v._id.slice(0, 10))}…</span>
-            <button class="btn-tracking" style="margin-left:4px;padding:3px 7px;" onclick="copyUserId('${escapeJsAttr(v._id)}')" title="คัดลอก User ID"><i class="ph ph-copy"></i></button>
-          </td>
-          <td>${v.label ? escapeHtml(v.label) : '<span style="color:var(--muted);">-</span>'}</td>
-          <td><span class="date-txt">${date}</span></td>
-          <td><button class="action-btn btn-delete" onclick="removeVip('${escapeJsAttr(v._id)}')"><i class="ph ph-trash"></i> ลบออกจาก VIP</button></td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  window.submitAddVip = async function() {
-    const uidInput = document.getElementById('vipUidInput');
-    const labelInput = document.getElementById('vipLabelInput');
-    const uid = uidInput.value.trim();
-    const label = labelInput.value.trim();
-
-    if (!uid) {
-      showToast('❌ กรุณากรอก User ID ของลูกค้าก่อน');
-      return;
-    }
-    if (allVipUsers.some(v => v._id === uid)) {
-      showToast('⚠️ User ID นี้เป็น VIP อยู่แล้ว');
-      return;
-    }
-
-    try {
-      await setDoc(doc(db, 'vipUsers', uid), {
-        label: label || null,
-        addedAt: new Date().toISOString()
-      });
-      uidInput.value = '';
-      labelInput.value = '';
-      showToast('✅ เพิ่มเป็น VIP เรียบร้อย');
-    } catch (e) {
-      showToast('❌ ไม่สามารถเพิ่ม VIP ได้: ' + e.message);
-    }
-  };
-
-  window.removeVip = async function(uid) {
-    if (!confirm('ต้องการลบลูกค้าคนนี้ออกจากรายชื่อ VIP หรือไม่?')) return;
-    try {
-      await deleteDoc(doc(db, 'vipUsers', uid));
-      showToast('🗑️ ลบออกจาก VIP แล้ว');
-    } catch (e) {
-      showToast('❌ ไม่สามารถลบได้: ' + e.message);
-    }
-  };
-
-  // ===== VIP AUTO SETTINGS (settings/vipAuto) =====
-  // The actual "give VIP to the first N sign-ups" counting happens
-  // server-side in the autoAssignVip Cloud Function (functions/index.js),
-  // which fires on every new Firebase Auth account and atomically bumps
-  // registeredCount / adds the user to vipUsers. This panel only lets the
-  // admin toggle it on/off and change the limit — it never writes
-  // registeredCount itself, so it can't clash with the function's counter.
-  window.loadVipAutoSettings = function() {
-    if (unsubsVipAutoSettings) unsubsVipAutoSettings();
-    unsubsVipAutoSettings = onSnapshot(doc(db, 'settings', 'vipAuto'), snap => {
-      if (snap.exists()) {
-        const d = snap.data();
-        vipAutoSettings = {
-          enabled: d.enabled !== false,
-          limit: typeof d.limit === 'number' ? d.limit : 200,
-          registeredCount: typeof d.registeredCount === 'number' ? d.registeredCount : 0
-        };
-      } else {
-        // No doc yet (no one has signed up since this feature was added).
-        vipAutoSettings = { enabled: true, limit: 200, registeredCount: 0 };
-      }
-      renderVipAutoSettings();
-    }, err => showToast('โหลดการตั้งค่า VIP อัตโนมัติไม่สำเร็จ: ' + err.message));
-  };
-
-  function renderVipAutoSettings() {
-    document.getElementById('vipAutoEnabledInput').checked = vipAutoSettings.enabled;
-    document.getElementById('vipAutoLimitInput').value = vipAutoSettings.limit;
-    document.getElementById('statVipAutoRegistered').textContent = vipAutoSettings.registeredCount;
-
-    const remaining = Math.max(0, vipAutoSettings.limit - vipAutoSettings.registeredCount);
-    const statusEl = document.getElementById('vipAutoStatusText');
-    if (!vipAutoSettings.enabled) {
-      statusEl.textContent = 'ปิดใช้งานอยู่ — สมาชิกใหม่จะเป็น User ปกติทั้งหมด';
-    } else if (remaining > 0) {
-      statusEl.textContent = `เปิดใช้งานอยู่ — เหลือโควต้า VIP อัตโนมัติอีก ${remaining} คน (สมัครแล้ว ${vipAutoSettings.registeredCount}/${vipAutoSettings.limit})`;
-    } else {
-      statusEl.textContent = `เปิดใช้งานอยู่ — ครบโควต้า ${vipAutoSettings.limit} คนแล้ว สมาชิกใหม่จะเป็น User ปกติ`;
-    }
-  }
-
-  window.submitVipAutoSettings = async function() {
-    const enabled = document.getElementById('vipAutoEnabledInput').checked;
-    const limitRaw = document.getElementById('vipAutoLimitInput').value;
-    const limit = parseInt(limitRaw, 10);
-
-    if (isNaN(limit) || limit < 0) {
-      showToast('❌ กรุณากรอกจำนวนคนเป็นตัวเลขที่ถูกต้อง');
-      return;
-    }
-
-    try {
-      // merge:true so we never overwrite registeredCount, which only the
-      // Cloud Function should update.
-      await setDoc(doc(db, 'settings', 'vipAuto'), {
-        enabled,
-        limit
-      }, { merge: true });
-      showToast('✅ บันทึกการตั้งค่า VIP อัตโนมัติเรียบร้อย');
-    } catch (e) {
-      showToast('❌ ไม่สามารถบันทึกการตั้งค่าได้: ' + e.message);
-    }
-  };
-
-  // One-time backfill: grants VIP to the first N accounts that already
-  // existed BEFORE the auto-VIP system was added, by calling the
-  // backfillVipAuto Cloud Function (needs Admin SDK access to list every
-  // Firebase Auth user — can't be done from the browser).
-  window.submitBackfillVipAuto = async function() {
-    const limitRaw = document.getElementById('vipAutoLimitInput').value;
-    const limit = parseInt(limitRaw, 10);
-    if (isNaN(limit) || limit < 0) {
-      showToast('❌ กรุณากรอกจำนวนคนเป็นตัวเลขที่ถูกต้องก่อน');
-      return;
-    }
-
-    if (!confirm(`ต้องการดึงบัญชีที่สมัครไว้แล้วทั้งหมด เรียงตามวันสมัคร แล้วตั้ง VIP ให้ ${limit} คนแรกใช่หรือไม่?`)) return;
-
-    const btn = document.getElementById('btnBackfillVip');
-    btn.disabled = true;
-    showToast('⏳ กำลังดึงข้อมูลผู้ใช้ทั้งหมด อาจใช้เวลาสักครู่...');
-
-    try {
-      const backfillVipAuto = httpsCallable(cloudFunctions, 'backfillVipAuto');
-      const result = await backfillVipAuto({ limit });
-      const { totalUsers, vipGranted } = result.data;
-      showToast(`✅ เสร็จสิ้น! ผู้ใช้ทั้งหมด ${totalUsers} คน ตั้งเป็น VIP ${vipGranted} คน`);
-    } catch (e) {
-      console.error('backfillVipAuto error:', e);
-      showToast('❌ ดึงข้อมูลไม่สำเร็จ: ' + (e.message || e));
-    } finally {
-      btn.disabled = false;
-    }
-  };
-
   window.openAddPrizeModal = function() {
     document.getElementById('addPrizeForm').reset();
     document.getElementById('prizeActive').checked = true;
+    document.getElementById('prizePreview').style.display = 'none';
     document.getElementById('addPrizeModal').classList.add('active');
   };
 
   window.submitAddPrize = async function() {
     const name = document.getElementById('prizeName').value.trim();
+    const image = document.getElementById('prizeImage').value.trim();
     const weight = Number(document.getElementById('prizeWeight').value) || 0;
     const qtyRaw = document.getElementById('prizeQty').value;
     const remainingQuantity = qtyRaw !== '' ? Number(qtyRaw) : null;
@@ -2297,7 +2062,7 @@
 
     try {
       await addDoc(collection(db, 'luckyDrawPrizes'), {
-        name, weight, remainingQuantity, minOrderAmount, giftItem,
+        name, image, weight, remainingQuantity, minOrderAmount, giftItem,
         freeShipping, isNoPrize, active,
         sortOrder: allMysteryPrizes.length,
         createdAt: new Date().toISOString()
@@ -2314,6 +2079,7 @@
     if (!p) return;
     document.getElementById('editPrizeId').value = p._id;
     document.getElementById('editPrizeName').value = p.name || '';
+    document.getElementById('editPrizeImage').value = p.image || '';
     document.getElementById('editPrizeWeight').value = (p.weight !== undefined && p.weight !== null) ? p.weight : 1;
     document.getElementById('editPrizeQty').value = (p.remainingQuantity !== undefined && p.remainingQuantity !== null) ? p.remainingQuantity : '';
     document.getElementById('editPrizeMinOrder').value = p.minOrderAmount || '';
@@ -2322,12 +2088,21 @@
     document.getElementById('editPrizeIsNoPrize').checked = !!p.isNoPrize;
     document.getElementById('editPrizeActive').checked = p.active !== false;
 
+    const previewBox = document.getElementById('editPrizePreview');
+    const previewImg = document.getElementById('editPrizePreviewImg');
+    if (p.image) {
+      previewImg.src = p.image;
+      previewBox.style.display = 'flex';
+    } else {
+      previewBox.style.display = 'none';
+    }
     document.getElementById('editPrizeModal').classList.add('active');
   };
 
   window.submitEditPrize = async function() {
     const id = document.getElementById('editPrizeId').value;
     const name = document.getElementById('editPrizeName').value.trim();
+    const image = document.getElementById('editPrizeImage').value.trim();
     const weight = Number(document.getElementById('editPrizeWeight').value) || 0;
     const qtyRaw = document.getElementById('editPrizeQty').value;
     const remainingQuantity = qtyRaw !== '' ? Number(qtyRaw) : null;
@@ -2340,7 +2115,7 @@
 
     try {
       await updateDoc(doc(db, 'luckyDrawPrizes', id), {
-        name, weight, remainingQuantity, minOrderAmount, giftItem,
+        name, image, weight, remainingQuantity, minOrderAmount, giftItem,
         freeShipping, isNoPrize, active,
         updatedAt: new Date().toISOString()
       });
