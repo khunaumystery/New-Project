@@ -765,6 +765,10 @@
           <div style="font-size:12.5px; color:var(--muted);">
             สถานะปัจจุบัน: <b id="vipAutoStatusText">-</b>
           </div>
+          <div style="border-top:1px solid var(--border, #2a2a2a); margin-top:6px; padding-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button class="btn-primary" id="btnBackfillVip" onclick="submitBackfillVipAuto()"><i class="ph ph-users-three"></i> ดึงข้อมูล 200 คนแรกมาเป็น VIP ทันที</button>
+            <span style="font-size:12px; color:var(--muted);">ใช้ครั้งแรกครั้งเดียว — ดึงบัญชีที่สมัครไว้แล้วทั้งหมด เรียงตามวันที่สมัคร แล้วตั้ง VIP ให้คนแรกสุดตามจำนวนด้านบน (ใช้ยอดปัจจุบันในช่องด้านบน ไม่ต้องกดบันทึกก่อน)</span>
+          </div>
         </div>
       </div>
 
@@ -1192,6 +1196,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, increment, runTransaction, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -1204,6 +1209,7 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
+  const cloudFunctions = getFunctions(app, 'us-central1'); // change region here if functions are deployed elsewhere
 
   // Only these email addresses may access the admin dashboard.
   // To add more admins later, just add their email to this array
@@ -2237,6 +2243,37 @@
       showToast('✅ บันทึกการตั้งค่า VIP อัตโนมัติเรียบร้อย');
     } catch (e) {
       showToast('❌ ไม่สามารถบันทึกการตั้งค่าได้: ' + e.message);
+    }
+  };
+
+  // One-time backfill: grants VIP to the first N accounts that already
+  // existed BEFORE the auto-VIP system was added, by calling the
+  // backfillVipAuto Cloud Function (needs Admin SDK access to list every
+  // Firebase Auth user — can't be done from the browser).
+  window.submitBackfillVipAuto = async function() {
+    const limitRaw = document.getElementById('vipAutoLimitInput').value;
+    const limit = parseInt(limitRaw, 10);
+    if (isNaN(limit) || limit < 0) {
+      showToast('❌ กรุณากรอกจำนวนคนเป็นตัวเลขที่ถูกต้องก่อน');
+      return;
+    }
+
+    if (!confirm(`ต้องการดึงบัญชีที่สมัครไว้แล้วทั้งหมด เรียงตามวันสมัคร แล้วตั้ง VIP ให้ ${limit} คนแรกใช่หรือไม่?`)) return;
+
+    const btn = document.getElementById('btnBackfillVip');
+    btn.disabled = true;
+    showToast('⏳ กำลังดึงข้อมูลผู้ใช้ทั้งหมด อาจใช้เวลาสักครู่...');
+
+    try {
+      const backfillVipAuto = httpsCallable(cloudFunctions, 'backfillVipAuto');
+      const result = await backfillVipAuto({ limit });
+      const { totalUsers, vipGranted } = result.data;
+      showToast(`✅ เสร็จสิ้น! ผู้ใช้ทั้งหมด ${totalUsers} คน ตั้งเป็น VIP ${vipGranted} คน`);
+    } catch (e) {
+      console.error('backfillVipAuto error:', e);
+      showToast('❌ ดึงข้อมูลไม่สำเร็จ: ' + (e.message || e));
+    } finally {
+      btn.disabled = false;
     }
   };
 
