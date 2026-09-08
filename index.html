@@ -442,6 +442,12 @@
       text-align: right;
     }
 
+    .odds-table th:nth-child(3),
+    .odds-table td:nth-child(3) {
+      text-align: center;
+      white-space: nowrap;
+    }
+
     .odds-table td {
       padding: 9px 6px;
       color: #F0F0F0;
@@ -1233,6 +1239,7 @@
           </button>
         </h3>
         <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 5 ชั่วโมง)</p>
+        <p class="lucky-card-desc" style="color:var(--gold); font-weight:600; margin-top:2px;"><i class="ph ph-crown"></i> สิทธิพิเศษเฉพาะสมาชิก VIP เท่านั้น</p>
       </div>
 
       <!-- 3D Interactive Gift Box Scene -->
@@ -1434,6 +1441,20 @@
     </div>
   </div>
 
+  <!-- Modal: VIP Required (Mystery Box is VIP-only) -->
+  <div class="modal-overlay" id="vipRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+    <div style="background:#24090D;border:1.5px solid rgba(245,200,66,0.4);border-radius:24px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+      <div style="width:62px;height:62px;border-radius:50%;background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.4);color:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;">
+        <i class="ph ph-crown"></i>
+      </div>
+      <h3 style="font-size:18px;font-weight:700;color:#FFFFFF;margin-bottom:8px;">สิทธิพิเศษเฉพาะสมาชิก VIP</h3>
+      <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;">ขออภัยครับ Mystery Box เปิดให้ใช้งานเฉพาะลูกค้า VIP เท่านั้น ติดต่อแอดมินเพื่อสอบถามเงื่อนไขการเป็นสมาชิก VIP ได้เลยครับ</p>
+      <button onclick="document.getElementById('vipRequiredModal').style.display='none'" style="width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">
+        เข้าใจแล้ว
+      </button>
+    </div>
+  </div>
+
   <!-- Modal: Lucky Draw Odds Info -->
   <div class="modal-overlay" id="oddsInfoModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
     <div class="odds-modal-box">
@@ -1449,11 +1470,12 @@
           <tr>
             <th>รายการรางวัล</th>
             <th>โอกาสได้รับ</th>
+            <th>จำนวนคงเหลือ</th>
             <th>ขั้นต่ำสั่งซื้อ</th>
           </tr>
         </thead>
         <tbody id="oddsTableBody">
-          <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
         </tbody>
       </table>
       <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
@@ -1517,6 +1539,11 @@
       if (modal) modal.style.display = 'flex';
     };
 
+    window.showVipRequiredModal = function() {
+      const modal = document.getElementById('vipRequiredModal');
+      if (modal) modal.style.display = 'flex';
+    };
+
     window.showOddsModal = function() {
       const modal = document.getElementById('oddsInfoModal');
       if (modal) modal.style.display = 'flex';
@@ -1564,12 +1591,12 @@
       }
     }
 
-    function doSpin() {
+    async function doSpin() {
       if (!window.currentUser) {
         showLoginRequiredModal('สุ่มโค้ดส่วนลด');
         return;
       }
-      if (typeof window.MK_PICK_PRIZE !== 'function' || !window.MK_PRIZES || !window.MK_PRIZES.length) {
+      if (typeof window.MK_PICK_PRIZE !== 'function' || !window.MK_PRIZES || !window.MK_PRIZES.length || typeof window.checkVipStatus !== 'function') {
         showToast('⚠️ ระบบของรางวัลยังไม่พร้อม กรุณาลองใหม่อีกครั้งในอีกสักครู่');
         return;
       }
@@ -1577,7 +1604,18 @@
       const giftBox = document.getElementById('giftBox');
       if (spinBtn.disabled) return;
 
+      // Re-check VIP status fresh from Firestore right before spinning
+      // (rather than trusting the cached value from login time) so an
+      // admin revoking/granting VIP takes effect without a page reload.
       spinBtn.disabled = true;
+      const isVip = await window.checkVipStatus(window.currentUser.uid);
+      window.currentUserIsVip = isVip;
+      if (!isVip) {
+        spinBtn.disabled = false;
+        showVipRequiredModal();
+        return;
+      }
+
       spinBtn.innerHTML = '<i class="ph ph-spinner-gap"></i> <span>กำลังลุ้นรางวัล...</span>';
 
       giftBox.classList.remove('floating', 'shaking', 'popping');
@@ -1861,7 +1899,7 @@
 
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
-    import { auth, db, collection, getDocs, doc, query, orderBy, onAuthStateChanged, runTransaction } from "./js/firebase-config.js";
+    import { auth, db, collection, getDocs, getDoc, doc, query, orderBy, onAuthStateChanged, runTransaction } from "./js/firebase-config.js";
 
     function getCartKey() {
       return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
@@ -1895,11 +1933,33 @@
     }
 
     window.currentUser = null;
+    window.currentUserIsVip = false;
+
+    // Looks up whether the given uid is in the admin-maintained `vipUsers`
+    // allowlist. Client-side only gates the UI/UX (disabling the button,
+    // showing the "VIP only" modal) — the real enforcement lives in
+    // firestore.rules, which independently requires VIP membership before
+    // it will let a spin decrement a limited-stock prize's quantity.
+    async function checkVipStatus(uid) {
+      try {
+        const snap = await getDoc(doc(db, 'vipUsers', uid));
+        return snap.exists();
+      } catch (err) {
+        console.warn('Error checking VIP status:', err);
+        return false;
+      }
+    }
+    window.checkVipStatus = checkVipStatus;
+
     onAuthStateChanged(auth, user => {
       window.currentUser = user;
+      window.currentUserIsVip = false;
       if (user) {
         migrateGuestCartToUser(user.uid);
         migrateGuestCodesToUser(user.uid);
+        checkVipStatus(user.uid).then(isVip => {
+          window.currentUserIsVip = isVip;
+        });
       }
       updateCartBadge();
       if (typeof window.restoreState === 'function') {
@@ -2003,7 +2063,7 @@
       const totalWeight = active.reduce((s, p) => s + (Number(p.weight) || 0), 0);
 
       if (!active.length) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
         return;
       }
 
@@ -2011,13 +2071,19 @@
         const weight = Number(p.weight) || 0;
         const pct = totalWeight > 0 ? (weight / totalWeight) * 100 : 0;
         const pctTxt = pct < 1 ? pct.toFixed(3) : pct.toFixed(2);
-        const soldOut = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
         const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
         const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
         const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
+        const hasQty = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && p.remainingQuantity !== '');
+        const qtyTxt = hasQty
+          ? (Number(p.remainingQuantity) > 0
+              ? `${Number(p.remainingQuantity).toLocaleString()} ชิ้น`
+              : '<span style="color:#EF4444;font-weight:700;">หมดแล้ว</span>')
+          : 'ไม่จำกัด';
         return `<tr>
-          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}${soldOut ? ' <span style="color:#EF4444;font-size:10px;">(หมดแล้ว)</span>' : ''}</td>
+          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}</td>
           <td class="odds-value">${pctTxt}%</td>
+          <td>${qtyTxt}</td>
           <td>${minTxt}</td>
         </tr>`;
       }).join('');
