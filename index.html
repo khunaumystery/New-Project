@@ -2016,7 +2016,7 @@
         const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
         const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
         return `<tr>
-          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}${soldOut ? ' <span style="color:#EF4444;font-size:10px;">(หมดแล้ว)</span>' : ''}</td>
+          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}</td>
           <td class="odds-value">${pctTxt}%</td>
           <td>${minTxt}</td>
         </tr>`;
