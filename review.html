@@ -572,6 +572,21 @@
         const items = order.items || [];
         const reviewed = reviewedOrderIds.has(order._id);
         const firstImage = (items[0] && items[0].image) || '';
+
+        // Reviewing is only allowed once the customer has confirmed
+        // receiving the order (order.status === 'received', set from
+        // tracking.html's "ยืนยันว่าได้รับสินค้าแล้ว" button). Orders that
+        // are still pending/paid/shipped show a disabled "waiting" state
+        // instead of the review button.
+        let actionBtn;
+        if (reviewed) {
+          actionBtn = `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`;
+        } else if (order.status === 'received') {
+          actionBtn = `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}')">เขียนรีวิว</button>`;
+        } else {
+          actionBtn = `<button type="button" class="btn-review done" disabled title="ต้องกดยืนยันรับสินค้าที่หน้าเลขพัสดุก่อน จึงจะรีวิวได้"><i class="ph ph-hourglass-medium"></i> รอรับสินค้า</button>`;
+        }
+
         return `
           <div class="item-row">
             <img class="item-img" src="${escapeHtml(firstImage)}" alt="" onerror="this.style.visibility='hidden'">
@@ -579,9 +594,7 @@
               <div class="item-name">${escapeHtml(itemsSummaryText(items))}</div>
               <div class="item-date">ออเดอร์ ${escapeHtml(order.orderId || order._id)} · ซื้อเมื่อ ${formatDateDMY(order.createdAt)}</div>
             </div>
-            ${reviewed
-              ? `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`
-              : `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}')">เขียนรีวิว</button>`}
+            ${actionBtn}
           </div>
         `;
       }).join('');
@@ -668,6 +681,10 @@
     window.openReviewModal = function (orderId) {
       const order = myOrders.find(o => o._id === orderId);
       if (!order) return;
+      if (order.status !== 'received') {
+        showToast('⚠️ ต้องกดยืนยันรับสินค้าที่หน้าเลขพัสดุก่อน จึงจะรีวิวได้');
+        return;
+      }
 
       const items = (order.items || []).map(i => ({
         id: i.id || '',
