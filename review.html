@@ -337,9 +337,6 @@
     import {
       getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, where
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-    import {
-      getStorage, ref, uploadBytes, getDownloadURL, deleteObject
-    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -352,7 +349,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     const reviewableContent = document.getElementById('reviewableContent');
     const myReviewsContent = document.getElementById('myReviewsContent');
@@ -364,12 +360,13 @@
     let myReviews = [];
     let reviewedKeys = new Set(); // `${orderId}::${productId}`
     let pendingItem = null;       // { orderId, productId, productName, productImage, purchaseDate }
-    let pendingPhotos = [];       // [{ blob, previewUrl }]
+    let pendingPhotos = [];       // [dataUrl, dataUrl, ...] — compressed base64 JPEGs
 
     const MAX_IMAGES = 4;
     const MAX_RAW_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per raw file before we even try to process it
-    const IMG_MAX_DIMENSION = 1280;
-    const IMG_TARGET_BYTES = 350 * 1024; // aim to land under ~350KB per compressed photo
+    const IMG_MAX_DIMENSION = 900;
+    const IMG_TARGET_DATAURL_LENGTH = 160000; // ~120KB binary per photo once base64-encoded, so 4 photos + text stay well under Firestore's 1MB document limit
+    const TOTAL_BUDGET_DATAURL_LENGTH = 900000; // hard ceiling across all photos in one review
 
     function showToast(msg) {
       toastText.textContent = msg;
@@ -397,8 +394,8 @@
 
     // ---- Client-side photo compression (same resize+quality-step pattern
     // used for the profile avatar in login.html) so a customer's raw phone
-    // photo (often 3-8MB) turns into a small JPEG before it ever leaves
-    // the browser. Keeps Storage usage and upload time low. ----
+    // photo (often 3-8MB) turns into a small base64 JPEG before it's saved
+    // directly on the review document — no Firebase Storage needed. ----
     function compressImageFile(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -415,19 +412,13 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
 
-            let quality = 0.8;
-            const attempt = () => {
-              canvas.toBlob((blob) => {
-                if (!blob) { reject(new Error('compress-failed')); return; }
-                if (blob.size > IMG_TARGET_BYTES && quality > 0.35) {
-                  quality -= 0.1;
-                  attempt();
-                } else {
-                  resolve(blob);
-                }
-              }, 'image/jpeg', quality);
-            };
-            attempt();
+            let quality = 0.75;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while (dataUrl.length > IMG_TARGET_DATAURL_LENGTH && quality > 0.3) {
+              quality -= 0.1;
+              dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            resolve(dataUrl);
           };
           img.onerror = () => reject(new Error('image-load-failed'));
           img.src = e.target.result;
@@ -459,8 +450,13 @@
           continue;
         }
         try {
-          const blob = await compressImageFile(file);
-          pendingPhotos.push({ blob, previewUrl: URL.createObjectURL(blob) });
+          const dataUrl = await compressImageFile(file);
+          const totalSoFar = pendingPhotos.reduce((s, d) => s + d.length, 0);
+          if (totalSoFar + dataUrl.length > TOTAL_BUDGET_DATAURL_LENGTH) {
+            showToast('⚠️ รูปรวมกันใหญ่เกินไป กรุณาลบบางรูปออกก่อนเพิ่ม');
+            continue;
+          }
+          pendingPhotos.push(dataUrl);
         } catch (err) {
           console.warn('compress error', err);
           showToast('❌ ไม่สามารถประมวลผลรูปนี้ได้');
@@ -470,17 +466,15 @@
     };
 
     window.removePendingImage = function (index) {
-      const item = pendingPhotos[index];
-      if (item) URL.revokeObjectURL(item.previewUrl);
       pendingPhotos.splice(index, 1);
       renderPhotoGrid();
     };
 
     function renderPhotoGrid() {
       const grid = document.getElementById('photoGrid');
-      const thumbs = pendingPhotos.map((p, i) => `
+      const thumbs = pendingPhotos.map((dataUrl, i) => `
         <div class="photo-thumb">
-          <img src="${p.previewUrl}" alt="">
+          <img src="${dataUrl}" alt="">
           <div class="remove-photo" onclick="removePendingImage(${i})"><i class="ph ph-x"></i></div>
         </div>
       `).join('');
@@ -491,6 +485,7 @@
         </label>` : '';
       grid.innerHTML = thumbs + addBtn;
     }
+
 
     window.updateCharCount = function () {
       const val = document.getElementById('reviewTextInput').value;
@@ -593,7 +588,6 @@
         productImage: item.image || '',
         purchaseDate: formatDateDMY(order.createdAt),
       };
-      pendingPhotos.forEach(p => URL.revokeObjectURL(p.previewUrl));
       pendingPhotos = [];
 
       document.getElementById('modalProductImg').src = pendingItem.productImage;
@@ -624,17 +618,6 @@
 
       try {
         const reviewRef = doc(collection(db, 'reviews'));
-        const imageUrls = [];
-        const imagePaths = [];
-
-        for (let i = 0; i < pendingPhotos.length; i++) {
-          const path = `reviews/${currentUser.uid}/${reviewRef.id}/${i}.jpg`;
-          const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, pendingPhotos[i].blob, { contentType: 'image/jpeg' });
-          const url = await getDownloadURL(storageRef);
-          imageUrls.push(url);
-          imagePaths.push(path);
-        }
 
         await setDoc(reviewRef, {
           userId: currentUser.uid,
@@ -645,8 +628,7 @@
           productImage: pendingItem.productImage,
           purchaseDate: pendingItem.purchaseDate,
           reviewText: text,
-          images: imageUrls,
-          imagePaths: imagePaths,
+          images: pendingPhotos,
           createdAt: new Date().toISOString(),
         });
 
@@ -664,14 +646,8 @@
 
     window.deleteReview = async function (reviewId) {
       if (!confirm('ต้องการลบรีวิวนี้หรือไม่?')) return;
-      const review = myReviews.find(r => r._id === reviewId);
       try {
         await deleteDoc(doc(db, 'reviews', reviewId));
-        if (review && review.imagePaths && review.imagePaths.length) {
-          await Promise.all(review.imagePaths.map(p =>
-            deleteObject(ref(storage, p)).catch(() => { /* ignore missing file */ })
-          ));
-        }
         showToast('🗑️ ลบรีวิวแล้ว');
         await refreshAll(currentUser);
       } catch (err) {
