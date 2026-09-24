@@ -198,6 +198,10 @@
     .locked-field-name { font-size: 13px; font-weight: 600; color: var(--text); }
     .locked-field-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
+    #modalItemsList { max-height: 160px; overflow-y: auto; margin-bottom: 14px; }
+    #modalItemsList .locked-field { margin-bottom: 8px; }
+    #modalItemsList .locked-field:last-child { margin-bottom: 14px; }
+
     .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
     textarea.review-textarea {
       width: 100%; min-height: 92px; padding: 11px 12px;
@@ -289,7 +293,7 @@
     </section>
 
     <section class="panel">
-      <div class="panel-title"><i class="ph ph-package"></i> สินค้าที่รอรีวิว</div>
+      <div class="panel-title"><i class="ph ph-package"></i> ออเดอร์ที่รอรีวิว</div>
       <div id="reviewableContent">
         <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
       </div>
@@ -312,16 +316,10 @@
   <!-- Modal: Write Review -->
   <div class="modal-overlay" id="reviewModal" onclick="if(event.target===this) closeReviewModal();">
     <div class="modal-box">
-      <div class="modal-title">เขียนรีวิวสินค้า</div>
-      <div class="modal-sub">แชร์ความประทับใจของคุณให้ลูกค้าคนอื่นเห็น</div>
+      <div class="modal-title">เขียนรีวิวออเดอร์นี้</div>
+      <div class="modal-sub" id="modalPurchaseDate">แชร์ความประทับใจของคุณให้ลูกค้าคนอื่นเห็น</div>
 
-      <div class="locked-field">
-        <img id="modalProductImg" src="" alt="">
-        <div>
-          <div class="locked-field-name" id="modalProductName">-</div>
-          <div class="locked-field-date" id="modalPurchaseDate">-</div>
-        </div>
-      </div>
+      <div id="modalItemsList"></div>
 
       <label class="form-label">ความคิดเห็นของคุณ</label>
       <textarea class="review-textarea" id="reviewTextInput" maxlength="500" placeholder="เช่น ได้ของแล้ว ของจริงสวยมากครับ..." oninput="updateCharCount()"></textarea>
@@ -354,7 +352,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
-      getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, where, orderBy, limit
+      getFirestore, collection, getDocs, getDoc, doc, setDoc, deleteDoc, query, where, orderBy, limit
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -379,9 +377,30 @@
     let currentUser = null;
     let myOrders = [];
     let myReviews = [];
-    let reviewedKeys = new Set(); // `${orderId}::${productId}`
-    let pendingItem = null;       // { orderId, productId, productName, productImage, purchaseDate }
-    let pendingPhotos = [];       // [dataUrl, dataUrl, ...] — compressed base64 JPEGs
+    let reviewedOrderIds = new Set(); // orderIds the current user already reviewed (1 order = 1 review)
+    let pendingOrder = null;          // { orderId, items: [{id,name,image}], purchaseDate }
+    let pendingPhotos = [];           // [dataUrl, dataUrl, ...] — compressed base64 JPEGs
+
+    // Cache of resolved "current" display names, keyed by userId, so a
+    // review always shows the reviewer's latest name from login.html
+    // (Firestore users/{uid}.displayName) instead of a frozen snapshot
+    // taken at submit time. Falls back to the snapshot if unavailable.
+    const userNameCache = new Map();
+    async function resolveUserName(userId, fallbackName) {
+      const fallback = fallbackName || 'ลูกค้า KHUN AU';
+      if (!userId) return fallback;
+      if (userNameCache.has(userId)) return userNameCache.get(userId) || fallback;
+      try {
+        const snap = await getDoc(doc(db, 'users', userId));
+        const name = (snap.exists() && snap.data().displayName) ? snap.data().displayName : null;
+        userNameCache.set(userId, name);
+        return name || fallback;
+      } catch (err) {
+        console.warn('resolveUserName error:', err);
+        userNameCache.set(userId, null);
+        return fallback;
+      }
+    }
 
     const MAX_IMAGES = 2;
     const MAX_RAW_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per raw file before we even try to process it
@@ -532,36 +551,40 @@
       myReviews = snap.docs
         .map(d => ({ _id: d.id, ...d.data() }))
         .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-      reviewedKeys = new Set(myReviews.map(r => `${r.orderId}::${r.productId}`));
+      // 1 order = 1 review: keyed purely by orderId (the review doc's own
+      // ID is always set to its orderId — see submitReview).
+      reviewedOrderIds = new Set(myReviews.map(r => r.orderId || r._id));
     }
 
-    function renderReviewable() {
-      const rows = [];
-      myOrders.forEach(order => {
-        (order.items || []).forEach(item => {
-          if (!item.id) return;
-          const key = `${order._id}::${item.id}`;
-          const reviewed = reviewedKeys.has(key);
-          rows.push(`
-            <div class="item-row">
-              <img class="item-img" src="${escapeHtml(item.image || '')}" alt="" onerror="this.style.visibility='hidden'">
-              <div class="item-info">
-                <div class="item-name">${escapeHtml(item.name || 'สินค้า')}</div>
-                <div class="item-date">ซื้อเมื่อ ${formatDateDMY(order.createdAt)}</div>
-              </div>
-              ${reviewed
-                ? `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`
-                : `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}','${item.id}')">เขียนรีวิว</button>`}
-            </div>
-          `);
-        });
-      });
+    function itemsSummaryText(items) {
+      const names = (items || []).map(i => i.name).filter(Boolean);
+      return names.length ? names.join(', ') : 'สินค้า';
+    }
 
-      if (!rows.length) {
-        reviewableContent.innerHTML = `<div class="empty"><i class="ph ph-package"></i>ยังไม่พบคำสั่งซื้อของคุณ<br><small>สินค้าที่คุณซื้อจะมาแสดงที่นี่เพื่อให้รีวิวได้</small></div>`;
+    // One row per ORDER (not per product) — an order can hold several
+    // products, but the whole order only ever gets a single review.
+    function renderReviewable() {
+      if (!myOrders.length) {
+        reviewableContent.innerHTML = `<div class="empty"><i class="ph ph-package"></i>ยังไม่พบคำสั่งซื้อของคุณ<br><small>คำสั่งซื้อของคุณจะมาแสดงที่นี่เพื่อให้รีวิวได้</small></div>`;
         return;
       }
-      reviewableContent.innerHTML = rows.join('');
+      reviewableContent.innerHTML = myOrders.map(order => {
+        const items = order.items || [];
+        const reviewed = reviewedOrderIds.has(order._id);
+        const firstImage = (items[0] && items[0].image) || '';
+        return `
+          <div class="item-row">
+            <img class="item-img" src="${escapeHtml(firstImage)}" alt="" onerror="this.style.visibility='hidden'">
+            <div class="item-info">
+              <div class="item-name">${escapeHtml(itemsSummaryText(items))}</div>
+              <div class="item-date">ออเดอร์ ${escapeHtml(order.orderId || order._id)} · ซื้อเมื่อ ${formatDateDMY(order.createdAt)}</div>
+            </div>
+            ${reviewed
+              ? `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`
+              : `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}')">เขียนรีวิว</button>`}
+          </div>
+        `;
+      }).join('');
     }
 
     function renderMyReviews() {
@@ -573,8 +596,8 @@
         <div class="review-card">
           <div class="review-head">
             <div>
-              <div class="review-product">${escapeHtml(r.productName || 'สินค้า')}</div>
-              <div class="review-date">ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div>
+              <div class="review-product">${escapeHtml(itemsSummaryText(r.items))}</div>
+              <div class="review-date">ออเดอร์ ${escapeHtml(r.orderId || '-')} · ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div>
             </div>
             <button type="button" class="btn-delete-review" onclick="deleteReview('${r._id}')" aria-label="ลบรีวิว"><i class="ph ph-trash"></i></button>
           </div>
@@ -590,6 +613,11 @@
         const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(50));
         const snap = await getDocs(q);
         allReviews = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+        // Resolve each reviewer's CURRENT display name (from login.html /
+        // Firestore users/{uid}) instead of the name stored on the review
+        // at submit time, so a later name change is reflected everywhere.
+        const uniqueUserIds = [...new Set(allReviews.map(r => r.userId).filter(Boolean))];
+        await Promise.all(uniqueUserIds.map(uid => resolveUserName(uid)));
         renderAllReviews();
       } catch (err) {
         console.error('Load all reviews error:', err);
@@ -603,7 +631,7 @@
         return;
       }
       allReviewsContent.innerHTML = allReviews.map(r => {
-        const name = r.userName || 'ลูกค้า KHUN AU';
+        const name = (r.userId && userNameCache.get(r.userId)) || r.userName || 'ลูกค้า KHUN AU';
         const initial = escapeHtml(name.trim().charAt(0).toUpperCase() || 'K');
         const photos = (r.images && r.images.length)
           ? `<div class="review-photos">${r.images.slice(0, 2).map(u => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
@@ -613,7 +641,7 @@
               <div class="public-review-avatar">${initial}</div>
               <div style="min-width:0;">
                 <div class="public-review-name">${escapeHtml(name)}</div>
-                <div class="public-review-product">${escapeHtml(r.productName || 'สินค้า')}</div>
+                <div class="public-review-product">${escapeHtml(itemsSummaryText(r.items))}</div>
               </div>
             </div>
             <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
@@ -637,23 +665,30 @@
     }
 
     // ---- Modal open/close ----
-    window.openReviewModal = function (orderId, productId) {
+    window.openReviewModal = function (orderId) {
       const order = myOrders.find(o => o._id === orderId);
-      const item = order && (order.items || []).find(i => i.id === productId);
-      if (!order || !item) return;
+      if (!order) return;
 
-      pendingItem = {
+      const items = (order.items || []).map(i => ({
+        id: i.id || '',
+        name: i.name || 'สินค้า',
+        image: i.image || '',
+      }));
+
+      pendingOrder = {
         orderId,
-        productId,
-        productName: item.name || 'สินค้า',
-        productImage: item.image || '',
+        items,
         purchaseDate: formatDateDMY(order.createdAt),
       };
       pendingPhotos = [];
 
-      document.getElementById('modalProductImg').src = pendingItem.productImage;
-      document.getElementById('modalProductName').textContent = pendingItem.productName;
-      document.getElementById('modalPurchaseDate').textContent = `ซื้อเมื่อ ${pendingItem.purchaseDate}`;
+      document.getElementById('modalItemsList').innerHTML = items.map(it => `
+        <div class="locked-field">
+          <img src="${escapeHtml(it.image)}" alt="" onerror="this.style.visibility='hidden'">
+          <div class="locked-field-name">${escapeHtml(it.name)}</div>
+        </div>
+      `).join('') || `<div class="locked-field"><div class="locked-field-name">สินค้าในออเดอร์นี้</div></div>`;
+      document.getElementById('modalPurchaseDate').textContent = `ออเดอร์ ${order.orderId || order._id} · ซื้อเมื่อ ${pendingOrder.purchaseDate}`;
       document.getElementById('reviewTextInput').value = '';
       updateCharCount();
       renderPhotoGrid();
@@ -666,7 +701,7 @@
     };
 
     window.submitReview = async function () {
-      if (!currentUser || !pendingItem) return;
+      if (!currentUser || !pendingOrder) return;
       const text = document.getElementById('reviewTextInput').value.trim();
       if (!text) {
         showToast('⚠️ กรุณาใส่ความคิดเห็นของคุณ');
@@ -678,16 +713,18 @@
       btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> กำลังส่ง...';
 
       try {
-        const reviewRef = doc(collection(db, 'reviews'));
+        // The review document's ID is always the orderId itself — this is
+        // what enforces "1 order = 1 review" at the database level (see
+        // firestore.rules): a second submission for the same order can
+        // only overwrite this same doc, never create a separate one.
+        const reviewRef = doc(db, 'reviews', pendingOrder.orderId);
 
         await setDoc(reviewRef, {
           userId: currentUser.uid,
           userName: currentUser.displayName || 'ลูกค้า KHUN AU',
-          orderId: pendingItem.orderId,
-          productId: pendingItem.productId,
-          productName: pendingItem.productName,
-          productImage: pendingItem.productImage,
-          purchaseDate: pendingItem.purchaseDate,
+          orderId: pendingOrder.orderId,
+          items: pendingOrder.items,
+          purchaseDate: pendingOrder.purchaseDate,
           reviewText: text,
           images: pendingPhotos,
           createdAt: new Date().toISOString(),

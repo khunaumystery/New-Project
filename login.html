@@ -962,6 +962,19 @@
         showToast('กำลังบันทึกชื่อ...');
         await updateProfile(auth.currentUser, { displayName: newName });
 
+        // Keep a public-readable copy of the name in Firestore too, so
+        // other pages (e.g. review.html) that show this customer's name
+        // to OTHER users — who can't read Firebase Auth profiles — always
+        // reflect the latest name set here, instead of a stale snapshot.
+        try {
+          await setDoc(doc(db, 'users', auth.currentUser.uid), {
+            displayName: newName,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (syncErr) {
+          console.warn('Sync displayName to Firestore error:', syncErr);
+        }
+
         // Reflect the change immediately in the UI
         const profileNameEl = document.getElementById('profileName');
         const heroSubtitleEl = document.getElementById('heroSubtitle');
@@ -1210,6 +1223,15 @@
           document.getElementById('profileImg').src = user.photoURL;
         }
         loadCustomAvatar(user.uid);
+
+        // Keep the public-readable name copy in sync on every login too
+        // (not just on explicit rename), so it's populated even for
+        // customers who never open the edit-name modal.
+        const nameForSync = user.displayName || (user.email ? user.email.split('@')[0] : 'ลูกค้า KHUN AU');
+        setDoc(doc(db, 'users', user.uid), {
+          displayName: nameForSync,
+          updatedAt: new Date().toISOString()
+        }, { merge: true }).catch((e) => console.warn('Sync displayName to Firestore error:', e));
 
         updateProfileStats(user.uid);
       } else {
