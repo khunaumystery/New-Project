@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รีวิวสินค้า | KHUN AU Mystery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --red: #D3222A;
+      --red-dark: #A51A20;
+      --gold: #F5C842;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --bg: #F8F9FA;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      padding: 76px 16px 32px;
+      background: radial-gradient(ellipse at top, #3A1115 0%, #170609 58%, #0A0203 100%);
+      color: var(--text);
+      font-family: 'Prompt', sans-serif;
+    }
+
+    .top-nav {
+      position: fixed;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text);
+      font-size: 20px;
+      text-decoration: none;
+    }
+
+    .nav-title { font-size: 16px; font-weight: 700; }
+    .nav-spacer { width: 40px; }
+
+    .container { width: 100%; max-width: 620px; margin: 0 auto; }
+
+    .hero { padding: 18px 8px 22px; color: white; text-align: center; }
+    .hero-icon {
+      width: 64px; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      border: 2px solid rgba(245,200,66,.7);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #4A171B, #21080A);
+      color: var(--gold);
+      font-size: 32px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.3);
+    }
+    .hero h1 { font-size: 24px; font-weight: 800; }
+    .hero p { margin-top: 4px; color: #E8C9CB; font-size: 13px; }
+
+    .panel {
+      padding: 18px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 12px 36px rgba(0,0,0,.3);
+    }
+
+    .panel-title {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
+      font-size: 14.5px; font-weight: 700; color: var(--text);
+    }
+    .panel-title i { color: var(--red); font-size: 18px; }
+
+    .loading, .empty, .error, .login-needed {
+      padding: 30px 14px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13.5px;
+    }
+    .loading i, .empty i, .error i, .login-needed i {
+      display: block; margin-bottom: 8px; font-size: 32px;
+    }
+    .error { color: #B91C1C; }
+    .login-needed a {
+      display: inline-block; margin-top: 14px; padding: 10px 18px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; font-weight: 700; text-decoration: none;
+    }
+
+    .item-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-img {
+      width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: 10px; object-fit: cover;
+      background: #F3F4F6;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name {
+      font-size: 13.5px; font-weight: 600; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .item-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .btn-review {
+      flex-shrink: 0;
+      padding: 8px 13px;
+      border: none; border-radius: 10px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; font-weight: 700; font-size: 12px;
+      font-family: inherit; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-review.done {
+      background: #F3F4F6; color: #9CA3AF; cursor: default;
+    }
+
+    .review-card {
+      padding: 13px 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .review-card:last-child { border-bottom: none; }
+    .review-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .review-product { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .review-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .btn-delete-review {
+      flex-shrink: 0;
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      border: none; border-radius: 8px;
+      background: #FEF2F2; color: #B91C1C;
+      cursor: pointer; font-size: 14px;
+    }
+    .review-text {
+      margin-top: 7px; font-size: 13px; color: #374151; line-height: 1.55;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .review-photos { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+    .review-photos img {
+      width: 66px; height: 66px; border-radius: 10px; object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0,0,0,.75);
+      display: none; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-box {
+      width: 100%; max-width: 400px;
+      max-height: 88vh; overflow-y: auto;
+      background: #FFFFFF; border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .modal-title { font-size: 16.5px; font-weight: 700; color: #1F2937; margin-bottom: 3px; }
+    .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+    .locked-field {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; margin-bottom: 14px;
+      background: #F9FAFB; border: 1px solid var(--border); border-radius: 12px;
+    }
+    .locked-field img {
+      width: 38px; height: 38px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
+    }
+    .locked-field-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .locked-field-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    textarea.review-textarea {
+      width: 100%; min-height: 92px; padding: 11px 12px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-family: inherit; font-size: 13.5px; color: var(--text);
+      resize: vertical;
+    }
+    textarea.review-textarea:focus { outline: none; border-color: var(--red); }
+    .char-count { text-align: right; font-size: 11px; color: #9CA3AF; margin-top: 4px; }
+
+    .photo-upload-zone { margin-top: 14px; }
+    .photo-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 9px; }
+    .photo-thumb { position: relative; width: 64px; height: 64px; }
+    .photo-thumb img {
+      width: 100%; height: 100%; border-radius: 10px; object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .photo-thumb .remove-photo {
+      position: absolute; top: -6px; right: -6px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--red); color: white; border: 2px solid white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; cursor: pointer;
+    }
+    .add-photo-btn {
+      width: 64px; height: 64px; border-radius: 10px;
+      border: 1.5px dashed #D1D5DB; background: #FAFAFA;
+      color: #9CA3AF; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .photo-hint { margin-top: 7px; font-size: 10.5px; color: #9CA3AF; }
+
+    .modal-btn-row { display: flex; gap: 8px; margin-top: 18px; }
+    .btn-submit-review {
+      flex: 1; padding: 12px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; font-weight: 700; font-size: 13.5px;
+      font-family: inherit; cursor: pointer;
+    }
+    .btn-submit-review:disabled { opacity: .6; cursor: default; }
+    .btn-cancel-review {
+      padding: 12px 16px; border: none; border-radius: 12px;
+      background: #F3F4F6; color: var(--muted);
+      font-weight: 600; font-size: 13.5px; font-family: inherit; cursor: pointer;
+    }
+
+    .toast-msg {
+      position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+      display: flex; align-items: center; gap: 8px;
+      padding: 11px 18px; border-radius: 12px;
+      background: #1F2937; color: white; font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+      opacity: 0; pointer-events: none; transition: all .25s ease;
+      z-index: 4000; max-width: 86vw;
+    }
+    .toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 430px) {
+      .panel { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <a href="login.html" class="back-btn" aria-label="กลับหน้าโปรไฟล์"><i class="ph ph-arrow-left"></i></a>
+    <span class="nav-title">รีวิวสินค้า</span>
+    <div class="nav-spacer"></div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-icon"><i class="ph ph-star"></i></div>
+      <h1>รีวิวสินค้า</h1>
+      <p>แบ่งปันประสบการณ์การซื้อของคุณให้ลูกค้าคนอื่นเห็น</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><i class="ph ph-package"></i> สินค้าที่รอรีวิว</div>
+      <div id="reviewableContent">
+        <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><i class="ph ph-chat-centered-text"></i> รีวิวของฉัน</div>
+      <div id="myReviewsContent">
+        <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal: Write Review -->
+  <div class="modal-overlay" id="reviewModal" onclick="if(event.target===this) closeReviewModal();">
+    <div class="modal-box">
+      <div class="modal-title">เขียนรีวิวสินค้า</div>
+      <div class="modal-sub">แชร์ความประทับใจของคุณให้ลูกค้าคนอื่นเห็น</div>
+
+      <div class="locked-field">
+        <img id="modalProductImg" src="" alt="">
+        <div>
+          <div class="locked-field-name" id="modalProductName">-</div>
+          <div class="locked-field-date" id="modalPurchaseDate">-</div>
+        </div>
+      </div>
+
+      <label class="form-label">ความคิดเห็นของคุณ</label>
+      <textarea class="review-textarea" id="reviewTextInput" maxlength="500" placeholder="เช่น ได้ของแล้ว ของจริงสวยมากครับ..." oninput="updateCharCount()"></textarea>
+      <div class="char-count"><span id="charCountVal">0</span>/500</div>
+
+      <div class="photo-upload-zone">
+        <label class="form-label">รูปภาพ (ไม่บังคับ)</label>
+        <div class="photo-grid" id="photoGrid">
+          <label class="add-photo-btn" id="addPhotoBtn">
+            <i class="ph ph-camera-plus"></i>
+            <input type="file" accept="image/*" multiple style="display:none;" onchange="handleReviewFilesChange(event)">
+          </label>
+        </div>
+        <div class="photo-hint">สูงสุด 4 รูป · ระบบจะบีบอัดรูปให้อัตโนมัติ</div>
+      </div>
+
+      <div class="modal-btn-row">
+        <button type="button" class="btn-cancel-review" onclick="closeReviewModal()">ยกเลิก</button>
+        <button type="button" class="btn-submit-review" id="btnSubmitReview" onclick="submitReview()">
+          <i class="ph ph-paper-plane-tilt"></i> ส่งรีวิว
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-msg" id="toastMsg"><span id="toastText"></span></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
+      authDomain: "khunaumystery-f0b63.firebaseapp.com",
+      projectId: "khunaumystery-f0b63",
+      storageBucket: "khunaumystery-f0b63.firebasestorage.app",
+      messagingSenderId: "508588235711",
+      appId: "1:508588235711:web:0455a68bbb795c46d95f0a",
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const reviewableContent = document.getElementById('reviewableContent');
+    const myReviewsContent = document.getElementById('myReviewsContent');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastText = document.getElementById('toastText');
+
+    let currentUser = null;
+    let myOrders = [];
+    let myReviews = [];
+    let reviewedKeys = new Set(); // `${orderId}::${productId}`
+    let pendingItem = null;       // { orderId, productId, productName, productImage, purchaseDate }
+    let pendingPhotos = [];       // [{ blob, previewUrl }]
+
+    const MAX_IMAGES = 4;
+    const MAX_RAW_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per raw file before we even try to process it
+    const IMG_MAX_DIMENSION = 1280;
+    const IMG_TARGET_BYTES = 350 * 1024; // aim to land under ~350KB per compressed photo
+
+    function showToast(msg) {
+      toastText.textContent = msg;
+      toastMsg.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastMsg.classList.remove('show'), 2600);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Purchase date is stored/rendered as DD/MM/YYYY (Gregorian) to match
+    // how KhunAu writes dates elsewhere in the store.
+    function formatDateDMY(isoOrDate) {
+      if (!isoOrDate) return '-';
+      const d = new Date(isoOrDate);
+      if (Number.isNaN(d.getTime())) return '-';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${d.getFullYear()}`;
+    }
+
+    // ---- Client-side photo compression (same resize+quality-step pattern
+    // used for the profile avatar in login.html) so a customer's raw phone
+    // photo (often 3-8MB) turns into a small JPEG before it ever leaves
+    // the browser. Keeps Storage usage and upload time low. ----
+    function compressImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > IMG_MAX_DIMENSION || h > IMG_MAX_DIMENSION) {
+              if (w > h) { h = Math.round((h * IMG_MAX_DIMENSION) / w); w = IMG_MAX_DIMENSION; }
+              else { w = Math.round((w * IMG_MAX_DIMENSION) / h); h = IMG_MAX_DIMENSION; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            let quality = 0.8;
+            const attempt = () => {
+              canvas.toBlob((blob) => {
+                if (!blob) { reject(new Error('compress-failed')); return; }
+                if (blob.size > IMG_TARGET_BYTES && quality > 0.35) {
+                  quality -= 0.1;
+                  attempt();
+                } else {
+                  resolve(blob);
+                }
+              }, 'image/jpeg', quality);
+            };
+            attempt();
+          };
+          img.onerror = () => reject(new Error('image-load-failed'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('read-failed'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.handleReviewFilesChange = async function (event) {
+      const input = event.target;
+      const files = Array.from(input.files || []);
+      input.value = '';
+      if (!files.length) return;
+
+      const remainingSlots = MAX_IMAGES - pendingPhotos.length;
+      if (remainingSlots <= 0) {
+        showToast('⚠️ อัปโหลดได้สูงสุด 4 รูป');
+        return;
+      }
+
+      for (const file of files.slice(0, remainingSlots)) {
+        if (!file.type || !file.type.startsWith('image/')) {
+          showToast('❌ กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+          continue;
+        }
+        if (file.size > MAX_RAW_UPLOAD_BYTES) {
+          showToast('⚠️ ไฟล์รูปใหญ่เกินไป (สูงสุด 8MB)');
+          continue;
+        }
+        try {
+          const blob = await compressImageFile(file);
+          pendingPhotos.push({ blob, previewUrl: URL.createObjectURL(blob) });
+        } catch (err) {
+          console.warn('compress error', err);
+          showToast('❌ ไม่สามารถประมวลผลรูปนี้ได้');
+        }
+      }
+      renderPhotoGrid();
+    };
+
+    window.removePendingImage = function (index) {
+      const item = pendingPhotos[index];
+      if (item) URL.revokeObjectURL(item.previewUrl);
+      pendingPhotos.splice(index, 1);
+      renderPhotoGrid();
+    };
+
+    function renderPhotoGrid() {
+      const grid = document.getElementById('photoGrid');
+      const thumbs = pendingPhotos.map((p, i) => `
+        <div class="photo-thumb">
+          <img src="${p.previewUrl}" alt="">
+          <div class="remove-photo" onclick="removePendingImage(${i})"><i class="ph ph-x"></i></div>
+        </div>
+      `).join('');
+      const addBtn = pendingPhotos.length < MAX_IMAGES ? `
+        <label class="add-photo-btn" id="addPhotoBtn">
+          <i class="ph ph-camera-plus"></i>
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="handleReviewFilesChange(event)">
+        </label>` : '';
+      grid.innerHTML = thumbs + addBtn;
+    }
+
+    window.updateCharCount = function () {
+      const val = document.getElementById('reviewTextInput').value;
+      document.getElementById('charCountVal').textContent = val.length;
+    };
+
+    // ---- Load this customer's orders + already-submitted reviews ----
+    async function loadMyOrders(user) {
+      const byUid = query(collection(db, 'orders'), where('userId', '==', user.uid));
+      let snap = await getDocs(byUid);
+      if (snap.empty && user.email) {
+        const byEmail = query(collection(db, 'orders'), where('userEmail', '==', user.email));
+        snap = await getDocs(byEmail);
+      }
+      myOrders = snap.docs
+        .map(d => ({ _id: d.id, ...d.data() }))
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
+
+    async function loadMyReviews(user) {
+      const q = query(collection(db, 'reviews'), where('userId', '==', user.uid));
+      const snap = await getDocs(q);
+      myReviews = snap.docs
+        .map(d => ({ _id: d.id, ...d.data() }))
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      reviewedKeys = new Set(myReviews.map(r => `${r.orderId}::${r.productId}`));
+    }
+
+    function renderReviewable() {
+      const rows = [];
+      myOrders.forEach(order => {
+        (order.items || []).forEach(item => {
+          if (!item.id) return;
+          const key = `${order._id}::${item.id}`;
+          const reviewed = reviewedKeys.has(key);
+          rows.push(`
+            <div class="item-row">
+              <img class="item-img" src="${escapeHtml(item.image || '')}" alt="" onerror="this.style.visibility='hidden'">
+              <div class="item-info">
+                <div class="item-name">${escapeHtml(item.name || 'สินค้า')}</div>
+                <div class="item-date">ซื้อเมื่อ ${formatDateDMY(order.createdAt)}</div>
+              </div>
+              ${reviewed
+                ? `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`
+                : `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}','${item.id}')">เขียนรีวิว</button>`}
+            </div>
+          `);
+        });
+      });
+
+      if (!rows.length) {
+        reviewableContent.innerHTML = `<div class="empty"><i class="ph ph-package"></i>ยังไม่พบคำสั่งซื้อของคุณ<br><small>สินค้าที่คุณซื้อจะมาแสดงที่นี่เพื่อให้รีวิวได้</small></div>`;
+        return;
+      }
+      reviewableContent.innerHTML = rows.join('');
+    }
+
+    function renderMyReviews() {
+      if (!myReviews.length) {
+        myReviewsContent.innerHTML = `<div class="empty"><i class="ph ph-chat-centered-text"></i>คุณยังไม่เคยรีวิวสินค้า</div>`;
+        return;
+      }
+      myReviewsContent.innerHTML = myReviews.map(r => `
+        <div class="review-card">
+          <div class="review-head">
+            <div>
+              <div class="review-product">${escapeHtml(r.productName || 'สินค้า')}</div>
+              <div class="review-date">ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div>
+            </div>
+            <button type="button" class="btn-delete-review" onclick="deleteReview('${r._id}')" aria-label="ลบรีวิว"><i class="ph ph-trash"></i></button>
+          </div>
+          <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
+          ${(r.images && r.images.length) ? `<div class="review-photos">${r.images.map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function refreshAll(user) {
+      try {
+        await Promise.all([loadMyOrders(user), loadMyReviews(user)]);
+        renderReviewable();
+        renderMyReviews();
+      } catch (err) {
+        console.error('Load reviews page error:', err);
+        reviewableContent.innerHTML = `<div class="error"><i class="ph ph-warning-circle"></i>โหลดข้อมูลไม่สำเร็จ<br><small>${escapeHtml(err.message)}</small></div>`;
+        myReviewsContent.innerHTML = '';
+      }
+    }
+
+    // ---- Modal open/close ----
+    window.openReviewModal = function (orderId, productId) {
+      const order = myOrders.find(o => o._id === orderId);
+      const item = order && (order.items || []).find(i => i.id === productId);
+      if (!order || !item) return;
+
+      pendingItem = {
+        orderId,
+        productId,
+        productName: item.name || 'สินค้า',
+        productImage: item.image || '',
+        purchaseDate: formatDateDMY(order.createdAt),
+      };
+      pendingPhotos.forEach(p => URL.revokeObjectURL(p.previewUrl));
+      pendingPhotos = [];
+
+      document.getElementById('modalProductImg').src = pendingItem.productImage;
+      document.getElementById('modalProductName').textContent = pendingItem.productName;
+      document.getElementById('modalPurchaseDate').textContent = `ซื้อเมื่อ ${pendingItem.purchaseDate}`;
+      document.getElementById('reviewTextInput').value = '';
+      updateCharCount();
+      renderPhotoGrid();
+
+      document.getElementById('reviewModal').style.display = 'flex';
+    };
+
+    window.closeReviewModal = function () {
+      document.getElementById('reviewModal').style.display = 'none';
+    };
+
+    window.submitReview = async function () {
+      if (!currentUser || !pendingItem) return;
+      const text = document.getElementById('reviewTextInput').value.trim();
+      if (!text) {
+        showToast('⚠️ กรุณาใส่ความคิดเห็นของคุณ');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitReview');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> กำลังส่ง...';
+
+      try {
+        const reviewRef = doc(collection(db, 'reviews'));
+        const imageUrls = [];
+        const imagePaths = [];
+
+        for (let i = 0; i < pendingPhotos.length; i++) {
+          const path = `reviews/${currentUser.uid}/${reviewRef.id}/${i}.jpg`;
+          const storageRef = ref(storage, path);
+          await uploadBytes(storageRef, pendingPhotos[i].blob, { contentType: 'image/jpeg' });
+          const url = await getDownloadURL(storageRef);
+          imageUrls.push(url);
+          imagePaths.push(path);
+        }
+
+        await setDoc(reviewRef, {
+          userId: currentUser.uid,
+          userName: currentUser.displayName || 'ลูกค้า KHUN AU',
+          orderId: pendingItem.orderId,
+          productId: pendingItem.productId,
+          productName: pendingItem.productName,
+          productImage: pendingItem.productImage,
+          purchaseDate: pendingItem.purchaseDate,
+          reviewText: text,
+          images: imageUrls,
+          imagePaths: imagePaths,
+          createdAt: new Date().toISOString(),
+        });
+
+        showToast('✅ ส่งรีวิวเรียบร้อยแล้ว ขอบคุณครับ');
+        closeReviewModal();
+        await refreshAll(currentUser);
+      } catch (err) {
+        console.error('Submit review error:', err);
+        showToast('❌ ส่งรีวิวไม่สำเร็จ: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> ส่งรีวิว';
+      }
+    };
+
+    window.deleteReview = async function (reviewId) {
+      if (!confirm('ต้องการลบรีวิวนี้หรือไม่?')) return;
+      const review = myReviews.find(r => r._id === reviewId);
+      try {
+        await deleteDoc(doc(db, 'reviews', reviewId));
+        if (review && review.imagePaths && review.imagePaths.length) {
+          await Promise.all(review.imagePaths.map(p =>
+            deleteObject(ref(storage, p)).catch(() => { /* ignore missing file */ })
+          ));
+        }
+        showToast('🗑️ ลบรีวิวแล้ว');
+        await refreshAll(currentUser);
+      } catch (err) {
+        console.error('Delete review error:', err);
+        showToast('❌ ลบไม่สำเร็จ: ' + err.message);
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (!user) {
+        reviewableContent.innerHTML = `<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว</div><a href="login.html">เข้าสู่ระบบ</a></div>`;
+        myReviewsContent.innerHTML = '';
+        return;
+      }
+      refreshAll(user);
+    });
+  </script>
+</body>
+</html>
