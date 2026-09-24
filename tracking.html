@@ -184,8 +184,8 @@
       content: '';
       position: absolute;
       top: 13px;
-      left: 13%;
-      right: 13%;
+      left: 12.5%;
+      right: 12.5%;
       height: 3px;
       background: #E5E7EB;
     }
@@ -193,7 +193,7 @@
     .step {
       position: relative;
       z-index: 1;
-      width: 33.33%;
+      width: 25%;
       color: #9CA3AF;
       text-align: center;
       font-size: 10px;
@@ -228,6 +228,22 @@
       font-size: 13px;
       font-weight: 700;
       text-align: center;
+    }
+
+    .confirm-receive-btn {
+      width: 100%; margin-top: 16px; padding: 12px;
+      border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #10B981, #047857);
+      color: white; font-family: inherit; font-size: 14px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .confirm-receive-btn:disabled { opacity: .6; cursor: default; }
+    .confirm-hint { margin-top: 6px; text-align: center; color: var(--muted); font-size: 11px; }
+    .review-link-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 16px; padding: 12px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; font-size: 14px; font-weight: 700; text-decoration: none;
     }
 
     .flash-link {
@@ -290,7 +306,7 @@
 
   <script type="module">
     import { auth, db, onAuthStateChanged } from './js/firebase-config.js';
-    import { collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { collection, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const content = document.getElementById('trackingContent');
 
@@ -298,6 +314,7 @@
       pending: { label: 'รอดำเนินการ', step: 0 },
       paid: { label: 'ชำระเงินแล้ว', step: 1 },
       shipped: { label: 'จัดส่งแล้ว', step: 2 },
+      received: { label: 'ได้รับสินค้าแล้ว', step: 3 },
       cancelled: { label: 'ยกเลิก', step: -1 }
     };
 
@@ -345,7 +362,14 @@
             ${renderStep('รับออเดอร์', 'ph-receipt', status.step >= 0)}
             ${renderStep('ชำระเงินแล้ว', 'ph-check-circle', status.step >= 1)}
             ${renderStep('จัดส่งแล้ว', 'ph-truck', status.step >= 2)}
+            ${renderStep('ได้รับสินค้า', 'ph-package', status.step >= 3)}
           </div>`;
+        if (order.status === 'shipped') {
+          statusHtml += `<button type="button" class="confirm-receive-btn" data-order-id="${escapeHtml(order._id)}"><i class="ph ph-package"></i> ยืนยันว่าได้รับสินค้าแล้ว</button>
+            <div class="confirm-hint">กดเมื่อได้รับสินค้าเรียบร้อยแล้วเท่านั้น จึงจะสามารถรีวิวสินค้าได้</div>`;
+        } else if (order.status === 'received') {
+          statusHtml += `<a class="review-link-btn" href="review.html"><i class="ph ph-star"></i> เขียนรีวิวออเดอร์นี้</a>`;
+        }
       }
 
       return `<article class="order-card">
@@ -381,6 +405,28 @@
       });
     }
 
+    function bindConfirmButtons(user) {
+      document.querySelectorAll('.confirm-receive-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          if (!confirm('ยืนยันว่าคุณได้รับสินค้าเรียบร้อยแล้วใช่หรือไม่?')) return;
+          button.disabled = true;
+          try {
+            const now = new Date().toISOString();
+            await updateDoc(doc(db, 'orders', button.dataset.orderId), {
+              status: 'received',
+              receivedAt: now,
+              updatedAt: now
+            });
+            await loadOrders(user);
+          } catch (error) {
+            console.error('Confirm receive error:', error);
+            alert('ยืนยันไม่สำเร็จ: ' + error.message);
+            button.disabled = false;
+          }
+        });
+      });
+    }
+
     async function loadOrders(user) {
       try {
         // ออเดอร์ใหม่ควรบันทึก userId: auth.currentUser.uid ตอนสร้างออเดอร์
@@ -404,6 +450,7 @@
 
         content.innerHTML = `<div class="order-list">${orders.map(renderOrder).join('')}</div>`;
         bindCopyButtons();
+        bindConfirmButtons(user);
       } catch (error) {
         console.error('Load tracking orders error:', error);
         content.innerHTML = `<div class="error"><i class="ph ph-warning-circle"></i>ไม่สามารถโหลดข้อมูลเลขพัสดุได้<br><small>${escapeHtml(error.message)}</small></div>`;

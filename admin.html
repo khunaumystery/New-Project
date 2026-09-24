@@ -142,6 +142,7 @@
     .status-badge.pending   { background:#FEF3C7; color:#92400E; }
     .status-badge.paid      { background:#D1FAE5; color:#065F46; }
     .status-badge.shipped   { background:#DBEAFE; color:#1E40AF; }
+    .status-badge.received  { background:#EDE9FE; color:#5B21B6; }
     .status-badge.cancelled { background:#FEE2E2; color:#991B1B; }
     .status-badge.active    { background:#D1FAE5; color:#065F46; }
     .status-badge.out       { background:#FEE2E2; color:#991B1B; }
@@ -605,6 +606,7 @@
           <option value="pending">⏳ รอดำเนินการ</option>
           <option value="paid">✅ ชำระแล้ว</option>
           <option value="shipped">🚚 จัดส่งแล้ว</option>
+          <option value="received">📦 ลูกค้าได้รับสินค้าแล้ว</option>
           <option value="cancelled">❌ ยกเลิก</option>
         </select>
         <button class="btn-primary" onclick="loadOrders()"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
@@ -1437,6 +1439,7 @@
       pending:   '<span class="status-badge pending">⏳ รอดำเนินการ</span>',
       paid:      '<span class="status-badge paid">✅ ชำระแล้ว</span>',
       shipped:   '<span class="status-badge shipped">🚚 จัดส่งแล้ว</span>',
+      received:  '<span class="status-badge received">📦 ได้รับสินค้าแล้ว</span>',
       cancelled: '<span class="status-badge cancelled">❌ ยกเลิก</span>',
     };
     tbody.innerHTML = orders.map(o => {
@@ -1457,7 +1460,10 @@
       let btns = '<button class="action-btn btn-detail" onclick="showDetail(\'' + o._id + '\')"><i class="ph ph-eye"></i> ดู</button>';
       if (o.status === 'pending')   btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + o._id + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
       if (o.status === 'paid')      btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + o._id + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
-      if (o.status !== 'cancelled') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + o._id + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
+      // Step 3 is done by the CUSTOMER (tracking.html), not the admin.
+      if (o.status === 'shipped')   btns += '<span class="action-btn" style="background:#FEF3C7;color:#92400E;cursor:default;"><i class="ph ph-hourglass-medium"></i> รอลูกค้ากดยืนยันรับสินค้า</span>';
+      if (o.status === 'received')  btns += '<span class="action-btn" style="background:#EDE9FE;color:#5B21B6;cursor:default;"><i class="ph ph-check-circle"></i> ลูกค้ายืนยันรับสินค้าแล้ว</span>';
+      if (o.status !== 'cancelled' && o.status !== 'received') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + o._id + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
       btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + o._id + '\')"><i class="ph ph-trash"></i> ลบ</button>';
       return '<tr><td><div class="order-id">' + (o.orderId || '-') + '</div>' + slipBadge + '</td>' +
              '<td><div class="cus-name">' + (o.customerName || '-') + '</div><div class="cus-phone">' + (o.phone || '') + '</div></td>' +
@@ -1486,7 +1492,7 @@
       } else {
         await updateDoc(doc(db, 'orders', id), { status });
       }
-      const lbl = {paid:'ชำระแล้ว', shipped:'จัดส่งแล้ว', cancelled:'ยกเลิก'}[status] || status;
+      const lbl = {paid:'ชำระแล้ว', shipped:'จัดส่งแล้ว', received:'ได้รับสินค้าแล้ว', cancelled:'ยกเลิก'}[status] || status;
       showToast('อัปเดตสถานะเป็น: ' + lbl);
     } catch(e) {
       console.error('changeStatus error:', e);
