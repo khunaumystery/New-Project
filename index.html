@@ -1182,66 +1182,6 @@
       visibility: visible;
     }
 
-    /* ===== CUSTOMER REVIEWS SECTION ===== */
-    .reviews-section { margin-top: 8px; margin-bottom: 22px; }
-    .reviews-scroll {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .reviews-scroll::-webkit-scrollbar { display: none; }
-
-    .review-card-public {
-      flex: 0 0 auto;
-      width: 240px;
-      background: var(--bg-card);
-      border-radius: 18px;
-      padding: 14px;
-      border: 1px solid rgba(245, 200, 66, 0.18);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-    }
-    .review-card-public-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .review-card-public-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #3D1117;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800; flex-shrink: 0;
-    }
-    .review-card-public-name {
-      font-size: 12.5px; font-weight: 700; color: #FFFFFF;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .review-card-public-product {
-      font-size: 10.5px; color: var(--gold);
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .review-card-public-text {
-      font-size: 12px; color: #D8CACB;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      min-height: 36px;
-    }
-    .review-card-public-photos {
-      display: flex; gap: 6px; margin-top: 10px;
-    }
-    .review-card-public-photos img {
-      width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
-      border: 1px solid rgba(245, 200, 66, 0.25);
-    }
-    .review-card-public-date {
-      margin-top: 8px; font-size: 10px; color: #8A7476;
-    }
   </style>
 </head>
 <body>
@@ -1464,20 +1404,6 @@
       </div>
     </div>
 
-    <!-- 6. Customer Reviews -->
-    <section class="reviews-section" id="reviewsSection" style="display:none;">
-      <div class="section-header-wrap">
-        <div class="section-title-left">
-          <div class="section-icon-box">
-            <i class="ph ph-star"></i>
-          </div>
-          <div class="section-title-text">รีวิวจากลูกค้า</div>
-        </div>
-      </div>
-      <div class="reviews-scroll" id="reviewsScrollContainer">
-        <!-- Dynamically Loaded -->
-      </div>
-    </section>
 
   </main>
 
@@ -1938,7 +1864,6 @@
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
     import { auth, db, collection, getDocs, doc, query, orderBy, onAuthStateChanged, runTransaction } from "./js/firebase-config.js";
-    import { limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     function getCartKey() {
       return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
@@ -2057,53 +1982,6 @@
       renderProductsGrid();
     }
 
-    // ===== CUSTOMER REVIEWS (public, written from review.html) =====
-    async function loadReviewsOnce() {
-      const section = document.getElementById('reviewsSection');
-      const scroller = document.getElementById('reviewsScrollContainer');
-      if (!section || !scroller) return;
-      try {
-        const reviewQuery = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(12));
-        const snap = await getDocs(reviewQuery);
-        const reviews = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-        if (!reviews.length) return; // keep section hidden if nobody has reviewed yet
-        renderReviewsScroll(reviews);
-        section.style.display = 'block';
-      } catch (err) {
-        console.warn('Error loading reviews:', err);
-      }
-    }
-
-    function formatReviewDate(dmy) {
-      // purchaseDate is already stored pre-formatted as DD/MM/YYYY
-      return dmy || '-';
-    }
-
-    function renderReviewsScroll(reviews) {
-      const scroller = document.getElementById('reviewsScrollContainer');
-      scroller.innerHTML = reviews.map(r => {
-        const name = r.userName || 'ลูกค้า KHUN AU';
-        const initial = escapeHtmlLocal(name.trim().charAt(0).toUpperCase() || 'K');
-        const photosHtml = (r.images && r.images.length)
-          ? `<div class="review-card-public-photos">${r.images.slice(0, 3).map(u => `<img src="${escapeHtmlLocal(u)}" alt="" loading="lazy">`).join('')}</div>`
-          : '';
-        return `
-          <div class="review-card-public">
-            <div class="review-card-public-head">
-              <div class="review-card-public-avatar">${initial}</div>
-              <div style="min-width:0;">
-                <div class="review-card-public-name">${escapeHtmlLocal(name)}</div>
-                <div class="review-card-public-product">${escapeHtmlLocal(r.productName || 'สินค้า')}</div>
-              </div>
-            </div>
-            <div class="review-card-public-text">${escapeHtmlLocal(r.reviewText || '')}</div>
-            ${photosHtml}
-            <div class="review-card-public-date">ซื้อเมื่อ ${escapeHtmlLocal(formatReviewDate(r.purchaseDate))}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
     // ===== MYSTERY BOX PRIZES (admin-editable, from luckyDrawPrizes) =====
     let storeMysteryPrizes = [];
 
@@ -2206,7 +2084,6 @@
     loadCategoryTypesOnce();
     loadProductsOnce();
     loadMysteryPrizesOnce();
-    loadReviewsOnce();
 
     // ===== CATEGORY TYPE HELPERS =====
     function getCategoriesFilteredByType() {

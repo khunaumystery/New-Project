@@ -256,6 +256,19 @@
     }
     .toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    .public-review-card { padding: 13px 0; border-bottom: 1px solid #F3F4F6; }
+    .public-review-card:last-child { border-bottom: none; }
+    .public-review-head { display: flex; align-items: center; gap: 9px; }
+    .public-review-avatar {
+      width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), #D4A017); color: #3D1117;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+    }
+    .public-review-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .public-review-product { font-size: 11.5px; color: var(--red); font-weight: 600; }
+    .public-review-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
     @media (max-width: 430px) {
       .panel { padding: 14px; }
     }
@@ -288,6 +301,12 @@
         <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
       </div>
     </section>
+    <section class="panel">
+      <div class="panel-title"><i class="ph ph-users-three"></i> รีวิวจากลูกค้าทุกคน</div>
+      <div id="allReviewsContent">
+        <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
+      </div>
+    </section>
   </main>
 
   <!-- Modal: Write Review -->
@@ -316,7 +335,7 @@
             <input type="file" accept="image/*" multiple style="display:none;" onchange="handleReviewFilesChange(event)">
           </label>
         </div>
-        <div class="photo-hint">สูงสุด 4 รูป · ระบบจะบีบอัดรูปให้อัตโนมัติ</div>
+        <div class="photo-hint">สูงสุด 2 รูป · ระบบจะบีบอัดรูปให้อัตโนมัติ</div>
       </div>
 
       <div class="modal-btn-row">
@@ -335,7 +354,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
-      getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, where
+      getFirestore, collection, getDocs, doc, setDoc, deleteDoc, query, where, orderBy, limit
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -352,6 +371,8 @@
 
     const reviewableContent = document.getElementById('reviewableContent');
     const myReviewsContent = document.getElementById('myReviewsContent');
+    const allReviewsContent = document.getElementById('allReviewsContent');
+    let allReviews = [];
     const toastMsg = document.getElementById('toastMsg');
     const toastText = document.getElementById('toastText');
 
@@ -362,7 +383,7 @@
     let pendingItem = null;       // { orderId, productId, productName, productImage, purchaseDate }
     let pendingPhotos = [];       // [dataUrl, dataUrl, ...] — compressed base64 JPEGs
 
-    const MAX_IMAGES = 4;
+    const MAX_IMAGES = 2;
     const MAX_RAW_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per raw file before we even try to process it
     const IMG_MAX_DIMENSION = 900;
     const IMG_TARGET_DATAURL_LENGTH = 160000; // ~120KB binary per photo once base64-encoded, so 4 photos + text stay well under Firestore's 1MB document limit
@@ -436,7 +457,7 @@
 
       const remainingSlots = MAX_IMAGES - pendingPhotos.length;
       if (remainingSlots <= 0) {
-        showToast('⚠️ อัปโหลดได้สูงสุด 4 รูป');
+        showToast('⚠️ อัปโหลดได้สูงสุด 2 รูป');
         return;
       }
 
@@ -563,11 +584,51 @@
       `).join('');
     }
 
+    // ---- Public reviews: every customer can see everyone's reviews ----
+    async function loadAllReviews() {
+      try {
+        const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(50));
+        const snap = await getDocs(q);
+        allReviews = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+        renderAllReviews();
+      } catch (err) {
+        console.error('Load all reviews error:', err);
+        allReviewsContent.innerHTML = `<div class="error"><i class="ph ph-warning-circle"></i>โหลดรีวิวไม่สำเร็จ<br><small>${escapeHtml(err.message)}</small></div>`;
+      }
+    }
+
+    function renderAllReviews() {
+      if (!allReviews.length) {
+        allReviewsContent.innerHTML = `<div class="empty"><i class="ph ph-chat-centered-text"></i>ยังไม่มีรีวิวจากลูกค้า</div>`;
+        return;
+      }
+      allReviewsContent.innerHTML = allReviews.map(r => {
+        const name = r.userName || 'ลูกค้า KHUN AU';
+        const initial = escapeHtml(name.trim().charAt(0).toUpperCase() || 'K');
+        const photos = (r.images && r.images.length)
+          ? `<div class="review-photos">${r.images.slice(0, 2).map(u => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
+        return `
+          <div class="public-review-card">
+            <div class="public-review-head">
+              <div class="public-review-avatar">${initial}</div>
+              <div style="min-width:0;">
+                <div class="public-review-name">${escapeHtml(name)}</div>
+                <div class="public-review-product">${escapeHtml(r.productName || 'สินค้า')}</div>
+              </div>
+            </div>
+            <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
+            ${photos}
+            <div class="public-review-date">ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div>
+          </div>`;
+      }).join('');
+    }
+
     async function refreshAll(user) {
       try {
         await Promise.all([loadMyOrders(user), loadMyReviews(user)]);
         renderReviewable();
         renderMyReviews();
+        loadAllReviews();
       } catch (err) {
         console.error('Load reviews page error:', err);
         reviewableContent.innerHTML = `<div class="error"><i class="ph ph-warning-circle"></i>โหลดข้อมูลไม่สำเร็จ<br><small>${escapeHtml(err.message)}</small></div>`;
@@ -661,6 +722,7 @@
       if (!user) {
         reviewableContent.innerHTML = `<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว</div><a href="login.html">เข้าสู่ระบบ</a></div>`;
         myReviewsContent.innerHTML = '';
+        loadAllReviews();
         return;
       }
       refreshAll(user);
