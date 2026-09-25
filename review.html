@@ -612,7 +612,6 @@
               <div class="review-product">${escapeHtml(itemsSummaryText(r.items))}</div>
               <div class="review-date">ออเดอร์ ${escapeHtml(r.orderId || '-')} · ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div>
             </div>
-            <button type="button" class="btn-delete-review" onclick="deleteReview('${r._id}')" aria-label="ลบรีวิว"><i class="ph ph-trash"></i></button>
           </div>
           <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
           ${(r.images && r.images.length) ? `<div class="review-photos">${r.images.map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
@@ -648,14 +647,6 @@
         const initial = escapeHtml(name.trim().charAt(0).toUpperCase() || 'K');
         const photos = (r.images && r.images.length)
           ? `<div class="review-photos">${r.images.slice(0, 2).map(u => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`).join('')}</div>` : '';
-        // Let the customer delete their own review directly from this
-        // public list too, not just from the "รีวิวของฉัน" panel above —
-        // otherwise a customer who only scrolls to this section never
-        // finds a delete option for their own review.
-        const isOwn = !!(currentUser && r.userId === currentUser.uid);
-        const deleteBtnHtml = isOwn
-          ? `<button type="button" class="btn-delete-review" style="margin-left:auto;" onclick="deleteReview('${r._id}')" aria-label="ลบรีวิว" title="ลบรีวิวของฉัน"><i class="ph ph-trash"></i></button>`
-          : '';
         return `
           <div class="public-review-card">
             <div class="public-review-head">
@@ -664,7 +655,6 @@
                 <div class="public-review-name">${escapeHtml(name)}</div>
                 <div class="public-review-product">${escapeHtml(itemsSummaryText(r.items))}</div>
               </div>
-              ${deleteBtnHtml}
             </div>
             <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
             ${photos}
@@ -765,18 +755,6 @@
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> ส่งรีวิว';
-      }
-    };
-
-    window.deleteReview = async function (reviewId) {
-      if (!confirm('ต้องการลบรีวิวนี้หรือไม่?')) return;
-      try {
-        await deleteDoc(doc(db, 'reviews', reviewId));
-        showToast('🗑️ ลบรีวิวแล้ว');
-        await refreshAll(currentUser);
-      } catch (err) {
-        console.error('Delete review error:', err);
-        showToast('❌ ลบไม่สำเร็จ: ' + err.message);
       }
     };
 
