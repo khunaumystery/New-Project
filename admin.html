@@ -582,6 +582,9 @@
     <button class="tab-btn" onclick="switchTab('usersTab', this)">
       <i class="ph ph-crown"></i> ระบบ User
     </button>
+    <button class="tab-btn" onclick="switchTab('reviewsTab', this)">
+      <i class="ph ph-star"></i> รีวิวลูกค้า
+    </button>
     <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
       <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
       <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
@@ -773,7 +776,39 @@
       </div>
     </div>
 
-    <!-- ================= TAB 6: LIVE CHAT ================= -->
+    <!-- ================= TAB 6: CUSTOMER REVIEWS ================= -->
+    <div id="reviewsTab" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card purple"><div class="stat-label">⭐ รีวิวทั้งหมด</div><div class="stat-value" id="statReviewsTotal">0</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card blue"><div class="stat-label">🖼️ รีวิวที่มีรูปแนบ</div><div class="stat-value" id="statReviewsWithPhotos">0</div><div class="stat-sub">รายการ</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchReviewsBox" placeholder="🔍 ค้นหา ชื่อลูกค้า, หมายเลขออเดอร์, ข้อความรีวิว..." oninput="filterReviews()">
+        <button class="btn-primary" onclick="loadReviews()"><i class="ph ph-arrows-clockwise"></i> รีเฟรช</button>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-star"></i> รายการรีวิวจากลูกค้า</h2>
+          <span style="font-size:12px;color:var(--muted);" id="reviewsCount">0 รายการ</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ลูกค้า</th><th>ออเดอร์</th><th>สินค้า</th><th>ข้อความรีวิว</th><th>รูปภาพ</th><th>วันที่</th><th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="reviewsTableBody">
+              <tr><td colspan="7"><div class="empty-state"><i class="ph ph-star"></i>กำลังโหลดรีวิว...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 7: LIVE CHAT ================= -->
     <div id="chatTab" class="tab-content">
       <div class="admin-chat-layout">
         <!-- Customer Threads List -->
@@ -1194,6 +1229,7 @@
   let allCategoryTypes = [];
   let allMysteryPrizes = [];
   let allVipUsers = [];
+  let allReviews = [];
   let allChats = [];
   let activeChatId = null;
   let seededCategoryTypes = false;
@@ -1205,6 +1241,7 @@
   let unsubsCategoryTypes = null;
   let unsubsMysteryPrizes = null;
   let unsubsVipUsers = null;
+  let unsubsReviews = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
 
@@ -1256,6 +1293,7 @@
     if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
     if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
     if (unsubsVipUsers) { unsubsVipUsers(); unsubsVipUsers = null; }
+    if (unsubsReviews) { unsubsReviews(); unsubsReviews = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
   }
@@ -1267,6 +1305,7 @@
     loadCategoryTypes();
     loadMysteryPrizes();
     loadVipUsers();
+    loadReviews();
     loadChats();
   }
 
@@ -2149,6 +2188,80 @@
       showToast('🗑️ ลบออกจาก VIP แล้ว');
     } catch (e) {
       showToast('❌ ไม่สามารถลบได้: ' + e.message);
+    }
+  };
+
+  // ================= 2d. CUSTOMER REVIEWS MODULE =================
+  // Lets the admin browse every review customers have left (public on
+  // review.html) and delete inappropriate/fake ones. firestore.rules
+  // already allows isAdmin() to delete any review doc, so this is just
+  // the UI wired up to that existing permission.
+  window.loadReviews = function() {
+    if (unsubsReviews) unsubsReviews();
+    const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+    unsubsReviews = onSnapshot(q, snap => {
+      allReviews = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+      document.getElementById('statReviewsTotal').textContent = allReviews.length;
+      document.getElementById('statReviewsWithPhotos').textContent = allReviews.filter(r => (r.images || []).length > 0).length;
+      filterReviews();
+    }, err => showToast('โหลดรีวิวไม่สำเร็จ: ' + err.message));
+  };
+
+  window.filterReviews = function() {
+    const search = document.getElementById('searchReviewsBox').value.toLowerCase().trim();
+    let f = allReviews;
+    if (search) {
+      f = f.filter(r =>
+        (r.userName || '').toLowerCase().includes(search) ||
+        (r.orderId || '').toLowerCase().includes(search) ||
+        (r.reviewText || '').toLowerCase().includes(search) ||
+        (r.items || []).some(i => (i.name || '').toLowerCase().includes(search))
+      );
+    }
+    document.getElementById('reviewsCount').textContent = f.length + ' รายการ';
+    renderReviewsTable(f);
+  };
+
+  function renderReviewsTable(reviews) {
+    const tbody = document.getElementById('reviewsTableBody');
+    if (!reviews.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ph ph-star"></i>ไม่พบรีวิว</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = reviews.map(r => {
+      const date = r.createdAt ? new Date(r.createdAt).toLocaleString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+      const itemNames = (r.items || []).map(i => i.name).filter(Boolean).join(', ') || '-';
+      const photosHtml = (r.images && r.images.length)
+        ? r.images.map(u => `<img src="${u}" class="table-thumb" style="cursor:zoom-in;margin-right:4px;" onclick="openReviewPhotoLightbox('${escapeJsAttr(u)}')">`).join('')
+        : '<span style="font-size:11px;color:var(--muted);">-</span>';
+      return `
+        <tr>
+          <td><strong>${escapeHtml(r.userName || 'ลูกค้า KHUN AU')}</strong></td>
+          <td><span class="order-id">${escapeHtml(r.orderId || r._id || '-')}</span><div class="date-txt">ซื้อเมื่อ ${escapeHtml(r.purchaseDate || '-')}</div></td>
+          <td><div class="item-list">${escapeHtml(itemNames)}</div></td>
+          <td style="max-width:260px; white-space:pre-wrap; word-break:break-word; font-size:12.5px;">${escapeHtml(r.reviewText || '')}</td>
+          <td>${photosHtml}</td>
+          <td><span class="date-txt">${date}</span></td>
+          <td><button class="action-btn btn-delete" onclick="deleteReviewAdmin('${r._id}')"><i class="ph ph-trash"></i> ลบรีวิว</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.openReviewPhotoLightbox = function(url) {
+    const img = document.getElementById('slipLightboxImg');
+    if (img) img.src = url;
+    const modal = document.getElementById('slipLightbox');
+    if (modal) modal.classList.add('active');
+  };
+
+  window.deleteReviewAdmin = async function(reviewId) {
+    if (!confirm('⚠️ ยืนยันการลบรีวิวนี้?\nลูกค้าจะไม่เห็นรีวิวนี้อีก และไม่สามารถกู้คืนได้')) return;
+    try {
+      await deleteDoc(doc(db, 'reviews', reviewId));
+      showToast('🗑️ ลบรีวิวเรียบร้อยแล้ว');
+    } catch (e) {
+      showToast('❌ ลบรีวิวไม่สำเร็จ: ' + e.message);
     }
   };
 
