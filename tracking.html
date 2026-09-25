@@ -359,14 +359,14 @@
       } else {
         statusHtml = `<div class="status-title">สถานะปัจจุบัน: ${escapeHtml(status.label)}</div>
           <div class="timeline">
-            ${renderStep('รับออเดอร์', 'ph-receipt', status.step >= 0)}
+            ${renderStep('รอดำเนินการ', 'ph-receipt', status.step >= 0)}
             ${renderStep('ชำระเงินแล้ว', 'ph-check-circle', status.step >= 1)}
             ${renderStep('จัดส่งแล้ว', 'ph-truck', status.step >= 2)}
-            ${renderStep('ได้รับสินค้า', 'ph-package', status.step >= 3)}
+            ${renderStep('ได้รับสินค้าแล้ว', 'ph-package', status.step >= 3)}
           </div>`;
         if (order.status === 'shipped') {
-          statusHtml += `<button type="button" class="confirm-receive-btn" data-order-id="${escapeHtml(order._id)}"><i class="ph ph-package"></i> ยืนยันว่าได้รับสินค้าแล้ว</button>
-            <div class="confirm-hint">กดเมื่อได้รับสินค้าเรียบร้อยแล้วเท่านั้น จึงจะสามารถรีวิวสินค้าได้</div>`;
+          statusHtml += `<button type="button" class="confirm-receive-btn" data-order-id="${escapeHtml(order._id)}"><i class="ph ph-package"></i>ได้รับสินค้าแล้ว</button>
+            <div class="confirm-hint">กดเมื่อได้รับสินค้าเรียบร้อยแล้ว จึงจะสามารถรีวิวสินค้าได้</div>`;
         } else if (order.status === 'received') {
           statusHtml += `<a class="review-link-btn" href="review.html"><i class="ph ph-star"></i> เขียนรีวิวออเดอร์นี้</a>`;
         }
