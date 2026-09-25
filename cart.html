@@ -1666,6 +1666,17 @@
         }
       }
 
+      // ---- Handles the file the customer picks for the payment slip ----
+      // Reads it, resizes/compresses it via canvas, then hands the result
+      // off to finalizeOrderWithSlip(). Two reliability fixes here:
+      //  1. HEIC/HEIF photos (default format on recent iPhones) usually
+      //     can't be decoded into an <img>/<canvas> outside Safari, which
+      //     was silently hanging forever on some Android/in-app browsers
+      //     with no error and no way to retry. Caught up front now.
+      //  2. A safety timeout: if the FileReader/Image/canvas pipeline
+      //     never calls back at all (seen intermittently on some mobile
+      //     browsers), the upload button no longer stays stuck disabled
+      //     forever — the customer gets an error and can try again.
       function handleSlipFileChange(event) {
         const input = event.target;
         const file = input.files && input.files[0];
@@ -1686,8 +1697,31 @@
           return;
         }
 
+        const nameLower = (file.name || '').toLowerCase();
+        const isHeic = /image\/hei[cf]/i.test(file.type || '') || nameLower.endsWith('.heic') || nameLower.endsWith('.heif');
+        if (isHeic) {
+          showSlipError('⚠️ ไฟล์สกุล HEIC (จากกล้อง iPhone) มือถือบางรุ่นอาจเปิดไม่ได้ กรุณาแคปหน้าจอสลิป หรือเปลี่ยนเป็นไฟล์ JPG/PNG แล้วลองใหม่');
+          input.value = '';
+          return;
+        }
+
         setUploadSlipEnabled(false);
         showToast('⏳ กำลังประมวลผลรูปสลิป...');
+
+        let settled = false;
+        const processingTimeout = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          setUploadSlipEnabled(true);
+          showSlipError('⚠️ ประมวลผลรูปภาพนานเกินไป กรุณาลองใหม่อีกครั้ง หรือเลือกรูปอื่น');
+        }, 15000);
+
+        function finishOnce(fn) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(processingTimeout);
+          fn();
+        }
 
         const reader = new FileReader();
         reader.onload = function (e) {
@@ -1711,17 +1745,21 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-            finalizeOrderWithSlip(pendingOrderData, dataUrl);
+            finishOnce(() => finalizeOrderWithSlip(pendingOrderData, dataUrl));
           };
           img.onerror = function () {
-            setUploadSlipEnabled(true);
-            showSlipError('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
+            finishOnce(() => {
+              setUploadSlipEnabled(true);
+              showSlipError('⚠️ ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ กรุณาลองไฟล์อื่น');
+            });
           };
           img.src = e.target.result;
         };
         reader.onerror = function () {
-          setUploadSlipEnabled(true);
-          showSlipError('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่');
+          finishOnce(() => {
+            setUploadSlipEnabled(true);
+            showSlipError('⚠️ ไม่สามารถอ่านไฟล์นี้ได้ กรุณาลองใหม่');
+          });
         };
         reader.readAsDataURL(file);
       }
