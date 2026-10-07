@@ -1013,6 +1013,12 @@
         <label>คำอธิบายหมวดหมู่</label>
         <input type="text" id="editCatDesc" class="form-control">
       </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="editCatHidden" style="width:16px;height:16px;">
+          🙈 ซ่อนหมวดหมู่นี้ (ไม่แสดงที่หน้าร้าน)
+        </label>
+      </div>
       <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
       <button type="button" class="btn-close-modal" onclick="closeModal('editCategoryModal')">ยกเลิก</button>
     </form>
@@ -1728,17 +1734,21 @@
         : `<input type="number" class="order-num-input" value="${i + 1}" min="1" max="${categories.length}"
              onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
              onchange="setCategoryOrder('${c._id}', this.value)" title="พิมพ์ลำดับที่ต้องการแล้วกด Enter">`;
+      const hiddenBadge = c.hidden ? '<span class="status-badge" style="background:#F3F4F6;color:#6B7280;margin-left:6px;">🙈 ซ่อนอยู่</span>' : '';
       return `
-        <tr>
+        <tr style="${c.hidden ? 'opacity:0.55;' : ''}">
           <td>${moveCell}</td>
           <td>${imgTag}</td>
-          <td><strong>${c.name || '-'}</strong><div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
+          <td><strong>${c.name || '-'}</strong>${hiddenBadge}<div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
           <td>${typeBadge}</td>
           <td><code>${c.slug || '-'}</code></td>
           <td>${pageLink}</td>
           <td><span class="date-txt">${date}</span></td>
           <td>
             <button class="action-btn btn-detail" onclick="openEditCategoryModal('${c._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
+            <button class="action-btn ${c.hidden ? 'btn-paid' : 'btn-cancel'}" onclick="toggleCategoryHidden('${c._id}')">
+              <i class="ph ${c.hidden ? 'ph-eye' : 'ph-eye-slash'}"></i> ${c.hidden ? 'แสดง' : 'ซ่อน'}
+            </button>
             <button class="action-btn btn-delete" onclick="deleteCategory('${c._id}', '${c.name}')"><i class="ph ph-trash"></i> ลบ</button>
           </td>
         </tr>
@@ -1777,6 +1787,7 @@
     document.getElementById('editCatImage').value = cat.image || '';
     document.getElementById('editCatPageLink').value = cat.pageLink || '';
     document.getElementById('editCatDesc').value = cat.desc || '';
+    document.getElementById('editCatHidden').checked = !!cat.hidden;
 
     // Set preview
     const previewBox = document.getElementById('editCatPreview');
@@ -1798,10 +1809,11 @@
     const image    = document.getElementById('editCatImage').value.trim();
     const pageLink = document.getElementById('editCatPageLink').value.trim();
     const desc     = document.getElementById('editCatDesc').value.trim();
+    const hidden   = document.getElementById('editCatHidden').checked;
 
     try {
       await updateDoc(doc(db, 'categories', id), {
-        name, slug, categoryType, image, pageLink, desc,
+        name, slug, categoryType, image, pageLink, desc, hidden,
         updatedAt: new Date().toISOString()
       });
       closeModal('editCategoryModal');
@@ -1818,6 +1830,17 @@
       showToast(`🗑️ ลบหมวดหมู่ "${name}" เรียบร้อยแล้ว`);
     } catch(e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  window.toggleCategoryHidden = async function(id) {
+    const cat = allCategories.find(c => c._id === id);
+    if (!cat) return;
+    try {
+      await updateDoc(doc(db, 'categories', id), { hidden: !cat.hidden, updatedAt: new Date().toISOString() });
+      showToast(cat.hidden ? `👁️ แสดงหมวดหมู่ "${cat.name}" แล้ว` : `🙈 ซ่อนหมวดหมู่ "${cat.name}" แล้ว`);
+    } catch (e) {
+      showToast('❌ อัปเดตไม่สำเร็จ: ' + e.message);
     }
   };
 

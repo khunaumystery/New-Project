@@ -1946,7 +1946,9 @@
         const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(catQuery);
         const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
-        storeCategories = dbCategories.length > 0 ? dbCategories : defaultCategories;
+        // หมวดหมู่ที่แอดมินซ่อนไว้ (hidden = true) จะไม่แสดงที่หน้าร้าน
+        const visibleCategories = dbCategories.filter(c => c.hidden !== true);
+        storeCategories = dbCategories.length > 0 ? visibleCategories : defaultCategories;
       } catch (err) {
         console.warn('Error loading categories:', err);
         storeCategories = defaultCategories;
