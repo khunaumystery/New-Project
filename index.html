@@ -1912,6 +1912,7 @@
     let storeCategories = [];
     let storeProducts = [];
     let storeCategoryTypes = [];
+    let storeHiddenCategoryNames = new Set(); // ชื่อหมวดที่แอดมินซ่อน — สินค้าในหมวดเหล่านี้จะไม่แสดง
     let selectedCategoryName = 'ALL';
     let selectedCategoryTypeName = 'ALL';
 
@@ -1949,10 +1950,14 @@
         // หมวดหมู่ที่แอดมินซ่อนไว้ (hidden = true) จะไม่แสดงที่หน้าร้าน
         const visibleCategories = dbCategories.filter(c => c.hidden !== true);
         storeCategories = dbCategories.length > 0 ? visibleCategories : defaultCategories;
+        storeHiddenCategoryNames = new Set(dbCategories.filter(c => c.hidden === true).map(c => c.name));
       } catch (err) {
         console.warn('Error loading categories:', err);
         storeCategories = defaultCategories;
+        storeHiddenCategoryNames = new Set();
       }
+      // สินค้าอาจโหลดเสร็จก่อนหมวดหมู่ — ล้างตัวอย่างสุ่มเดิมเพื่อสุ่มใหม่จากสินค้าที่ไม่ถูกซ่อน
+      cachedAllProductsSample = null;
       renderCategoryGrid(getCategoriesFilteredByType());
       renderCategoryPills(getCategoriesFilteredByType());
       renderProductsGrid(); // category lookup for type-filtering may have changed
@@ -2217,6 +2222,7 @@
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
+      const visibleProducts = storeProducts.filter(p => !storeHiddenCategoryNames.has(p.category));
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
       let filtered;
       let totalMatchCount;
@@ -2226,12 +2232,12 @@
         // re-render (e.g. switching category and back) within the same
         // page load — only a fresh product load resets it.
         if (!cachedAllProductsSample) {
-          cachedAllProductsSample = pickRandomSample(storeProducts, ALL_PRODUCTS_DISPLAY_LIMIT);
+          cachedAllProductsSample = pickRandomSample(visibleProducts, ALL_PRODUCTS_DISPLAY_LIMIT);
         }
         filtered = cachedAllProductsSample;
-        totalMatchCount = storeProducts.length;
+        totalMatchCount = visibleProducts.length;
       } else {
-        filtered = storeProducts;
+        filtered = visibleProducts;
         if (selectedCategoryTypeName !== 'ALL') {
           filtered = filtered.filter(p => productMatchesSelectedType(p.category));
         }
