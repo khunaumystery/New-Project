@@ -683,6 +683,7 @@
         <select class="filter-select" id="productCategoryFilter" onchange="filterProducts()">
           <option value="">ทุกหมวดหมู่</option>
         </select>
+        <button class="btn-primary" id="btnSaveAllStock" style="background:#059669;" onclick="saveAllStockQty()"><i class="ph ph-floppy-disk"></i> บันทึกทั้งหมด</button>
         <button class="btn-primary" onclick="openAddProductModal()"><i class="ph ph-plus-circle"></i> + เพิ่มสินค้าใหม่</button>
       </div>
 
@@ -2694,6 +2695,45 @@
       showToast(delta > 0 ? `➕ เพิ่มสต็อกแล้ว (${next} ชิ้น)` : `➖ ลดสต็อกแล้ว (${next} ชิ้น)`);
     } catch(e) {
       showToast('❌ อัปเดตสต็อกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // บันทึกจำนวนสต็อกของทุกรายการที่แสดงอยู่ในตารางพร้อมกัน
+  // (เฉพาะรายการที่ค่าเปลี่ยนไปจากที่บันทึกไว้ — ไม่แตะรายการที่ไม่ได้แก้)
+  window.saveAllStockQty = async function() {
+    const btn = document.getElementById('btnSaveAllStock');
+    const changes = [];
+    let invalid = 0;
+    document.querySelectorAll('input[id^="stockQtyInput_"]').forEach(input => {
+      const id = input.id.replace('stockQtyInput_', '');
+      const p = allProducts.find(x => x._id === id);
+      if (!p) return;
+      const val = parseInt(input.value, 10);
+      if (isNaN(val) || val < 0) { invalid++; return; }
+      const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
+      if (!hasQty && val === 0) return;            // ยังไม่เคยระบุจำนวน และไม่ได้กรอกใหม่
+      if (hasQty && Number(p.stockQty) === val) return; // ไม่มีการเปลี่ยนแปลง
+      changes.push({ id, val });
+    });
+
+    if (invalid > 0) { showToast(`⚠️ มี ${invalid} รายการที่จำนวนสต็อกไม่ถูกต้อง (ต้องเป็น 0 ขึ้นไป)`); return; }
+    if (!changes.length) { showToast('ℹ️ ไม่มีรายการที่เปลี่ยนแปลง'); return; }
+    if (!confirm(`บันทึกจำนวนสต็อกที่แก้ไข ${changes.length} รายการ?`)) return;
+
+    if (btn) btn.disabled = true;
+    try {
+      const now = new Date().toISOString();
+      const results = await Promise.allSettled(changes.map(c =>
+        updateDoc(doc(db, 'products', c.id), { stockQty: c.val, inStock: c.val > 0, updatedAt: now })
+      ));
+      const failed = results.filter(r => r.status === 'rejected').length;
+      showToast(failed
+        ? `⚠️ บันทึกสำเร็จ ${changes.length - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
+        : `✅ บันทึกทั้งหมด ${changes.length} รายการเรียบร้อย`);
+    } catch (e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   };
 
