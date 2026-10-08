@@ -1182,6 +1182,35 @@
       visibility: visible;
     }
 
+
+    /* ===== WELCOME POPUP (แก้ไขข้อความ/รูปได้จากหน้า admin) ===== */
+    .welcome-popup-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+      display: none; align-items: center; justify-content: center;
+      z-index: 4000; padding: 16px;
+    }
+    .welcome-popup-overlay.show { display: flex; animation: fadeSlideUp 0.35s ease-out; }
+    .welcome-popup-box {
+      background: #24090D; border: 1.5px solid rgba(245,200,66,0.45);
+      border-radius: 24px; padding: 24px 20px 20px; width: 100%; max-width: 360px;
+      text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      max-height: 88vh; overflow-y: auto;
+    }
+    .welcome-popup-img {
+      display: none; width: 100%; max-height: 220px; object-fit: contain;
+      border-radius: 14px; margin-bottom: 14px; background: rgba(0,0,0,0.25);
+    }
+    .welcome-popup-title { font-size: 17px; font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+    .welcome-popup-msg {
+      font-size: 13.5px; color: #F3E9EA; line-height: 1.6;
+      white-space: pre-line; word-break: break-word; margin-bottom: 18px;
+    }
+    .welcome-popup-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, var(--mk-red), var(--mk-red-dark)); color: #fff;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      box-shadow: 0 4px 15px rgba(211,34,42,0.4);
+    }
   </style>
 </head>
 <body>
@@ -1462,6 +1491,16 @@
     </div>
   </div>
 
+  <!-- Modal: Welcome Popup -->
+  <div class="welcome-popup-overlay" id="welcomePopup">
+    <div class="welcome-popup-box" role="dialog" aria-modal="true">
+      <img class="welcome-popup-img" id="welcomePopupImg" alt="">
+      <div class="welcome-popup-title" id="welcomePopupTitle">📢 ประกาศจากร้าน</div>
+      <div class="welcome-popup-msg" id="welcomePopupMsg">หากรายการสินค้ายังไม่ขึ้น โปรดรอสักครู่ ประมาณ 10 วินาทีครับ</div>
+      <button type="button" class="welcome-popup-btn" onclick="closeWelcomePopup()">รับทราบ</button>
+    </div>
+  </div>
+
   <!-- Toast Message -->
   <div class="toast" id="toast"></div>
 
@@ -1518,6 +1557,28 @@
       if (desc) desc.textContent = `คุณต้องเข้าสู่ระบบหรือสมัครสมาชิกก่อน จึงจะสามารถ ${action} ได้ครับ`;
       if (modal) modal.style.display = 'flex';
     };
+
+    // ===== WELCOME POPUP =====
+    // แสดงทันทีด้วยข้อความเริ่มต้น (วันละครั้งต่อการเปิดเบราว์เซอร์) แล้วค่อยอัปเดต
+    // เป็นข้อความ/รูปที่แอดมินตั้งไว้เมื่อโหลดจาก Firestore เสร็จ
+    window.welcomePopupClosed = false;
+    window.closeWelcomePopup = function() {
+      window.welcomePopupClosed = true;
+      const el = document.getElementById('welcomePopup');
+      if (el) el.classList.remove('show');
+      try { sessionStorage.setItem('mkWelcomeSeen', '1'); } catch (e) {}
+    };
+    (function initWelcomePopup() {
+      let seen = false;
+      try { seen = sessionStorage.getItem('mkWelcomeSeen') === '1'; } catch (e) {}
+      if (seen) { window.welcomePopupClosed = true; return; }
+      const show = () => {
+        const el = document.getElementById('welcomePopup');
+        if (el && !window.welcomePopupClosed) el.classList.add('show');
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show);
+      else show();
+    })();
 
     window.showOddsModal = function() {
       const modal = document.getElementById('oddsInfoModal');
@@ -2086,7 +2147,33 @@
       }
     }
 
+    // ===== WELCOME POPUP SETTINGS (settings/welcomePopup) =====
+    async function loadWelcomePopupOnce() {
+      try {
+        const snap = await getDocs(collection(db, 'settings'));
+        const d = snap.docs.find(x => x.id === 'welcomePopup');
+        if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นที่แสดงอยู่แล้ว
+        const s = d.data();
+        const overlay = document.getElementById('welcomePopup');
+        if (s.enabled === false) {
+          if (overlay) overlay.classList.remove('show');
+          window.welcomePopupClosed = true;
+          return;
+        }
+        if (s.title) document.getElementById('welcomePopupTitle').textContent = s.title;
+        if (s.message) document.getElementById('welcomePopupMsg').textContent = s.message;
+        const img = document.getElementById('welcomePopupImg');
+        if (img) {
+          if (s.image) { img.src = s.image; img.style.display = 'block'; }
+          else { img.removeAttribute('src'); img.style.display = 'none'; }
+        }
+      } catch (err) {
+        console.warn('Error loading welcome popup settings:', err);
+      }
+    }
+
     // Kick all off in parallel rather than waiting on each other.
+    loadWelcomePopupOnce();
     loadCategoriesOnce();
     loadCategoryTypesOnce();
     loadProductsOnce();

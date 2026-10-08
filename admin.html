@@ -585,6 +585,9 @@
     <button class="tab-btn" onclick="switchTab('reviewsTab', this)">
       <i class="ph ph-star"></i> รีวิวลูกค้า
     </button>
+    <button class="tab-btn" onclick="switchTab('popupTab', this)">
+      <i class="ph ph-megaphone"></i> ป๊อปอัปหน้าร้าน
+    </button>
     <button class="tab-btn" onclick="switchTab('chatTab', this)" id="chatTabBtn">
       <i class="ph ph-chat-teardrop-dots"></i> แชทลูกค้า
       <span class="badge-unread" id="adminTotalUnreadChatBadge" style="display:none; background:#EF4444; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px;">0</span>
@@ -805,6 +808,49 @@
               <tr><td colspan="7"><div class="empty-state"><i class="ph ph-star"></i>กำลังโหลดรีวิว...</div></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB: WELCOME POPUP ================= -->
+    <div id="popupTab" class="tab-content">
+      <div class="content-card">
+        <div class="card-header">
+          <h2><i class="ph ph-megaphone"></i> ป๊อปอัปแจ้งลูกค้าตอนเข้าหน้าร้าน</h2>
+        </div>
+        <div style="padding:18px 20px; max-width:560px;">
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="popupEnabled" style="width:16px;height:16px;" checked>
+              เปิดใช้งานป๊อปอัป (ปิดไว้ = ลูกค้าจะไม่เห็นป๊อปอัป)
+            </label>
+          </div>
+          <div class="form-group">
+            <label>หัวข้อ</label>
+            <input type="text" id="popupTitle" class="form-control" placeholder="เช่น 📢 ประกาศจากร้าน">
+          </div>
+          <div class="form-group">
+            <label>ข้อความ (ขึ้นบรรทัดใหม่ได้)</label>
+            <textarea id="popupMessage" class="form-control" rows="4" placeholder="หากรายการสินค้ายังไม่ขึ้น โปรดรอสักครู่ ประมาณ 10 วินาทีครับ"></textarea>
+          </div>
+          <div class="form-group">
+            <label>รูปภาพ (ถ้ามี)</label>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <input type="file" id="popupFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'popupImage', 'popupPreview')">
+              <input type="text" id="popupImage" class="form-control" placeholder="หรือกรอก URL รูปภาพ (เว้นว่าง = ไม่มีรูป)" oninput="updatePreview('popupImage', 'popupPreview')">
+            </div>
+            <div id="popupPreview" style="display:none; margin-top:8px; align-items:center; gap:8px;">
+              <img id="popupPreviewImg" src="" style="width:96px; height:96px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+              <button type="button" class="action-btn btn-delete" onclick="clearPopupImage()"><i class="ph ph-trash"></i> ลบรูป</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+            <button type="button" class="btn-primary" style="background:#059669;" onclick="savePopupSettings()"><i class="ph ph-floppy-disk"></i> บันทึกป๊อปอัป</button>
+            <button type="button" class="btn-primary" style="background:#6B7280;" onclick="resetPopupDefaults()"><i class="ph ph-arrow-counter-clockwise"></i> คืนค่าข้อความเริ่มต้น</button>
+          </div>
+          <div style="margin-top:10px; font-size:11.5px; color:var(--muted); line-height:1.5;">
+            ป๊อปอัปจะแสดงเมื่อลูกค้าเข้าหน้าแรก 1 ครั้งต่อการเปิดเบราว์เซอร์ ถ้ายังไม่เคยบันทึก จะใช้ข้อความเริ่มต้น: "หากรายการสินค้ายังไม่ขึ้น โปรดรอสักครู่ ประมาณ 10 วินาทีครับ"
+          </div>
         </div>
       </div>
     </div>
@@ -1251,6 +1297,7 @@
   let unsubsReviews = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
+  let unsubsPopup = null;
 
   // Sort by the admin-assigned custom order (sortOrder). Items that don't
   // have a sortOrder yet (e.g. created before this feature existed) fall
@@ -1303,6 +1350,7 @@
     if (unsubsReviews) { unsubsReviews(); unsubsReviews = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
+    if (unsubsPopup) { unsubsPopup(); unsubsPopup = null; }
   }
 
   function initDataListeners() {
@@ -1314,6 +1362,7 @@
     loadVipUsers();
     loadReviews();
     loadChats();
+    loadPopupSettings();
   }
 
   // ===== TAB SWITCHING =====
@@ -2754,6 +2803,58 @@
       });
       showToast(`✅ บันทึกจำนวนสต็อก: ${val} ชิ้น`);
     } catch(e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= WELCOME POPUP SETTINGS =================
+  // เก็บที่ settings/welcomePopup — หน้าร้าน (index.html) อ่านค่านี้ไปแสดงเป็นป๊อปอัป
+  const POPUP_DEFAULT_TITLE = '📢 ประกาศจากร้าน';
+  const POPUP_DEFAULT_MESSAGE = 'หากรายการสินค้ายังไม่ขึ้น โปรดรอสักครู่ ประมาณ 10 วินาทีครับ';
+  let popupFormFilled = false;
+
+  function fillPopupForm(s) {
+    document.getElementById('popupEnabled').checked = s.enabled !== false;
+    document.getElementById('popupTitle').value = s.title || '';
+    document.getElementById('popupMessage').value = s.message || '';
+    document.getElementById('popupImage').value = s.image || '';
+    updatePreview('popupImage', 'popupPreview');
+  }
+
+  window.loadPopupSettings = function() {
+    if (unsubsPopup) unsubsPopup();
+    popupFormFilled = false;
+    unsubsPopup = onSnapshot(doc(db, 'settings', 'welcomePopup'), snap => {
+      // เติมฟอร์มครั้งเดียวตอนโหลด เพื่อไม่ให้ทับสิ่งที่แอดมินกำลังพิมพ์อยู่
+      if (popupFormFilled) return;
+      popupFormFilled = true;
+      fillPopupForm(snap.exists() ? snap.data() : { enabled: true, title: POPUP_DEFAULT_TITLE, message: POPUP_DEFAULT_MESSAGE });
+    }, err => showToast('โหลดตั้งค่าป๊อปอัปไม่สำเร็จ: ' + err.message));
+  };
+
+  window.clearPopupImage = function() {
+    document.getElementById('popupImage').value = '';
+    document.getElementById('popupFileInput').value = '';
+    updatePreview('popupImage', 'popupPreview');
+  };
+
+  window.resetPopupDefaults = function() {
+    fillPopupForm({ enabled: true, title: POPUP_DEFAULT_TITLE, message: POPUP_DEFAULT_MESSAGE, image: '' });
+    showToast('↩️ ใส่ข้อความเริ่มต้นแล้ว (กด "บันทึกป๊อปอัป" เพื่อใช้งานจริง)');
+  };
+
+  window.savePopupSettings = async function() {
+    const enabled = document.getElementById('popupEnabled').checked;
+    const title   = document.getElementById('popupTitle').value.trim();
+    const message = document.getElementById('popupMessage').value.trim();
+    const image   = document.getElementById('popupImage').value.trim();
+    if (enabled && !message) { showToast('⚠️ กรุณากรอกข้อความป๊อปอัป'); return; }
+    try {
+      await setDoc(doc(db, 'settings', 'welcomePopup'), {
+        enabled, title, message, image, updatedAt: new Date().toISOString()
+      });
+      showToast('✅ บันทึกป๊อปอัปเรียบร้อย');
+    } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
   };
