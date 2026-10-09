@@ -452,6 +452,9 @@
       border-bottom: none;
     }
 
+    .odds-table tr.sold-out td { opacity: 0.55; }
+    .odds-table tr.sold-out .prize-name-text { text-decoration: line-through; }
+    .sold-out-badge { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:10px; background:#DC2626; color:#fff; font-size:10.5px; font-weight:800; text-decoration:none; }
     .odds-table td.odds-value {
       font-weight: 700;
       color: var(--gold);
@@ -1487,7 +1490,8 @@
           <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
         </tbody>
       </table>
-      <p class="odds-modal-footnote">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ<br>* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
+      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ
+* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
     </div>
   </div>
 
@@ -1583,6 +1587,7 @@
     window.showOddsModal = function() {
       const modal = document.getElementById('oddsInfoModal');
       if (modal) modal.style.display = 'flex';
+      if (typeof window.MK_REFRESH_ODDS === 'function') window.MK_REFRESH_ODDS();
     };
 
     window.closeOddsModal = function() {
@@ -2069,8 +2074,10 @@
     function renderOddsTable(prizes) {
       const tbody = document.getElementById('oddsTableBody');
       if (!tbody) return;
+      const isSoldOut = (p) => (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
       const active = (prizes || []).filter(p => p.active !== false);
-      const totalWeight = active.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+      // รางวัลที่หมดแล้วออกไม่ได้ จึงไม่นำน้ำหนักมาคิด % (ให้ตรงกับการสุ่มจริง)
+      const totalWeight = active.filter(p => !isSoldOut(p)).reduce((s, p) => s + (Number(p.weight) || 0), 0);
 
       if (!active.length) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
@@ -2079,15 +2086,15 @@
 
       tbody.innerHTML = active.map(p => {
         const weight = Number(p.weight) || 0;
-        const pct = totalWeight > 0 ? (weight / totalWeight) * 100 : 0;
-        const pctTxt = pct < 1 ? pct.toFixed(3) : pct.toFixed(2);
-        const soldOut = (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
+        const soldOut = isSoldOut(p);
+        const pct = (!soldOut && totalWeight > 0) ? (weight / totalWeight) * 100 : 0;
+        const pctTxt = soldOut ? '<span style="color:#EF4444;">หมด</span>' : ((pct < 1 ? pct.toFixed(3) : pct.toFixed(2)) + '%');
         const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
         const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
         const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
-        return `<tr>
-          <td>${imgHtml}${nameLabel}${p.name || 'รางวัล'}${soldOut ? ' <span style="color:#EF4444;font-size:10px;">(หมดแล้ว)</span>' : ''}</td>
-          <td class="odds-value">${pctTxt}%</td>
+        return `<tr class="${soldOut ? 'sold-out' : ''}">
+          <td>${imgHtml}<span class="prize-name-text">${nameLabel}${p.name || 'รางวัล'}</span>${soldOut ? '<span class="sold-out-badge">หมด</span>' : ''}</td>
+          <td class="odds-value">${pctTxt}</td>
           <td>${minTxt}</td>
         </tr>`;
       }).join('');
@@ -2124,9 +2131,17 @@
         if (!claimed) {
           // Someone else grabbed the last one between the pick and now —
           // fail safely to "no prize" for this spin rather than error out.
+          loadMysteryPrizesOnce(); // รีเฟรชรายการ/ตารางโอกาสให้ตรงกับของจริง
           return { isNoPrize: true, name: 'ไม่ได้รับโค้ด', soldOutRace: true };
         }
         chosen = { ...chosen, remainingQuantity: Number(chosen.remainingQuantity) - 1 };
+        // อัปเดตจำนวนคงเหลือในหน้าเว็บทันที เพื่อให้ตารางโอกาสขึ้น "หมด" โดยไม่ต้องรีเฟรชหน้า
+        const localIdx = storeMysteryPrizes.findIndex(x => x._id === chosen._id);
+        if (localIdx !== -1) {
+          storeMysteryPrizes[localIdx] = { ...storeMysteryPrizes[localIdx], remainingQuantity: chosen.remainingQuantity };
+          window.MK_PRIZES = storeMysteryPrizes;
+          renderOddsTable(storeMysteryPrizes);
+        }
       }
       return chosen;
     };
@@ -2172,7 +2187,29 @@
       }
     }
 
+    // ===== MYSTERY BOX FOOTNOTE (settings/mysteryNotes — แก้ได้จากหน้า admin) =====
+    async function loadOddsNotesOnce() {
+      try {
+        const snap = await getDocs(collection(db, 'settings'));
+        const d = snap.docs.find(x => x.id === 'mysteryNotes');
+        if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นใน HTML
+        const text = String(d.data().text || '').trim();
+        const el = document.getElementById('oddsFootnote');
+        if (!el) return;
+        if (text) { el.textContent = text; el.style.display = ''; }
+        else { el.style.display = 'none'; }
+      } catch (err) {
+        console.warn('Error loading mystery notes:', err);
+      }
+    }
+    // เปิดหน้าต่าง "ดูเปอร์เซ็นต์" ทีไรให้ดึงข้อมูลล่าสุด (จำนวนคงเหลือ + ข้อความหมายเหตุ)
+    window.MK_REFRESH_ODDS = function () {
+      loadMysteryPrizesOnce();
+      loadOddsNotesOnce();
+    };
+
     // Kick all off in parallel rather than waiting on each other.
+    loadOddsNotesOnce();
     loadWelcomePopupOnce();
     loadCategoriesOnce();
     loadCategoryTypesOnce();
@@ -2304,22 +2341,12 @@
       return copy.slice(0, n);
     }
 
-    function isProductInStock(p) {
-      const flagOk = (p.inStock === true || p.inStock === 'true');
-      const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
-      const qtyOk = hasQty ? (Number(p.stockQty) > 0) : true;
-      return flagOk && qtyOk;
-    }
-
     function renderProductsGrid() {
       const grid = document.getElementById('productGridContainer');
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
-      // ซ่อนสินค้าที่หมดสต็อก (inStock = false หรือ stockQty <= 0) ไม่ให้แสดงที่หน้าร้าน
-      const visibleProducts = storeProducts.filter(p =>
-        !storeHiddenCategoryNames.has(p.category) && isProductInStock(p)
-      );
+      const visibleProducts = storeProducts.filter(p => !storeHiddenCategoryNames.has(p.category));
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
       let filtered;
       let totalMatchCount;

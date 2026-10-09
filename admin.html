@@ -727,6 +727,25 @@
 
       <div class="content-card">
         <div class="card-header">
+          <h2><i class="ph ph-note-pencil"></i> ข้อความหมายเหตุใต้ตารางโอกาส (หน้าร้าน)</h2>
+        </div>
+        <div style="padding:18px 20px; max-width:760px;">
+          <div class="form-group">
+            <label>ข้อความ (1 บรรทัด = 1 หัวข้อ, เว้นว่างทั้งหมด = ซ่อนข้อความนี้)</label>
+            <textarea id="mysteryNotesText" class="form-control" rows="5" placeholder="* พิมพ์ข้อความหมายเหตุที่ต้องการให้ลูกค้าเห็นใต้ตาราง"></textarea>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-primary" style="background:#059669;" onclick="saveMysteryNotes()"><i class="ph ph-floppy-disk"></i> บันทึกข้อความ</button>
+            <button type="button" class="btn-primary" style="background:#6B7280;" onclick="resetMysteryNotesDefaults()"><i class="ph ph-arrow-counter-clockwise"></i> คืนค่าข้อความเริ่มต้น</button>
+          </div>
+          <div style="margin-top:10px; font-size:11.5px; color:var(--muted); line-height:1.5;">
+            ข้อความนี้จะแสดงที่หน้าต่าง "MYSTERY BOX (รางวัลประจำเดือน)" ของหน้าแรก (ปุ่ม ? ข้างชื่อ MYSTERY BOX) พิมพ์เครื่องหมาย * นำหน้าเองได้ตามต้องการ
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
           <h2><i class="ph ph-gift"></i> รายการรางวัล Mystery Box</h2>
           <span style="font-size:12px;color:var(--muted);" id="mysteryPrizesCount">0 รายการ</span>
         </div>
@@ -1298,6 +1317,7 @@
   let unsubsChats = null;
   let unsubsActiveMessages = null;
   let unsubsPopup = null;
+  let unsubsMysteryNotes = null;
 
   // Sort by the admin-assigned custom order (sortOrder). Items that don't
   // have a sortOrder yet (e.g. created before this feature existed) fall
@@ -1351,6 +1371,7 @@
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
     if (unsubsPopup) { unsubsPopup(); unsubsPopup = null; }
+    if (unsubsMysteryNotes) { unsubsMysteryNotes(); unsubsMysteryNotes = null; }
   }
 
   function initDataListeners() {
@@ -1363,6 +1384,7 @@
     loadReviews();
     loadChats();
     loadPopupSettings();
+    loadMysteryNotes();
   }
 
   // ===== TAB SWITCHING =====
@@ -2803,6 +2825,42 @@
       });
       showToast(`✅ บันทึกจำนวนสต็อก: ${val} ชิ้น`);
     } catch(e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= MYSTERY BOX FOOTNOTE SETTINGS =================
+  // เก็บที่ settings/mysteryNotes — หน้าร้าน (index.html) อ่านไปแสดงใต้ตารางโอกาสรางวัล
+  const MYSTERY_NOTES_DEFAULT =
+    '* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ\n' +
+    '* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง';
+  let mysteryNotesFilled = false;
+
+  window.loadMysteryNotes = function() {
+    if (unsubsMysteryNotes) unsubsMysteryNotes();
+    mysteryNotesFilled = false;
+    unsubsMysteryNotes = onSnapshot(doc(db, 'settings', 'mysteryNotes'), snap => {
+      // เติมฟอร์มครั้งเดียวตอนโหลด เพื่อไม่ให้ทับสิ่งที่แอดมินกำลังพิมพ์อยู่
+      if (mysteryNotesFilled) return;
+      mysteryNotesFilled = true;
+      const el = document.getElementById('mysteryNotesText');
+      if (el) el.value = snap.exists() ? (snap.data().text || '') : MYSTERY_NOTES_DEFAULT;
+    }, err => showToast('โหลดข้อความหมายเหตุไม่สำเร็จ: ' + err.message));
+  };
+
+  window.resetMysteryNotesDefaults = function() {
+    document.getElementById('mysteryNotesText').value = MYSTERY_NOTES_DEFAULT;
+    showToast('↩️ ใส่ข้อความเริ่มต้นแล้ว (กด "บันทึกข้อความ" เพื่อใช้งานจริง)');
+  };
+
+  window.saveMysteryNotes = async function() {
+    const text = document.getElementById('mysteryNotesText').value.trim();
+    try {
+      await setDoc(doc(db, 'settings', 'mysteryNotes'), {
+        text, updatedAt: new Date().toISOString()
+      });
+      showToast(text ? '✅ บันทึกข้อความหมายเหตุเรียบร้อย' : '✅ บันทึกแล้ว (ข้อความถูกซ่อนที่หน้าร้าน)');
+    } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
   };
