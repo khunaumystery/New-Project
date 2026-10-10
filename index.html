@@ -1896,7 +1896,14 @@
       if (saved) {
         lastSpinTime = parseInt(saved);
         const elapsed = Date.now() - lastSpinTime;
-        if (elapsed < COOLDOWN_MS) {
+        const adminResetAt = Number(window.MK_SPIN_RESET_AT) || 0;
+        if (adminResetAt && lastSpinTime < adminResetAt && elapsed < COOLDOWN_MS) {
+          // แอดมินกดรีเซ็ตเวลาสุ่มหลังจากที่ลูกค้าสุ่มครั้งล่าสุด → ปลดล็อกให้สุ่มได้ทันที
+          localStorage.removeItem(key);
+          lastSpinTime = null;
+          resetSpinUI();
+          showToast('🎉 แอดมินรีเซ็ตเวลาให้แล้ว กดสุ่มได้อีกครั้ง!');
+        } else if (elapsed < COOLDOWN_MS) {
           const spinBtn = document.getElementById('spinBtn');
           if (spinBtn) {
             spinBtn.disabled = true;
@@ -2004,6 +2011,29 @@
         window.restoreState();
       }
     });
+
+    // ===== ADMIN SPIN RESET (settings/spinReset) =====
+    // แอดมินกดรีเซ็ตจากหน้า admin → เก็บเวลาไว้ที่ settings/spinReset.resetAt
+    // หน้าร้านเทียบกับเวลาสุ่มล่าสุดของลูกค้า (ใน restoreState) แล้วปลดล็อกให้
+    async function refreshSpinReset() {
+      let resetAt = 0;
+      try {
+        const snap = await getDocs(collection(db, 'settings'));
+        const d = snap.docs.find(x => x.id === 'spinReset');
+        resetAt = d ? (Number(d.data().resetAt) || 0) : 0;
+      } catch (e) { return; }
+      if (window.MK_SPIN_RESET_AT !== resetAt) {
+        window.MK_SPIN_RESET_AT = resetAt;
+        if (typeof window.restoreState === 'function') window.restoreState();
+      }
+    }
+    refreshSpinReset();
+    // เช็กซ้ำทุก 60 วินาที เฉพาะตอนที่ลูกค้ากำลังติดเวลารอ (ประหยัดการอ่าน Firestore)
+    setInterval(() => {
+      const timerSection = document.getElementById('timerSection');
+      if (!document.hidden && timerSection && timerSection.classList.contains('active')) refreshSpinReset();
+    }, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSpinReset(); });
 
     let storeCategories = [];
     let storeProducts = [];
