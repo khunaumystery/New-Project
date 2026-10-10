@@ -1706,7 +1706,7 @@
         resetSpinUI();
         if (access.reason === 'login') showLoginRequiredModal('สุ่มโค้ดส่วนลด');
         else if (access.reason === 'vip') showVipRequiredModal();
-        else showToast('⚠️ ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        else showToast('⚠️ ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' + (access.code ? ' (' + access.code + ')' : ''));
         return;
       }
 
@@ -2081,30 +2081,39 @@
 
     // ===== MYSTERY BOX ACCESS (settings/mysteryAccess + vipUsers) =====
     // mode 'all' = ลูกค้าทุกคนที่ล็อกอินสุ่มได้ | อย่างอื่น/ไม่มีเอกสาร = เฉพาะ VIP
-    // อ่านทีละเอกสารด้วย read-only transaction (1 read ต่อเอกสาร)
-    async function readSingleDoc(ref) {
-      return runTransaction(db, async (t) => {
-        const snap = await t.get(ref);
-        return snap.exists() ? snap.data() : null;
-      });
+    // อ่านด้วย getDocs แบบเดียวกับส่วนอื่นของหน้านี้ (อ่านอย่างเดียว ไม่ผ่าน transaction)
+    async function readSettingsDoc(id) {
+      const snap = await getDocs(collection(db, 'settings'));
+      const d = snap.docs.find(x => x.id === id);
+      return d ? d.data() : null;
+    }
+    // เก็บรายชื่อ VIP ไว้ในหน่วยความจำ 60 วินาที เพื่อไม่ให้อ่าน Firestore ซ้ำทุกครั้งที่กด
+    let vipIdsCache = { at: 0, ids: null };
+    async function isVipUid(uid) {
+      const now = Date.now();
+      if (!vipIdsCache.ids || now - vipIdsCache.at > 60000) {
+        const snap = await getDocs(collection(db, 'vipUsers'));
+        vipIdsCache = { at: now, ids: new Set(snap.docs.map(d => d.id)) };
+      }
+      return vipIdsCache.ids.has(uid);
     }
     window.MK_CHECK_ACCESS = async function () {
       const user = window.currentUser;
       if (!user) return { ok: false, reason: 'login' };
       let mode = 'vip';
       try {
-        const cfg = await readSingleDoc(doc(db, 'settings', 'mysteryAccess'));
+        const cfg = await readSettingsDoc('mysteryAccess');
         if (cfg && cfg.mode === 'all') mode = 'all';
       } catch (e) {
         console.warn('อ่านโหมดสิทธิ์ Mystery Box ไม่สำเร็จ (ใช้โหมดเฉพาะ VIP):', e);
       }
       if (mode === 'all') return { ok: true, mode };
       try {
-        const vip = await readSingleDoc(doc(db, 'vipUsers', user.uid));
+        const vip = await isVipUid(user.uid);
         return vip ? { ok: true, mode } : { ok: false, reason: 'vip', mode };
       } catch (e) {
         console.error('ตรวจสอบสถานะ VIP ไม่สำเร็จ:', e);
-        return { ok: false, reason: 'error' };
+        return { ok: false, reason: 'error', code: (e && e.code) || '' };
       }
     };
 
