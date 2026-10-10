@@ -2351,7 +2351,17 @@
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
-      const visibleProducts = storeProducts.filter(p => !storeHiddenCategoryNames.has(p.category));
+      // ซ่อนสินค้าที่หมด: สถานะ inStock = false หรือระบุจำนวนสต็อกไว้แล้วเหลือ 0
+      const isProductInStock = (p) => {
+        const inStockFlag = (p.inStock === true || p.inStock === 'true');
+        const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
+        const qtyOk = hasQty ? Number(p.stockQty) > 0 : true;
+        return inStockFlag && qtyOk;
+      };
+
+      const visibleProducts = storeProducts.filter(p =>
+        !storeHiddenCategoryNames.has(p.category) && isProductInStock(p)
+      );
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
       let filtered;
       let totalMatchCount;
