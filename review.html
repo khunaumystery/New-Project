@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>รีวิวสินค้า | KHUN AU Mystery</title>
+  <title>รีวิวสินค้า & ประวัติการสั่งซื้อ | KHUN AU Mystery</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -128,6 +128,16 @@
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .item-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .order-status {
+      display: inline-block; margin-top: 3px; padding: 1px 8px;
+      border-radius: 10px; font-size: 10.5px; font-weight: 700;
+      background: #F3F4F6; color: #374151;
+    }
+    .order-status.pending { background: #FEF3C7; color: #92400E; }
+    .order-status.paid { background: #D1FAE5; color: #065F46; }
+    .order-status.shipped { background: #DBEAFE; color: #1E40AF; }
+    .order-status.received { background: #EDE9FE; color: #5B21B6; }
+    .order-status.cancelled { background: #FEE2E2; color: #991B1B; }
 
     .btn-review {
       flex-shrink: 0;
@@ -281,19 +291,19 @@
 <body>
   <header class="top-nav">
     <a href="login.html" class="back-btn" aria-label="กลับหน้าโปรไฟล์"><i class="ph ph-arrow-left"></i></a>
-    <span class="nav-title">รีวิวสินค้า</span>
+    <span class="nav-title">รีวิว & ประวัติการสั่งซื้อ</span>
     <div class="nav-spacer"></div>
   </header>
 
   <main class="container">
     <section class="hero">
       <div class="hero-icon"><i class="ph ph-star"></i></div>
-      <h1>รีวิวสินค้า</h1>
-      <p>แบ่งปันประสบการณ์การซื้อของคุณให้ลูกค้าคนอื่นเห็น</p>
+      <h1>รีวิวสินค้า & ประวัติการสั่งซื้อ</h1>
+      <p>ดูประวัติการสั่งซื้อ และแบ่งปันประสบการณ์ให้ลูกค้าคนอื่นเห็น</p>
     </section>
 
     <section class="panel">
-      <div class="panel-title"><i class="ph ph-package"></i> ออเดอร์ที่รอรีวิว</div>
+      <div class="panel-title"><i class="ph ph-clock-counter-clockwise"></i> ประวัติการสั่งซื้อ & ออเดอร์ที่รอรีวิว</div>
       <div id="reviewableContent">
         <div class="loading"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
       </div>
@@ -407,6 +417,14 @@
     const IMG_MAX_DIMENSION = 900;
     const IMG_TARGET_DATAURL_LENGTH = 160000; // ~120KB binary per photo once base64-encoded, so 4 photos + text stay well under Firestore's 1MB document limit
     const TOTAL_BUDGET_DATAURL_LENGTH = 900000; // hard ceiling across all photos in one review
+
+    const ORDER_STATUS_LABEL = {
+      pending: 'รอดำเนินการ',
+      paid: 'ชำระเงินแล้ว',
+      shipped: 'จัดส่งแล้ว',
+      received: 'ได้รับสินค้าแล้ว',
+      cancelled: 'ยกเลิก'
+    };
 
     function showToast(msg) {
       toastText.textContent = msg;
@@ -563,6 +581,7 @@
 
     // One row per ORDER (not per product) — an order can hold several
     // products, but the whole order only ever gets a single review.
+    // This list doubles as the customer's order history (all statuses).
     function renderReviewable() {
       if (!myOrders.length) {
         reviewableContent.innerHTML = `<div class="empty"><i class="ph ph-package"></i>ยังไม่พบคำสั่งซื้อของคุณ<br><small>คำสั่งซื้อของคุณจะมาแสดงที่นี่เพื่อให้รีวิวได้</small></div>`;
@@ -572,6 +591,10 @@
         const items = order.items || [];
         const reviewed = reviewedOrderIds.has(order._id);
         const firstImage = (items[0] && items[0].image) || '';
+        const statusKey = ORDER_STATUS_LABEL[order.status] ? order.status : 'pending';
+        const statusBadge = `<span class="order-status ${statusKey}">${ORDER_STATUS_LABEL[statusKey]}</span>`;
+        const totalTxt = (order.grandTotal !== undefined && order.grandTotal !== null)
+          ? ` · ฿${Number(order.grandTotal).toLocaleString()}` : '';
 
         // Reviewing is only allowed once the customer has confirmed
         // receiving the order (order.status === 'received', set from
@@ -583,6 +606,8 @@
           actionBtn = `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`;
         } else if (order.status === 'received') {
           actionBtn = `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}')">เขียนรีวิว</button>`;
+        } else if (order.status === 'cancelled') {
+          actionBtn = `<button type="button" class="btn-review done" disabled>ยกเลิกแล้ว</button>`;
         } else {
           actionBtn = `<button type="button" class="btn-review done" disabled title="ต้องกดยืนยันรับสินค้าที่หน้าเลขพัสดุก่อน จึงจะรีวิวได้"><i class="ph ph-hourglass-medium"></i> รอรับสินค้า</button>`;
         }
@@ -592,7 +617,8 @@
             <img class="item-img" src="${escapeHtml(firstImage)}" alt="" onerror="this.style.visibility='hidden'">
             <div class="item-info">
               <div class="item-name">${escapeHtml(itemsSummaryText(items))}</div>
-              <div class="item-date">ออเดอร์ ${escapeHtml(order.orderId || order._id)} · ซื้อเมื่อ ${formatDateDMY(order.createdAt)}</div>
+              <div class="item-date">ออเดอร์ ${escapeHtml(order.orderId || order._id)} · ซื้อเมื่อ ${formatDateDMY(order.createdAt)}${totalTxt}</div>
+              ${statusBadge}
             </div>
             ${actionBtn}
           </div>
@@ -761,7 +787,7 @@
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       if (!user) {
-        reviewableContent.innerHTML = `<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว</div><a href="login.html">เข้าสู่ระบบ</a></div>`;
+        reviewableContent.innerHTML = `<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อดูประวัติการสั่งซื้อและเขียนรีวิว</div><a href="login.html">เข้าสู่ระบบ</a></div>`;
         myReviewsContent.innerHTML = '';
         loadAllReviews();
         return;

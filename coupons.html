@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โค้ดส่วนลด | KHUN AU Mystery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --red: #D3222A;
+      --red-dark: #A51A20;
+      --gold: #F5C842;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      padding: 76px 16px 32px;
+      background: #170407;
+      color: var(--text);
+      font-family: 'Prompt', sans-serif;
+    }
+
+    .top-nav {
+      position: fixed;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(255,255,255,.96);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text);
+      font-size: 20px;
+      text-decoration: none;
+    }
+
+    .nav-title { font-size: 16px; font-weight: 700; }
+    .nav-spacer { width: 40px; }
+
+    .container { width: 100%; max-width: 620px; margin: 0 auto; }
+
+    .hero { padding: 18px 8px 22px; color: white; text-align: center; }
+    .hero-icon {
+      width: 64px; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      border: 2px solid rgba(245,200,66,.7);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #4A171B, #21080A);
+      color: var(--gold);
+      font-size: 32px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.3);
+    }
+    .hero h1 { font-size: 24px; font-weight: 800; }
+    .hero p { margin-top: 4px; color: #E8C9CB; font-size: 13px; }
+
+    .panel {
+      padding: 18px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 12px 36px rgba(0,0,0,.3);
+    }
+
+    .panel-title {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
+      font-size: 14.5px; font-weight: 700;
+    }
+    .panel-title i { color: var(--red); font-size: 18px; }
+
+    .empty, .login-needed {
+      padding: 30px 14px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13.5px;
+    }
+    .empty i, .login-needed i {
+      display: block; margin-bottom: 8px; font-size: 32px;
+    }
+    .login-needed a, .go-shop {
+      display: inline-block; margin-top: 14px; padding: 10px 18px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: white; font-weight: 700; text-decoration: none; font-size: 13.5px;
+    }
+
+    .coupon-list { display: grid; gap: 12px; }
+
+    .coupon-card {
+      display: flex;
+      border: 1.5px dashed #D1D5DB;
+      border-radius: 16px;
+      background: #FFFDF5;
+      overflow: hidden;
+    }
+    .coupon-card.active { border-color: #F59E0B; }
+    .coupon-card.inactive { background: #F9FAFB; opacity: .75; }
+
+    .coupon-left {
+      flex-shrink: 0;
+      width: 64px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(145deg, var(--red), var(--red-dark));
+      color: var(--gold);
+      font-size: 28px;
+    }
+    .coupon-card.inactive .coupon-left { background: #9CA3AF; color: #E5E7EB; }
+
+    .coupon-body { flex: 1; min-width: 0; padding: 12px 14px; }
+
+    .coupon-prize { font-size: 13.5px; font-weight: 700; color: var(--text); word-break: break-word; }
+    .coupon-code {
+      margin-top: 4px;
+      font-size: 22px; font-weight: 800; letter-spacing: 3px;
+      color: var(--red);
+    }
+    .coupon-card.inactive .coupon-code { color: #6B7280; text-decoration: line-through; }
+
+    .coupon-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .tag {
+      padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 600;
+      background: #EDE9FE; color: #5B21B6;
+    }
+    .tag.ship { background: #DBEAFE; color: #1E40AF; }
+    .tag.min { background: #FEF3C7; color: #92400E; }
+
+    .coupon-status { margin-top: 8px; font-size: 12px; font-weight: 700; }
+    .coupon-status.ok { color: #B45309; }
+    .coupon-status.used { color: #047857; }
+    .coupon-status.expired { color: #B91C1C; }
+
+    .coupon-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-copy, .btn-use {
+      padding: 7px 12px; border-radius: 9px; border: none;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-copy { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .btn-use { background: linear-gradient(135deg, var(--red), var(--red-dark)); color: white; }
+
+    .note { margin-top: 12px; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+
+    .toast-msg {
+      position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+      padding: 11px 18px; border-radius: 12px;
+      background: #1F2937; color: white; font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+      opacity: 0; pointer-events: none; transition: all .25s ease;
+      z-index: 4000; max-width: 86vw;
+    }
+    .toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <a href="login.html" class="back-btn" aria-label="กลับหน้าโปรไฟล์"><i class="ph ph-arrow-left"></i></a>
+    <span class="nav-title">โค้ดส่วนลด</span>
+    <div class="nav-spacer"></div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-icon"><i class="ph ph-ticket"></i></div>
+      <h1>โค้ดส่วนลดของฉัน</h1>
+      <p>โค้ดที่ได้จากการสุ่ม Mystery Box</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><i class="ph ph-tag"></i> โค้ดของคุณ</div>
+      <div id="couponContent">
+        <div class="empty"><i class="ph ph-spinner-gap ph-spin"></i>กำลังโหลดข้อมูล...</div>
+      </div>
+      <div class="note">
+        * โค้ดมีอายุ 30 นาทีนับจากเวลาที่สุ่มได้ และใช้ได้ครั้งเดียว<br>
+        * ระบบเก็บเฉพาะโค้ดที่สุ่มได้ล่าสุดเพียง 1 โค้ด
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-msg" id="toastMsg"></div>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from './js/firebase-config.js';
+
+    const content = document.getElementById('couponContent');
+    const toastMsg = document.getElementById('toastMsg');
+    const CODE_EXPIRY_MS = 30 * 60 * 1000;
+    let tickTimer = null;
+    let currentUid = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toastMsg.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastMsg.classList.remove('show'), 2400);
+    }
+
+    function getCodes(uid) {
+      try {
+        const list = JSON.parse(localStorage.getItem('mkValidCodes_' + uid) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) { return []; }
+    }
+
+    function expiresAtOf(c) {
+      return c.expiresAt || (c.createdAt ? c.createdAt + CODE_EXPIRY_MS : 0);
+    }
+
+    function formatRemaining(ms) {
+      const s = Math.max(0, Math.floor(ms / 1000));
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function statusOf(c) {
+      if (c.used) return 'used';
+      return expiresAtOf(c) > Date.now() ? 'ok' : 'expired';
+    }
+
+    function render() {
+      const codes = getCodes(currentUid)
+        .slice()
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      if (!codes.length) {
+        content.innerHTML = '<div class="empty"><i class="ph ph-ticket"></i>ยังไม่มีโค้ดส่วนลด<br><small>สุ่ม Mystery Box ที่หน้าแรกเพื่อรับโค้ด</small><br><a class="go-shop" href="index.html">ไปสุ่มโค้ด</a></div>';
+        return;
+      }
+
+      content.innerHTML = '<div class="coupon-list">' + codes.map(c => {
+        const st = statusOf(c);
+        const exp = expiresAtOf(c);
+        const tags = [];
+        if (c.freeShipping) tags.push('<span class="tag ship">🚚 ส่งฟรี</span>');
+        if (c.giftItem) tags.push('<span class="tag">🎁 ' + escapeHtml(c.giftItem) + '</span>');
+        if (Number(c.minOrderAmount) > 0) tags.push('<span class="tag min">ขั้นต่ำ ฿' + Number(c.minOrderAmount).toLocaleString() + '</span>');
+
+        let statusHtml;
+        let actions = '';
+        if (st === 'ok') {
+          statusHtml = '<div class="coupon-status ok">⏳ หมดอายุใน <span data-exp="' + exp + '">' + formatRemaining(exp - Date.now()) + '</span></div>';
+          actions = '<div class="coupon-actions">' +
+            '<button type="button" class="btn-copy" data-code="' + escapeHtml(c.code) + '"><i class="ph ph-copy"></i> คัดลอก</button>' +
+            '<a class="btn-use" href="cart.html">ใช้โค้ด <i class="ph ph-arrow-right"></i></a>' +
+            '</div>';
+        } else if (st === 'used') {
+          statusHtml = '<div class="coupon-status used">✅ ใช้งานแล้ว</div>';
+        } else {
+          statusHtml = '<div class="coupon-status expired">❌ หมดอายุแล้ว</div>';
+        }
+
+        return '<div class="coupon-card ' + (st === 'ok' ? 'active' : 'inactive') + '">' +
+          '<div class="coupon-left"><i class="ph ph-ticket"></i></div>' +
+          '<div class="coupon-body">' +
+            '<div class="coupon-prize">' + escapeHtml(c.prizeName || 'รางวัลพิเศษ') + '</div>' +
+            '<div class="coupon-code">' + escapeHtml(c.code) + '</div>' +
+            (tags.length ? '<div class="coupon-tags">' + tags.join('') + '</div>' : '') +
+            statusHtml + actions +
+          '</div></div>';
+      }).join('') + '</div>';
+
+      content.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const code = btn.dataset.code || '';
+          try {
+            await navigator.clipboard.writeText(code);
+            showToast('📋 คัดลอกโค้ด ' + code + ' แล้ว');
+          } catch (e) {
+            window.prompt('คัดลอกโค้ดนี้', code);
+          }
+        });
+      });
+    }
+
+    function startTicker() {
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(() => {
+        let needRerender = false;
+        document.querySelectorAll('[data-exp]').forEach(el => {
+          const left = Number(el.dataset.exp) - Date.now();
+          if (left <= 0) needRerender = true;
+          else el.textContent = formatRemaining(left);
+        });
+        if (needRerender) render();
+      }, 1000);
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        currentUid = null;
+        if (tickTimer) clearInterval(tickTimer);
+        content.innerHTML = '<div class="login-needed"><i class="ph ph-lock-key"></i><div>กรุณาเข้าสู่ระบบเพื่อดูโค้ดส่วนลดของคุณ</div><a href="login.html">เข้าสู่ระบบ</a></div>';
+        return;
+      }
+      currentUid = user.uid;
+      render();
+      startTicker();
+    });
+  </script>
+</body>
+</html>
