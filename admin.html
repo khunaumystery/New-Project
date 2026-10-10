@@ -754,6 +754,19 @@
 
       <div class="content-card">
         <div class="card-header">
+          <h2><i class="ph ph-timer"></i> รีเซ็ตเวลาสุ่ม (ลูกค้าทุกคน)</h2>
+        </div>
+        <div style="padding:18px 20px; max-width:760px;">
+          <div style="font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
+            กดแล้วลูกค้าทุกคนที่ติดเวลารอ 5 ชั่วโมงจะกดสุ่มได้ใหม่ทันที — คนที่เปิดหน้าเว็บค้างอยู่จะปลดล็อกภายในประมาณ 1 นาที ส่วนคนที่เปิดหน้าใหม่หรือรีเฟรชจะปลดล็อกทันที โค้ดรางวัลที่ได้ไปแล้วยังใช้งานได้ตามเดิม
+          </div>
+          <button type="button" class="btn-primary" style="background:#DC2626;" onclick="resetAllSpinCooldowns()"><i class="ph ph-arrow-counter-clockwise"></i> รีเซ็ตเวลาให้ทุกคนสุ่มได้ใหม่ทันที</button>
+          <div id="spinResetLastInfo" style="margin-top:10px; font-size:11.5px; color:var(--muted);">รีเซ็ตล่าสุด: -</div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
           <h2><i class="ph ph-gift"></i> รายการรางวัล Mystery Box</h2>
           <span style="font-size:12px;color:var(--muted);" id="mysteryPrizesCount">0 รายการ</span>
         </div>
@@ -1352,6 +1365,7 @@
   let unsubsActiveMessages = null;
   let unsubsPopup = null;
   let unsubsMysteryNotes = null;
+  let unsubsSpinReset = null;
 
   // Sort by the admin-assigned custom order (sortOrder). Items that don't
   // have a sortOrder yet (e.g. created before this feature existed) fall
@@ -1406,6 +1420,7 @@
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
     if (unsubsPopup) { unsubsPopup(); unsubsPopup = null; }
     if (unsubsMysteryNotes) { unsubsMysteryNotes(); unsubsMysteryNotes = null; }
+    if (unsubsSpinReset) { unsubsSpinReset(); unsubsSpinReset = null; }
   }
 
   function initDataListeners() {
@@ -1419,6 +1434,7 @@
     loadChats();
     loadPopupSettings();
     loadMysteryNotes();
+    loadSpinResetInfo();
   }
 
   // ===== TAB SWITCHING =====
@@ -2974,6 +2990,32 @@
       showToast(text ? '✅ บันทึกข้อความเรียบร้อย' : '✅ บันทึกแล้ว (หมายเหตุใต้ตารางถูกซ่อนที่หน้าร้าน)');
     } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= SPIN COOLDOWN RESET (ALL CUSTOMERS) =================
+  // เก็บที่ settings/spinReset { resetAt: <ms> } — หน้าร้าน (index.html) เทียบเวลาสุ่มล่าสุดของลูกค้า
+  // ถ้าสุ่มก่อนเวลา resetAt จะปลดล็อกเวลารอให้ทันที (เวลารอเก็บในเครื่องลูกค้า จึงรีเซ็ตด้วยวิธีนี้)
+  window.loadSpinResetInfo = function() {
+    if (unsubsSpinReset) unsubsSpinReset();
+    unsubsSpinReset = onSnapshot(doc(db, 'settings', 'spinReset'), snap => {
+      const el = document.getElementById('spinResetLastInfo');
+      if (!el) return;
+      const t = snap.exists() ? Number(snap.data().resetAt) : 0;
+      el.textContent = 'รีเซ็ตล่าสุด: ' + (t ? new Date(t).toLocaleString('th-TH') : '-');
+    }, err => showToast('โหลดข้อมูลรีเซ็ตเวลาไม่สำเร็จ: ' + err.message));
+  };
+
+  window.resetAllSpinCooldowns = async function() {
+    if (!confirm('ยืนยันรีเซ็ตเวลาสุ่ม?\nลูกค้าทุกคนจะกดสุ่ม Mystery Box ได้ใหม่ทันที')) return;
+    try {
+      await setDoc(doc(db, 'settings', 'spinReset'), {
+        resetAt: Date.now(),
+        updatedAt: new Date().toISOString()
+      });
+      showToast('✅ รีเซ็ตเวลาสุ่มให้ทุกคนแล้ว');
+    } catch (e) {
+      showToast('❌ รีเซ็ตไม่สำเร็จ: ' + e.message);
     }
   };
 
