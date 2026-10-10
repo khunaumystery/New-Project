@@ -1498,6 +1498,20 @@
     </div>
   </div>
 
+  <!-- Modal: VIP Required (Mystery Box in VIP-only mode) -->
+  <div class="modal-overlay" id="vipRequiredModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
+    <div style="background:#24090D;border:1.5px solid rgba(245,200,66,0.4);border-radius:24px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+      <div style="width:62px;height:62px;border-radius:50%;background:rgba(245,200,66,0.15);border:1px solid rgba(245,200,66,0.4);color:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;">
+        <i class="ph ph-crown"></i>
+      </div>
+      <h3 style="font-size:18px;font-weight:700;color:#FFFFFF;margin-bottom:8px;">Mystery Box สำหรับสมาชิก VIP</h3>
+      <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;">ขณะนี้ Mystery Box เปิดให้สุ่มเฉพาะสมาชิก VIP เท่านั้น (ยังไม่ได้ใช้สิทธิ์สุ่มของคุณ) ติดตามโปรโมชั่นที่เปิดให้ทุกคนสุ่มได้จากทางร้านนะครับ</p>
+      <button onclick="document.getElementById('vipRequiredModal').style.display='none'" style="width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">
+        รับทราบ
+      </button>
+    </div>
+  </div>
+
   <!-- Modal: Lucky Draw Odds Info -->
   <div class="modal-overlay" id="oddsInfoModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
     <div class="odds-modal-box">
@@ -1592,6 +1606,11 @@
       if (modal) modal.style.display = 'flex';
     };
 
+    window.showVipRequiredModal = function() {
+      const modal = document.getElementById('vipRequiredModal');
+      if (modal) modal.style.display = 'flex';
+    };
+
     // ===== WELCOME POPUP =====
     // แสดงทันทีด้วยข้อความเริ่มต้น (วันละครั้งต่อการเปิดเบราว์เซอร์) แล้วค่อยอัปเดต
     // เป็นข้อความ/รูปที่แอดมินตั้งไว้เมื่อโหลดจาก Firestore เสร็จ
@@ -1662,7 +1681,7 @@
       }
     }
 
-    function doSpin() {
+    async function doSpin() {
       if (!window.currentUser) {
         showLoginRequiredModal('สุ่มโค้ดส่วนลด');
         return;
@@ -1676,6 +1695,21 @@
       if (spinBtn.disabled) return;
 
       spinBtn.disabled = true;
+      spinBtn.innerHTML = '<i class="ph ph-spinner-gap"></i> <span>กำลังตรวจสอบสิทธิ์...</span>';
+
+      // เช็กสิทธิ์ตามโหมดที่แอดมินตั้ง (เฉพาะ VIP / ลูกค้าทุกคน) ก่อนเริ่มสุ่มทุกครั้ง
+      let access = { ok: true };
+      if (typeof window.MK_CHECK_ACCESS === 'function') {
+        try { access = await window.MK_CHECK_ACCESS(); } catch (e) { access = { ok: false, reason: 'error' }; }
+      }
+      if (!access.ok) {
+        resetSpinUI();
+        if (access.reason === 'login') showLoginRequiredModal('สุ่มโค้ดส่วนลด');
+        else if (access.reason === 'vip') showVipRequiredModal();
+        else showToast('⚠️ ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+
       spinBtn.innerHTML = '<i class="ph ph-spinner-gap"></i> <span>กำลังลุ้นรางวัล...</span>';
 
       giftBox.classList.remove('floating', 'shaking', 'popping');
@@ -1689,15 +1723,25 @@
       const giftBox = document.getElementById('giftBox');
       giftBox.classList.remove('shaking');
       giftBox.classList.add('popping');
-      burstConfetti();
 
       let prize;
       try {
         prize = await window.MK_PICK_PRIZE();
       } catch (e) {
-        prize = { isNoPrize: true, name: 'ไม่ได้รับโค้ด' };
+        console.error('MK_PICK_PRIZE failed:', e);
+        prize = { claimError: true };
       }
 
+      // ระบบขัดข้อง (เช่น ตัดสต็อกรางวัลไม่สำเร็จ) → ไม่นับเป็นการสุ่ม ไม่เริ่มเวลารอ
+      if (prize.claimError) {
+        giftBox.classList.remove('popping');
+        giftBox.classList.add('floating');
+        resetSpinUI();
+        showToast('⚠️ ระบบขัดข้อง ยังไม่ได้ใช้สิทธิ์สุ่มของคุณ กรุณากดสุ่มใหม่อีกครั้ง');
+        return;
+      }
+
+      burstConfetti();
       const isNoPrize = !!prize.isNoPrize;
 
       if (!isNoPrize) {
@@ -2035,6 +2079,35 @@
     }, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSpinReset(); });
 
+    // ===== MYSTERY BOX ACCESS (settings/mysteryAccess + vipUsers) =====
+    // mode 'all' = ลูกค้าทุกคนที่ล็อกอินสุ่มได้ | อย่างอื่น/ไม่มีเอกสาร = เฉพาะ VIP
+    // อ่านทีละเอกสารด้วย read-only transaction (1 read ต่อเอกสาร)
+    async function readSingleDoc(ref) {
+      return runTransaction(db, async (t) => {
+        const snap = await t.get(ref);
+        return snap.exists() ? snap.data() : null;
+      });
+    }
+    window.MK_CHECK_ACCESS = async function () {
+      const user = window.currentUser;
+      if (!user) return { ok: false, reason: 'login' };
+      let mode = 'vip';
+      try {
+        const cfg = await readSingleDoc(doc(db, 'settings', 'mysteryAccess'));
+        if (cfg && cfg.mode === 'all') mode = 'all';
+      } catch (e) {
+        console.warn('อ่านโหมดสิทธิ์ Mystery Box ไม่สำเร็จ (ใช้โหมดเฉพาะ VIP):', e);
+      }
+      if (mode === 'all') return { ok: true, mode };
+      try {
+        const vip = await readSingleDoc(doc(db, 'vipUsers', user.uid));
+        return vip ? { ok: true, mode } : { ok: false, reason: 'vip', mode };
+      } catch (e) {
+        console.error('ตรวจสอบสถานะ VIP ไม่สำเร็จ:', e);
+        return { ok: false, reason: 'error' };
+      }
+    };
+
     let storeCategories = [];
     let storeProducts = [];
     let storeCategoryTypes = [];
@@ -2186,7 +2259,12 @@
       const hasLimitedStock = (chosen.remainingQuantity !== undefined && chosen.remainingQuantity !== null);
       if (hasLimitedStock) {
         const claimed = await claimLimitedPrize(chosen._id);
-        if (!claimed) {
+        if (claimed === 'error') {
+          // ตัดสต็อกไม่สำเร็จเพราะ error (เช่น สิทธิ์ไม่พอ/เครือข่าย) ไม่ใช่ของหมดจริง
+          // → ไม่นับเป็นการสุ่ม (finishSpin จะไม่เริ่มเวลารอ)
+          return { isNoPrize: true, name: 'ไม่ได้รับโค้ด', claimError: true };
+        }
+        if (claimed === 'soldout') {
           // Someone else grabbed the last one between the pick and now —
           // fail safely to "no prize" for this spin rather than error out.
           loadMysteryPrizesOnce(); // รีเฟรชรายการ/ตารางโอกาสให้ตรงกับของจริง
@@ -2204,19 +2282,22 @@
       return chosen;
     };
 
+    // คืนค่า 'ok' | 'soldout' (ของหมดจริง/ถูกลบ) | 'error' (ขัดข้อง เช่น permission-denied)
     async function claimLimitedPrize(prizeId) {
       const pRef = doc(db, 'luckyDrawPrizes', prizeId);
       try {
         await runTransaction(db, async (transaction) => {
           const snap = await transaction.get(pRef);
-          if (!snap.exists()) throw new Error('not found');
+          if (!snap.exists()) throw new Error('MK_SOLD_OUT');
           const remain = Number(snap.data().remainingQuantity);
-          if (!(remain > 0)) throw new Error('sold out');
+          if (!(remain > 0)) throw new Error('MK_SOLD_OUT');
           transaction.update(pRef, { remainingQuantity: remain - 1 });
         });
-        return true;
+        return 'ok';
       } catch (e) {
-        return false;
+        if (e && e.message === 'MK_SOLD_OUT') return 'soldout';
+        console.error('claimLimitedPrize failed:', e);
+        return 'error';
       }
     }
 

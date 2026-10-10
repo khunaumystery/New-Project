@@ -754,6 +754,22 @@
 
       <div class="content-card">
         <div class="card-header">
+          <h2><i class="ph ph-crown"></i> สิทธิ์การสุ่ม Mystery Box</h2>
+        </div>
+        <div style="padding:18px 20px; max-width:760px;">
+          <div id="mysteryAccessStatus" style="font-size:14px; font-weight:700; margin-bottom:10px;">กำลังโหลด...</div>
+          <div style="font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
+            สลับโหมดได้ตลอดเวลา เช่น เปิดให้ลูกค้าทุกคนสุ่มได้ในช่วงโปรโมชั่น แล้วสลับกลับเป็นเฉพาะ VIP เมื่อหมดโปรโมชั่น — มีผลกับลูกค้าที่กดสุ่มครั้งถัดไปทันที (ไม่ต้องรีเฟรช) ลูกค้าต้องเข้าสู่ระบบก่อนในทุกโหมด
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="btnAccessVip" class="btn-primary" style="background:#7C3AED;" onclick="setMysteryAccess('vip')"><i class="ph ph-crown"></i> เฉพาะ VIP</button>
+            <button type="button" id="btnAccessAll" class="btn-primary" style="background:#059669;" onclick="setMysteryAccess('all')"><i class="ph ph-users-three"></i> ลูกค้าทุกคน (โปรโมชั่น)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
           <h2><i class="ph ph-timer"></i> รีเซ็ตเวลาสุ่ม (ลูกค้าทุกคน)</h2>
         </div>
         <div style="padding:18px 20px; max-width:760px;">
@@ -793,7 +809,7 @@
 
       <div class="toolbar" style="flex-wrap:wrap;">
         <div style="flex:1 1 100%; font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:2px;">
-          👑 เพิ่ม User ID ของลูกค้าที่ต้องการให้เป็น VIP (คัดลอก User ID ได้จากตาราง "รายการออเดอร์") — <b>ยังไม่มีการจำกัดสิทธิ์ Mystery Box ตาม VIP ในตอนนี้</b> ระบบนี้เป็นแค่การเก็บรายชื่อ VIP ไว้ก่อน
+          👑 เพิ่ม User ID ของลูกค้าที่ต้องการให้เป็น VIP (คัดลอก User ID ได้จากตาราง "รายการออเดอร์") — <b>เลือกให้ Mystery Box สุ่มได้เฉพาะ VIP หรือทุกคนได้ที่แท็บ Mystery Box</b> (การ์ด "สิทธิ์การสุ่ม Mystery Box")
         </div>
         <input type="text" id="vipUidInput" class="search-box" style="flex:2; min-width:220px;" placeholder="วาง User ID ของลูกค้าที่นี่...">
         <input type="text" id="vipLabelInput" class="search-box" style="flex:1; min-width:160px;" placeholder="ชื่อ/หมายเหตุ (ถ้ามี)">
@@ -1366,6 +1382,7 @@
   let unsubsPopup = null;
   let unsubsMysteryNotes = null;
   let unsubsSpinReset = null;
+  let unsubsMysteryAccess = null;
 
   // Sort by the admin-assigned custom order (sortOrder). Items that don't
   // have a sortOrder yet (e.g. created before this feature existed) fall
@@ -1421,6 +1438,7 @@
     if (unsubsPopup) { unsubsPopup(); unsubsPopup = null; }
     if (unsubsMysteryNotes) { unsubsMysteryNotes(); unsubsMysteryNotes = null; }
     if (unsubsSpinReset) { unsubsSpinReset(); unsubsSpinReset = null; }
+    if (unsubsMysteryAccess) { unsubsMysteryAccess(); unsubsMysteryAccess = null; }
   }
 
   function initDataListeners() {
@@ -1435,6 +1453,7 @@
     loadPopupSettings();
     loadMysteryNotes();
     loadSpinResetInfo();
+    loadMysteryAccess();
   }
 
   // ===== TAB SWITCHING =====
@@ -2988,6 +3007,43 @@
         title, subtitle, text, updatedAt: new Date().toISOString()
       });
       showToast(text ? '✅ บันทึกข้อความเรียบร้อย' : '✅ บันทึกแล้ว (หมายเหตุใต้ตารางถูกซ่อนที่หน้าร้าน)');
+    } catch (e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= MYSTERY BOX ACCESS MODE (VIP ONLY / ALL CUSTOMERS) =================
+  // เก็บที่ settings/mysteryAccess { mode: 'vip' | 'all' } — ไม่มีเอกสาร = 'vip'
+  // หน้าร้านอ่านค่านี้ตอนลูกค้ากดสุ่ม และ firestore.rules อ่านค่าเดียวกันตอนตัดสต็อกรางวัล
+  function renderMysteryAccess(mode) {
+    const st = document.getElementById('mysteryAccessStatus');
+    const bVip = document.getElementById('btnAccessVip');
+    const bAll = document.getElementById('btnAccessAll');
+    if (st) {
+      st.textContent = mode === 'all'
+        ? '🟢 ตอนนี้: เปิดให้ลูกค้าทุกคนที่เข้าสู่ระบบสุ่มได้ (โหมดโปรโมชั่น)'
+        : '👑 ตอนนี้: เฉพาะสมาชิก VIP เท่านั้น';
+    }
+    if (bVip) { bVip.style.opacity = mode === 'vip' ? '1' : '0.45'; bVip.style.outline = mode === 'vip' ? '2px solid #C4B5FD' : 'none'; }
+    if (bAll) { bAll.style.opacity = mode === 'all' ? '1' : '0.45'; bAll.style.outline = mode === 'all' ? '2px solid #6EE7B7' : 'none'; }
+  }
+
+  window.loadMysteryAccess = function() {
+    if (unsubsMysteryAccess) unsubsMysteryAccess();
+    unsubsMysteryAccess = onSnapshot(doc(db, 'settings', 'mysteryAccess'), snap => {
+      renderMysteryAccess(snap.exists() && snap.data().mode === 'all' ? 'all' : 'vip');
+    }, err => showToast('โหลดสิทธิ์การสุ่มไม่สำเร็จ: ' + err.message));
+  };
+
+  window.setMysteryAccess = async function(mode) {
+    if (mode !== 'vip' && mode !== 'all') return;
+    const msg = mode === 'all'
+      ? 'เปิดให้ลูกค้าทุกคนที่เข้าสู่ระบบสุ่ม Mystery Box ได้?'
+      : 'ปิดให้สุ่มได้เฉพาะสมาชิก VIP?';
+    if (!confirm(msg)) return;
+    try {
+      await setDoc(doc(db, 'settings', 'mysteryAccess'), { mode, updatedAt: new Date().toISOString() });
+      showToast(mode === 'all' ? '✅ เปิดให้ลูกค้าทุกคนสุ่มได้แล้ว' : '✅ ตั้งเป็นเฉพาะ VIP แล้ว');
     } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
