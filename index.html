@@ -1747,8 +1747,9 @@
         const nowTime = Date.now();
         const expiresAt = nowTime + CODE_EXPIRY_MS;
         try {
-          const validCodes = JSON.parse(localStorage.getItem(getCodesKey()) || '[]');
-          validCodes.push({
+          // เก็บเฉพาะโค้ดที่สุ่มได้ล่าสุดเพียงโค้ดเดียว
+          // (เขียนทับรายการเดิมทั้งหมด แทนการ push ต่อท้าย → โค้ดเก่าถูกลบอัตโนมัติ)
+          const latestOnly = [{
             code: currentCode,
             prizeId: prize._id || null,
             prizeName: prize.name || 'รางวัลพิเศษ',
@@ -1758,8 +1759,8 @@
             used: false,
             createdAt: nowTime,
             expiresAt: expiresAt
-          });
-          localStorage.setItem(getCodesKey(), JSON.stringify(validCodes));
+          }];
+          localStorage.setItem(getCodesKey(), JSON.stringify(latestOnly));
           localStorage.setItem(getCurrentPromoKey(), currentCode);
           localStorage.setItem(getCurrentPrizeKey(), prize.name || '');
           localStorage.setItem(getCurrentExpiryKey(), expiresAt.toString());
@@ -1976,6 +1977,21 @@
           }
         }
       } catch(e) {}
+
+      // 3. ล้างโค้ดเก่าที่ค้างอยู่ในเครื่อง (จากเวอร์ชันก่อนที่เก็บหลายโค้ด)
+      //    ให้เหลือเฉพาะโค้ดล่าสุดเพียงโค้ดเดียว
+      pruneToLatestCode();
+    }
+
+    // เหลือเฉพาะโค้ดล่าสุด (createdAt มากที่สุด) ใน mkValidCodes_<uid>
+    function pruneToLatestCode() {
+      try {
+        const key = getCodesKey();
+        const list = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(list) || list.length <= 1) return;
+        const latest = list.reduce((a, b) => ((b.createdAt || 0) >= (a.createdAt || 0) ? b : a));
+        localStorage.setItem(key, JSON.stringify([latest]));
+      } catch (e) { /* ignore */ }
     }
 
     window.restoreState = restoreState;
