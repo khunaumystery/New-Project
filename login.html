@@ -835,8 +835,11 @@
         2. เลือก <strong>"เปิดใน Chrome"</strong> หรือ <strong>"เปิดในเบราว์เซอร์ภายนอก"</strong><br>
         <div style="margin-top:6px; font-size:12px; color:#DC2626;">* หรือสมัคร/เข้าสู่ระบบด้วยอีเมลในหน้านี้ได้ทันที</div>
       </div>
-      <button onclick="document.getElementById('inAppGuideModal').style.display='none'" style="width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(211,34,42,0.3);">
-        เข้าใจแล้ว / ใช้อีเมลสมัครแทน
+      <button type="button" onclick="openInExternalBrowser()" style="width:100%;padding:12px;background:linear-gradient(135deg, var(--mk-red), var(--mk-red-dark));color:#fff;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(211,34,42,0.3);">
+        <i class="ph ph-browsers"></i> เข้าใจแล้ว / เปิดในเบราว์เซอร์
+      </button>
+      <button type="button" onclick="document.getElementById('inAppGuideModal').style.display='none'" style="width:100%;padding:11px;margin-top:8px;background:#F3F4F6;color:#6B7280;border:none;border-radius:12px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+        ใช้อีเมลสมัคร/เข้าสู่ระบบแทน
       </button>
     </div>
   </div>
@@ -866,6 +869,52 @@
       const alertEl = document.getElementById('inAppBrowserAlert');
       if (alertEl) alertEl.style.display = 'block';
     }
+
+    // ---- เปิดหน้านี้ใน Chrome / Safari แทนเบราว์เซอร์ในแอป (Messenger / LINE / IG ฯลฯ) ----
+    // หมายเหตุ: แอปแต่ละตัวมีข้อจำกัดต่างกัน จึงทำแบบ "พยายามเปิด" แล้วมีทางสำรองคือคัดลอกลิงก์
+    //  - LINE: ใส่พารามิเตอร์ openExternalBrowser=1 (LINE รองรับอย่างเป็นทางการ ทั้ง iOS/Android)
+    //  - Android อื่นๆ: ใช้ intent:// เรียก Chrome
+    //  - iOS อื่นๆ: ลองสกีม x-safari-https:// (บางแอปอาจบล็อก)
+    window.openInExternalBrowser = function() {
+      const ua = navigator.userAgent || '';
+      const url = window.location.href.split('#')[0];
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isLine = /Line\//i.test(ua);
+
+      let opened = false;
+      const onVis = () => { if (document.hidden) opened = true; };
+      document.addEventListener('visibilitychange', onVis);
+
+      try {
+        if (isLine) {
+          const u = new URL(url);
+          u.searchParams.set('openExternalBrowser', '1');
+          window.location.href = u.toString();
+        } else if (isAndroid) {
+          const u = new URL(url);
+          const scheme = u.protocol.replace(':', '');
+          window.location.href = 'intent://' + u.host + u.pathname + u.search +
+            '#Intent;scheme=' + scheme + ';package=com.android.chrome;end';
+        } else if (isIOS) {
+          window.location.href = url.replace(/^https?:\/\//i, 'x-safari-https://');
+        }
+      } catch (e) {
+        console.warn('open external browser error:', e);
+      }
+
+      // ถ้าเปิดไม่สำเร็จ (หน้ายังอยู่) ให้คัดลอกลิงก์ไว้ให้ลูกค้านำไปวางในเบราว์เซอร์เอง
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onVis);
+        if (opened) return;
+        const done = () => showToast('📋 คัดลอกลิงก์แล้ว กรุณาเปิด Chrome/Safari แล้ววางลิงก์');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(() => showToast('⚠️ เปิดอัตโนมัติไม่ได้ กรุณากด ⋯ แล้วเลือกเปิดในเบราว์เซอร์'));
+        } else {
+          showToast('⚠️ เปิดอัตโนมัติไม่ได้ กรุณากด ⋯ แล้วเลือกเปิดในเบราว์เซอร์');
+        }
+      }, 1800);
+    };
 
     // Generate subtle particles
     function initParticles() {
