@@ -37,7 +37,7 @@
 
     body {
       font-family: 'Prompt', sans-serif;
-      background: radial-gradient(ellipse at top, #3A0C11 0%, #170407 65%, #0B0203 100%);
+      background: #170407;
       color: var(--text-main);
       min-height: 100vh;
       line-height: 1.5;
@@ -49,6 +49,7 @@
 
     /* Ambient Sparkle Particles */
     .particles-bg {
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
@@ -1410,9 +1411,6 @@
         </div>
         <div class="section-title-text">หมวดหมู่สินค้า</div>
       </div>
-      <span class="section-link-more" onclick="selectCategory('ALL')">
-        ดูทั้งหมด <i class="ph ph-caret-right"></i>
-      </span>
     </div>
 
     <!-- 4-in-a-row Category Grid -->
@@ -1437,7 +1435,7 @@
           <div class="section-icon-box">
             <i class="ph ph-shopping-bag"></i>
           </div>
-          <div class="section-title-text" id="currentCategoryTitle">สินค้าทั้งหมด</div>
+          <div class="section-title-text" id="currentCategoryTitle">สินค้า</div>
         </div>
         <span style="font-size:12px; color:var(--text-muted);" id="productCountLabel">0 รายการ</span>
       </div>
@@ -2060,7 +2058,22 @@
     // ===== ADMIN SPIN RESET (settings/spinReset) =====
     // แอดมินกดรีเซ็ตจากหน้า admin → เก็บเวลาไว้ที่ settings/spinReset.resetAt
     // หน้าร้านเทียบกับเวลาสุ่มล่าสุดของลูกค้า (ใน restoreState) แล้วปลดล็อกให้
+    // อ่าน settings/spinReset เฉพาะเมื่อเครื่องนี้มีเวลารอสุ่มค้างอยู่เท่านั้น (คนที่ไม่เคยสุ่ม/หมดเวลารอแล้วไม่ต้องอ่าน)
+    // และห้ามอ่านถี่กว่า 60 วินาที ไม่ว่าจะถูกเรียกจากจุดไหน
+    let lastSpinResetCheck = 0;
+    function hasSpinCooldownSaved() {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf('mkLastSpin_') === 0) return true;
+        }
+      } catch (e) {}
+      return false;
+    }
     async function refreshSpinReset() {
+      if (!hasSpinCooldownSaved()) return;
+      if (Date.now() - lastSpinResetCheck < 60000) return;
+      lastSpinResetCheck = Date.now();
       let resetAt = 0;
       try {
         const settingSnap = await getDoc(doc(db, 'settings', 'spinReset'));
@@ -2186,7 +2199,6 @@
         storeHiddenCategoryNames = new Set();
       }
       // สินค้าอาจโหลดเสร็จก่อนหมวดหมู่ — ล้างตัวอย่างสุ่มเดิมเพื่อสุ่มใหม่จากสินค้าที่ไม่ถูกซ่อน
-      cachedAllProductsSample = null;
       renderCategoryGrid(getCategoriesFilteredByType());
       renderCategoryPills(getCategoriesFilteredByType());
       renderProductsGrid(); // category lookup for type-filtering may have changed
@@ -2224,7 +2236,6 @@
       // A fresh product list means the previous random "all products"
       // sample no longer reflects it — clear the cache so the next
       // render (right below) picks a new sample from the updated data.
-      cachedAllProductsSample = null;
       renderProductsGrid();
     }
 
@@ -2474,7 +2485,7 @@
       renderProductsGrid();
       const titleEl = document.getElementById('currentCategoryTitle');
       if (titleEl) {
-        titleEl.textContent = (catName === 'ALL' ? 'สินค้าทั้งหมด' : catName);
+        titleEl.textContent = (catName === 'ALL' ? 'สินค้า' : catName);
       }
     };
 
@@ -2504,29 +2515,10 @@
       renderCategoryPills(getCategoriesFilteredByType());
       renderProductsGrid();
       const titleEl = document.getElementById('currentCategoryTitle');
-      if (titleEl) titleEl.textContent = 'สินค้าทั้งหมด';
+      if (titleEl) titleEl.textContent = 'สินค้า';
     };
 
     // ===== RENDER PRODUCTS GRID =====
-    // When neither filter is active ("สินค้าทั้งหมด"), rendering every
-    // single product at once is what was slowing the page down — instead
-    // we show a random sample of this many, which keeps the homepage fast
-    // regardless of how large the catalog grows. Picking any specific
-    // category/type still shows that category's full product list.
-    const ALL_PRODUCTS_DISPLAY_LIMIT = 10;
-    let cachedAllProductsSample = null;
-
-    // Fisher–Yates partial shuffle — picks `n` random items from `arr`
-    // without mutating the original array.
-    function pickRandomSample(arr, n) {
-      const copy = arr.slice();
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy.slice(0, n);
-    }
-
     function renderProductsGrid() {
       const grid = document.getElementById('productGridContainer');
       const countLabel = document.getElementById('productCountLabel');
@@ -2544,34 +2536,27 @@
         !storeHiddenCategoryNames.has(p.category) && isProductInStock(p)
       );
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
-      let filtered;
-      let totalMatchCount;
-
+      // ไม่แสดงสินค้ารวมทุกหมวดหมู่ — ต้องเลือกประเภทหรือหมวดหมู่ก่อนจึงจะแสดงสินค้า
       if (noFilterActive) {
-        // Cache the sample so it doesn't reshuffle on every unrelated
-        // re-render (e.g. switching category and back) within the same
-        // page load — only a fresh product load resets it.
-        if (!cachedAllProductsSample) {
-          cachedAllProductsSample = pickRandomSample(visibleProducts, ALL_PRODUCTS_DISPLAY_LIMIT);
-        }
-        filtered = cachedAllProductsSample;
-        totalMatchCount = visibleProducts.length;
-      } else {
-        filtered = visibleProducts;
-        if (selectedCategoryTypeName !== 'ALL') {
-          filtered = filtered.filter(p => productMatchesSelectedType(p.category));
-        }
-        if (selectedCategoryName !== 'ALL') {
-          filtered = filtered.filter(p => p.category === selectedCategoryName);
-        }
-        totalMatchCount = filtered.length;
+        if (countLabel) countLabel.textContent = '';
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align:center; padding:36px 12px; color:var(--text-muted);">
+            <i class="ph ph-hand-pointing" style="font-size:38px; display:block; margin-bottom:8px; color:var(--gold);"></i>
+            เลือกประเภทหรือหมวดหมู่ด้านบนเพื่อดูสินค้า
+          </div>
+        `;
+        return;
       }
 
-      if (countLabel) {
-        countLabel.textContent = noFilterActive
-          ? `${filtered.length} จาก ${totalMatchCount} รายการ (สุ่มแสดง)`
-          : `${filtered.length} รายการ`;
+      let filtered = visibleProducts;
+      if (selectedCategoryTypeName !== 'ALL') {
+        filtered = filtered.filter(p => productMatchesSelectedType(p.category));
       }
+      if (selectedCategoryName !== 'ALL') {
+        filtered = filtered.filter(p => p.category === selectedCategoryName);
+      }
+
+      if (countLabel) countLabel.textContent = `${filtered.length} รายการ`;
 
       if (filtered.length === 0) {
         grid.innerHTML = `
