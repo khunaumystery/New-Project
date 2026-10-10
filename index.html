@@ -880,31 +880,6 @@
       word-break: break-word;
     }
 
-    /* Loading message shown in the category grid until categories load */
-    .cat-loading-msg {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 22px 12px;
-      color: var(--text-muted);
-    }
-    .cat-loading-spinner {
-      display: inline-block;
-      font-size: 30px;
-      color: var(--gold);
-      margin-bottom: 6px;
-      animation: catLoadingSpin 1s linear infinite;
-    }
-    @keyframes catLoadingSpin { to { transform: rotate(360deg); } }
-    .cat-loading-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #FFFFFF;
-    }
-    .cat-loading-sub {
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
     /* Category Pill Filter Bar */
     .cat-pill-bar {
       display: flex;
@@ -1417,12 +1392,7 @@
 
     <!-- 4-in-a-row Category Grid -->
     <section class="categories-grid-4" id="categoryBannersContainer">
-      <!-- Dynamically Rendered (ข้อความด้านล่างจะถูกแทนที่เมื่อโหลดหมวดหมู่เสร็จ) -->
-      <div class="cat-loading-msg">
-        <i class="ph ph-spinner-gap cat-loading-spinner"></i>
-        <div class="cat-loading-title">โปรดรอสักครู่....</div>
-        <div class="cat-loading-sub">กำลังโหลดหน้าสินค้าทั้งหมด</div>
-      </div>
+      <!-- Dynamically Rendered -->
     </section>
 
     <!-- Category Pill Filter Tabs -->
@@ -2381,17 +2351,7 @@
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
-      // ซ่อนสินค้าที่หมด: สถานะ inStock = false หรือระบุจำนวนสต็อกไว้แล้วเหลือ 0
-      const isProductInStock = (p) => {
-        const inStockFlag = (p.inStock === true || p.inStock === 'true');
-        const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
-        const qtyOk = hasQty ? Number(p.stockQty) > 0 : true;
-        return inStockFlag && qtyOk;
-      };
-
-      const visibleProducts = storeProducts.filter(p =>
-        !storeHiddenCategoryNames.has(p.category) && isProductInStock(p)
-      );
+      const visibleProducts = storeProducts.filter(p => !storeHiddenCategoryNames.has(p.category));
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
       let filtered;
       let totalMatchCount;
