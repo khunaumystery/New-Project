@@ -1272,6 +1272,24 @@
   </div>
 </div>
 
+<!-- ===== MODAL: REVIEW STOCK MISMATCH (มีสต็อก แต่สถานะเป็น "หมด") ===== -->
+<div class="modal-overlay" id="stockReviewModal">
+  <div class="modal-box" style="max-width:560px;">
+    <h3><i class="ph ph-warning-circle"></i> ตรวจสอบสินค้าที่มีสต็อก แต่สถานะเป็น "หมด"</h3>
+    <p style="font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:12px;">
+      รายการด้านล่างมีจำนวนสต็อกมากกว่า 0 แต่ยังถูกตั้งเป็น "สินค้าหมด" — ติ๊กเลือกเฉพาะรายการที่คุณตรวจสอบแล้วว่าพร้อมขายจริง แล้วกดยืนยัน
+      (รายการที่ไม่ได้ติ๊กจะไม่ถูกเปลี่ยนแปลง)
+    </p>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <button type="button" class="btn-primary" style="background:#6B7280;" onclick="toggleAllStockReview(true)"><i class="ph ph-checks"></i> เลือกทั้งหมด</button>
+      <button type="button" class="btn-primary" style="background:#6B7280;" onclick="toggleAllStockReview(false)"><i class="ph ph-square"></i> ไม่เลือกเลย</button>
+    </div>
+    <div id="stockReviewList" style="max-height:48vh; overflow-y:auto; margin-bottom:6px;"></div>
+    <button type="button" class="btn-submit" id="btnConfirmStockReview" onclick="confirmStockReview()"><i class="ph ph-check-circle"></i> ตั้งรายการที่เลือกเป็น "พร้อมขาย"</button>
+    <button type="button" class="btn-close-modal" onclick="closeModal('stockReviewModal')">ปิด (ยังไม่เปลี่ยนแปลง)</button>
+  </div>
+</div>
+
 <!-- ===== MODAL: ORDER DETAIL ===== -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box" id="detailModalContent"></div>
@@ -2807,21 +2825,88 @@
     });
 
     if (invalid > 0) { showToast(`⚠️ มี ${invalid} รายการที่จำนวนสต็อกไม่ถูกต้อง (ต้องเป็น 0 ขึ้นไป)`); return; }
-    if (!changes.length) { showToast('ℹ️ ไม่มีรายการที่เปลี่ยนแปลง'); return; }
-    if (!confirm(`บันทึกจำนวนสต็อกที่แก้ไข ${changes.length} รายการ?`)) return;
 
+    // สินค้าที่มีสต็อก > 0 แต่สถานะยังเป็น "หมด" (ไม่รวมรายการที่กำลังจะถูกบันทึกจำนวนใหม่ในรอบนี้)
+    const changedIds = new Set(changes.map(c => c.id));
+    const mismatches = allProducts.filter(p => {
+      const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
+      const inStock = (p.inStock === true || p.inStock === 'true');
+      return hasQty && Number(p.stockQty) > 0 && !inStock && !changedIds.has(p._id);
+    });
+
+    if (!changes.length && !mismatches.length) { showToast('ℹ️ ไม่มีรายการที่เปลี่ยนแปลง'); return; }
+
+    if (changes.length) {
+      if (!confirm(`บันทึกจำนวนสต็อกที่แก้ไข ${changes.length} รายการ?`)) return;
+
+      if (btn) btn.disabled = true;
+      try {
+        const now = new Date().toISOString();
+        const results = await Promise.allSettled(changes.map(c =>
+          updateDoc(doc(db, 'products', c.id), { stockQty: c.val, inStock: c.val > 0, updatedAt: now })
+        ));
+        const failed = results.filter(r => r.status === 'rejected').length;
+        showToast(failed
+          ? `⚠️ บันทึกสำเร็จ ${changes.length - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
+          : `✅ บันทึกทั้งหมด ${changes.length} รายการเรียบร้อย`);
+      } catch (e) {
+        showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    if (mismatches.length) openStockReviewModal(mismatches);
+  };
+
+  // ===== ตรวจสอบสินค้าที่มีสต็อกแต่สถานะ "หมด" ก่อนตั้งเป็น "พร้อมขาย" =====
+  function openStockReviewModal(items) {
+    const list = document.getElementById('stockReviewList');
+    list.innerHTML = items.map(p => {
+      const img = p.image
+        ? `<img src="${escapeHtml(p.image)}" class="table-thumb" onerror="this.src='Payment.jpg'">`
+        : '<div class="table-thumb"></div>';
+      return `
+        <label style="display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; cursor:pointer;">
+          <input type="checkbox" class="stock-review-check" data-id="${escapeHtml(p._id)}" style="width:17px;height:17px;flex-shrink:0;">
+          ${img}
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:600; font-size:13px;">${escapeHtml(p.name || '-')}</div>
+            <div style="font-size:11px; color:var(--muted);">${escapeHtml(p.category || '-')}</div>
+          </div>
+          <div style="text-align:right; flex-shrink:0;">
+            <div style="font-weight:700; font-size:13px;">คงเหลือ ${Number(p.stockQty).toLocaleString()} ชิ้น</div>
+            <span class="status-badge out" style="margin-top:2px;">❌ หมด</span>
+          </div>
+        </label>`;
+    }).join('');
+    document.getElementById('stockReviewModal').classList.add('active');
+  }
+
+  window.toggleAllStockReview = function(checked) {
+    document.querySelectorAll('#stockReviewList .stock-review-check').forEach(cb => { cb.checked = checked; });
+  };
+
+  window.confirmStockReview = async function() {
+    const ids = Array.from(document.querySelectorAll('#stockReviewList .stock-review-check'))
+      .filter(cb => cb.checked).map(cb => cb.dataset.id);
+    if (!ids.length) { showToast('⚠️ ยังไม่ได้เลือกรายการใด'); return; }
+    if (!confirm(`ตั้ง ${ids.length} รายการเป็น "พร้อมขาย"?`)) return;
+
+    const btn = document.getElementById('btnConfirmStockReview');
     if (btn) btn.disabled = true;
     try {
       const now = new Date().toISOString();
-      const results = await Promise.allSettled(changes.map(c =>
-        updateDoc(doc(db, 'products', c.id), { stockQty: c.val, inStock: c.val > 0, updatedAt: now })
+      const results = await Promise.allSettled(ids.map(id =>
+        updateDoc(doc(db, 'products', id), { inStock: true, updatedAt: now })
       ));
       const failed = results.filter(r => r.status === 'rejected').length;
       showToast(failed
-        ? `⚠️ บันทึกสำเร็จ ${changes.length - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
-        : `✅ บันทึกทั้งหมด ${changes.length} รายการเรียบร้อย`);
+        ? `⚠️ สำเร็จ ${ids.length - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
+        : `✅ ตั้งเป็นพร้อมขาย ${ids.length} รายการเรียบร้อย`);
+      closeModal('stockReviewModal');
     } catch (e) {
-      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+      showToast('❌ ไม่สำเร็จ: ' + e.message);
     } finally {
       if (btn) btn.disabled = false;
     }
