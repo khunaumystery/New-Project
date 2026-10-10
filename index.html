@@ -880,31 +880,6 @@
       word-break: break-word;
     }
 
-    /* Loading message shown in the category grid until categories load */
-    .cat-loading-msg {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 22px 12px;
-      color: var(--text-muted);
-    }
-    .cat-loading-spinner {
-      display: inline-block;
-      font-size: 30px;
-      color: var(--gold);
-      margin-bottom: 6px;
-      animation: catLoadingSpin 1s linear infinite;
-    }
-    @keyframes catLoadingSpin { to { transform: rotate(360deg); } }
-    .cat-loading-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #FFFFFF;
-    }
-    .cat-loading-sub {
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
     /* Category Pill Filter Bar */
     .cat-pill-bar {
       display: flex;
@@ -1417,12 +1392,7 @@
 
     <!-- 4-in-a-row Category Grid -->
     <section class="categories-grid-4" id="categoryBannersContainer">
-      <!-- Dynamically Rendered (ข้อความด้านล่างจะถูกแทนที่เมื่อโหลดหมวดหมู่เสร็จ) -->
-      <div class="cat-loading-msg">
-        <i class="ph ph-spinner-gap cat-loading-spinner"></i>
-        <div class="cat-loading-title">โปรดรอสักครู่....</div>
-        <div class="cat-loading-sub">กำลังโหลดหน้าสินค้าทั้งหมด</div>
-      </div>
+      <!-- Dynamically Rendered -->
     </section>
 
     <!-- Category Pill Filter Tabs -->
@@ -1744,7 +1714,7 @@
       if (isNoPrize) {
         prizeBadge.className = 'prize-badge no-prize';
         prizeBadge.innerHTML = prize.soldOutRace
-          ? '😢 ของรางวัลเพิ่งหมดพอดี ลองใหม่ได้ในครั้งถัดไป'
+          ? '😢 ไม่ได้รับโค้ดส่วนลด ลองใหม่ได้ในครั้งถัดไป'
           : '❌ ไม่ได้รับโค้ดส่วนลด สามารถกดสุ่มใหม่ได้ในครั้งถัดไป';
         copyBtn.style.display = 'none';
         document.getElementById('codeExpiryDisplayWrap').style.display = 'none';
@@ -1896,14 +1866,7 @@
       if (saved) {
         lastSpinTime = parseInt(saved);
         const elapsed = Date.now() - lastSpinTime;
-        const adminResetAt = Number(window.MK_SPIN_RESET_AT) || 0;
-        if (adminResetAt && lastSpinTime < adminResetAt && elapsed < COOLDOWN_MS) {
-          // แอดมินกดรีเซ็ตเวลาสุ่มหลังจากที่ลูกค้าสุ่มครั้งล่าสุด → ปลดล็อกให้สุ่มได้ทันที
-          localStorage.removeItem(key);
-          lastSpinTime = null;
-          resetSpinUI();
-          showToast('🎉 แอดมินรีเซ็ตเวลาให้แล้ว กดสุ่มได้อีกครั้ง!');
-        } else if (elapsed < COOLDOWN_MS) {
+        if (elapsed < COOLDOWN_MS) {
           const spinBtn = document.getElementById('spinBtn');
           if (spinBtn) {
             spinBtn.disabled = true;
@@ -2011,29 +1974,6 @@
         window.restoreState();
       }
     });
-
-    // ===== ADMIN SPIN RESET (settings/spinReset) =====
-    // แอดมินกดรีเซ็ตจากหน้า admin → เก็บเวลาไว้ที่ settings/spinReset.resetAt
-    // หน้าร้านเทียบกับเวลาสุ่มล่าสุดของลูกค้า (ใน restoreState) แล้วปลดล็อกให้
-    async function refreshSpinReset() {
-      let resetAt = 0;
-      try {
-        const snap = await getDocs(collection(db, 'settings'));
-        const d = snap.docs.find(x => x.id === 'spinReset');
-        resetAt = d ? (Number(d.data().resetAt) || 0) : 0;
-      } catch (e) { return; }
-      if (window.MK_SPIN_RESET_AT !== resetAt) {
-        window.MK_SPIN_RESET_AT = resetAt;
-        if (typeof window.restoreState === 'function') window.restoreState();
-      }
-    }
-    refreshSpinReset();
-    // เช็กซ้ำทุก 60 วินาที เฉพาะตอนที่ลูกค้ากำลังติดเวลารอ (ประหยัดการอ่าน Firestore)
-    setInterval(() => {
-      const timerSection = document.getElementById('timerSection');
-      if (!document.hidden && timerSection && timerSection.classList.contains('active')) refreshSpinReset();
-    }, 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSpinReset(); });
 
     let storeCategories = [];
     let storeProducts = [];
@@ -2411,17 +2351,7 @@
       const countLabel = document.getElementById('productCountLabel');
       if (!grid) return;
 
-      // ซ่อนสินค้าที่หมด: สถานะ inStock = false หรือระบุจำนวนสต็อกไว้แล้วเหลือ 0
-      const isProductInStock = (p) => {
-        const inStockFlag = (p.inStock === true || p.inStock === 'true');
-        const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
-        const qtyOk = hasQty ? Number(p.stockQty) > 0 : true;
-        return inStockFlag && qtyOk;
-      };
-
-      const visibleProducts = storeProducts.filter(p =>
-        !storeHiddenCategoryNames.has(p.category) && isProductInStock(p)
-      );
+      const visibleProducts = storeProducts.filter(p => !storeHiddenCategoryNames.has(p.category));
       const noFilterActive = (selectedCategoryTypeName === 'ALL' && selectedCategoryName === 'ALL');
       let filtered;
       let totalMatchCount;
