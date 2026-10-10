@@ -2011,6 +2011,7 @@
   <!-- Firebase Firestore & Shop Logic -->
   <script type="module">
     import { auth, db, collection, getDocs, doc, query, orderBy, onAuthStateChanged, runTransaction } from "./js/firebase-config.js";
+    import { getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     function getCartKey() {
       return window.currentUser ? ('mkCart_' + window.currentUser.uid) : 'mkCart_guest';
@@ -2062,8 +2063,8 @@
     async function refreshSpinReset() {
       let resetAt = 0;
       try {
-        const snap = await getDocs(collection(db, 'settings'));
-        const d = snap.docs.find(x => x.id === 'spinReset');
+        const settingSnap = await getDoc(doc(db, 'settings', 'spinReset'));
+        const d = settingSnap.exists() ? settingSnap : null;
         resetAt = d ? (Number(d.data().resetAt) || 0) : 0;
       } catch (e) { return; }
       if (window.MK_SPIN_RESET_AT !== resetAt) {
@@ -2083,19 +2084,14 @@
     // mode 'all' = ลูกค้าทุกคนที่ล็อกอินสุ่มได้ | อย่างอื่น/ไม่มีเอกสาร = เฉพาะ VIP
     // อ่านด้วย getDocs แบบเดียวกับส่วนอื่นของหน้านี้ (อ่านอย่างเดียว ไม่ผ่าน transaction)
     async function readSettingsDoc(id) {
-      const snap = await getDocs(collection(db, 'settings'));
-      const d = snap.docs.find(x => x.id === id);
+      const settingSnap = await getDoc(doc(db, 'settings', id));
+        const d = settingSnap.exists() ? settingSnap : null;
       return d ? d.data() : null;
     }
-    // เก็บรายชื่อ VIP ไว้ในหน่วยความจำ 60 วินาที เพื่อไม่ให้อ่าน Firestore ซ้ำทุกครั้งที่กด
-    let vipIdsCache = { at: 0, ids: null };
+    // เช็กสถานะ VIP ด้วยการอ่านเอกสารเดียว (vipUsers/{uid}) แทนการดึงรายชื่อทั้งหมด
     async function isVipUid(uid) {
-      const now = Date.now();
-      if (!vipIdsCache.ids || now - vipIdsCache.at > 60000) {
-        const snap = await getDocs(collection(db, 'vipUsers'));
-        vipIdsCache = { at: now, ids: new Set(snap.docs.map(d => d.id)) };
-      }
-      return vipIdsCache.ids.has(uid);
+      const snap = await getDoc(doc(db, 'vipUsers', uid));
+      return snap.exists();
     }
     window.MK_CHECK_ACCESS = async function () {
       const user = window.currentUser;
@@ -2150,11 +2146,36 @@
     // faster and lighter on data/battery. Each section loads independently
     // and in parallel so one slow query doesn't block the others.
 
+    // ===== SESSION CACHE (หมวดหมู่ / ประเภท / สินค้า) =====
+    // เก็บผลที่ดึงจาก Firestore ไว้ใน sessionStorage 10 นาที เปิดหน้าซ้ำ/กลับมาหน้าแรกไม่ต้องอ่านใหม่
+    // ถ้าข้อมูลใหญ่เกินโควตา sessionStorage จะข้ามการแคชเงียบๆ (ไม่กระทบการทำงาน)
+    const CACHE_TTL_MS = 10 * 60 * 1000;
+    function cacheGet(key) {
+      try {
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !Array.isArray(obj.d) || Date.now() - obj.t > CACHE_TTL_MS) {
+          sessionStorage.removeItem(key);
+          return null;
+        }
+        return obj.d;
+      } catch (e) { return null; }
+    }
+    function cacheSet(key, data) {
+      try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), d: data })); }
+      catch (e) { try { sessionStorage.removeItem(key); } catch (e2) {} }
+    }
+
     async function loadCategoriesOnce() {
       try {
-        const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(catQuery);
-        const dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+        let dbCategories = cacheGet('mkCache_categories_v1');
+        if (!dbCategories) {
+          const catQuery = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
+          const snap = await getDocs(catQuery);
+          dbCategories = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+          cacheSet('mkCache_categories_v1', dbCategories);
+        }
         // หมวดหมู่ที่แอดมินซ่อนไว้ (hidden = true) จะไม่แสดงที่หน้าร้าน
         const visibleCategories = dbCategories.filter(c => c.hidden !== true);
         storeCategories = dbCategories.length > 0 ? visibleCategories : defaultCategories;
@@ -2173,9 +2194,14 @@
 
     async function loadCategoryTypesOnce() {
       try {
-        const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
-        const snap = await getDocs(catTypeQuery);
-        storeCategoryTypes = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+        let types = cacheGet('mkCache_categoryTypes_v1');
+        if (!types) {
+          const catTypeQuery = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
+          const snap = await getDocs(catTypeQuery);
+          types = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+          cacheSet('mkCache_categoryTypes_v1', types);
+        }
+        storeCategoryTypes = types;
         renderCategoryTypePills(storeCategoryTypes);
       } catch (err) {
         console.warn('Error loading category types:', err);
@@ -2184,9 +2210,14 @@
 
     async function loadProductsOnce() {
       try {
-        const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(prodQuery);
-        storeProducts = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+        let prods = cacheGet('mkCache_products_v1');
+        if (!prods) {
+          const prodQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+          const snap = await getDocs(prodQuery);
+          prods = sortByOrder(snap.docs.map(d => ({ _id: d.id, ...d.data() })));
+          cacheSet('mkCache_products_v1', prods);
+        }
+        storeProducts = prods;
       } catch (err) {
         console.warn('Error loading products:', err);
       }
@@ -2313,8 +2344,8 @@
     // ===== WELCOME POPUP SETTINGS (settings/welcomePopup) =====
     async function loadWelcomePopupOnce() {
       try {
-        const snap = await getDocs(collection(db, 'settings'));
-        const d = snap.docs.find(x => x.id === 'welcomePopup');
+        const settingSnap = await getDoc(doc(db, 'settings', 'welcomePopup'));
+        const d = settingSnap.exists() ? settingSnap : null;
         if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นที่แสดงอยู่แล้ว
         const s = d.data();
         const overlay = document.getElementById('welcomePopup');
@@ -2338,8 +2369,8 @@
     // ===== MYSTERY BOX FOOTNOTE (settings/mysteryNotes — แก้ได้จากหน้า admin) =====
     async function loadOddsNotesOnce() {
       try {
-        const snap = await getDocs(collection(db, 'settings'));
-        const d = snap.docs.find(x => x.id === 'mysteryNotes');
+        const settingSnap = await getDoc(doc(db, 'settings', 'mysteryNotes'));
+        const d = settingSnap.exists() ? settingSnap : null;
         if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นใน HTML
         const data = d.data();
         const titleEl = document.getElementById('oddsModalTitle');

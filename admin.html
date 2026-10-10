@@ -636,6 +636,7 @@
             </tbody>
           </table>
         </div>
+        <div id="ordersLoadMoreWrap" style="display:none; padding:14px; text-align:center; border-top:1px solid var(--border);"><button type="button" class="btn-primary" id="btnOrdersLoadMore" onclick="loadMoreOrders()" style="margin:0 auto;"><i class="ph ph-caret-double-down"></i> โหลดเพิ่ม</button></div>
       </div>
     </div>
 
@@ -865,6 +866,7 @@
             </tbody>
           </table>
         </div>
+        <div id="reviewsLoadMoreWrap" style="display:none; padding:14px; text-align:center; border-top:1px solid var(--border);"><button type="button" class="btn-primary" id="btnReviewsLoadMore" onclick="loadMoreReviews()" style="margin:0 auto;"><i class="ph ph-caret-double-down"></i> โหลดเพิ่ม</button></div>
       </div>
     </div>
 
@@ -1337,7 +1339,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, collection, addDoc, setDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, increment, runTransaction, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, setDoc, getDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, limit, startAfter, increment, runTransaction, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDjp5b54yTDBjchJeJqEwcOXdpzl04Ov3g",
@@ -1370,13 +1372,7 @@
   let seededCategoryTypes = false;
   let seededMysteryPrizes = false;
 
-  let unsubsOrders = null;
-  let unsubsCategories = null;
   let unsubsProducts = null;
-  let unsubsCategoryTypes = null;
-  let unsubsMysteryPrizes = null;
-  let unsubsVipUsers = null;
-  let unsubsReviews = null;
   let unsubsChats = null;
   let unsubsActiveMessages = null;
   let unsubsPopup = null;
@@ -1394,6 +1390,133 @@
       const bo = (b.sortOrder !== undefined && b.sortOrder !== null) ? b.sortOrder : Infinity;
       return ao - bo;
     });
+  }
+
+
+  // ===== PAGED LIVE LIST (orders / reviews) =====
+  // Realtime listener on the newest `pageSize` docs + a cursor-based
+  // "load more" (getDocs) for older ones. Docs that get pushed out of the
+  // live window by newer arrivals are kept locally, so nothing disappears
+  // from the list while the admin is looking at it.
+  function createPagedLive(colName, pageSize, onUpdate, errLabel) {
+    const map = new Map();
+    const older = new Set(); // ids loaded via "load more" (not live)
+    let unsub = null, cursor = null, hasMore = false, loadingMore = false;
+    const snapshotItem = (d) => ({ _id: d.id, ...d.data() });
+    return {
+      items() {
+        return Array.from(map.values()).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      },
+      get hasMore() { return hasMore; },
+      get loadingMore() { return loadingMore; },
+      start() {
+        if (unsub) unsub();
+        map.clear(); older.clear(); cursor = null; hasMore = false;
+        const q = query(collection(db, colName), orderBy('createdAt', 'desc'), limit(pageSize));
+        unsub = onSnapshot(q, snap => {
+          if (cursor === null && snap.docs.length) {
+            cursor = snap.docs[snap.docs.length - 1];
+            hasMore = snap.docs.length >= pageSize;
+          }
+          snap.docChanges().forEach(ch => {
+            if (ch.type === 'removed') return; // pushed out of the window (or deleted — see remove())
+            map.set(ch.doc.id, snapshotItem(ch.doc));
+          });
+          onUpdate();
+        }, err => showToast(errLabel + err.message));
+      },
+      stop() { if (unsub) { unsub(); unsub = null; } },
+      async loadMore() {
+        if (!cursor || loadingMore) return;
+        loadingMore = true; onUpdate();
+        try {
+          const snap = await getDocs(query(collection(db, colName), orderBy('createdAt', 'desc'), startAfter(cursor), limit(pageSize)));
+          snap.docs.forEach(d => { if (!map.has(d.id)) { map.set(d.id, snapshotItem(d)); older.add(d.id); } });
+          if (snap.docs.length) cursor = snap.docs[snap.docs.length - 1];
+          hasMore = snap.docs.length >= pageSize;
+        } catch (e) {
+          showToast('โหลดเพิ่มไม่สำเร็จ: ' + e.message);
+        } finally {
+          loadingMore = false; onUpdate();
+        }
+      },
+      // Older (non-live) docs don't update by themselves — re-read one after we change it.
+      async refresh(id) {
+        if (!older.has(id)) return;
+        try {
+          const snap = await getDoc(doc(db, colName, id));
+          if (snap.exists()) map.set(id, snapshotItem(snap)); else { map.delete(id); older.delete(id); }
+          onUpdate();
+        } catch (e) { console.warn('refresh doc error:', e); }
+      },
+      remove(id) { map.delete(id); older.delete(id); onUpdate(); }
+    };
+  }
+
+  function updateLoadMoreUI(wrapId, btnId, live) {
+    const wrap = document.getElementById(wrapId);
+    const btn = document.getElementById(btnId);
+    if (!wrap || !btn) return;
+    wrap.style.display = live.hasMore ? 'block' : 'none';
+    btn.disabled = live.loadingMore;
+    btn.innerHTML = live.loadingMore
+      ? '<i class="ph ph-spinner-gap ph-spin"></i> กำลังโหลด...'
+      : '<i class="ph ph-caret-double-down"></i> โหลดเพิ่ม';
+  }
+
+  const ORDERS_PAGE_SIZE = 100;
+  const REVIEWS_PAGE_SIZE = 50;
+  const CHAT_MESSAGES_LIMIT = 100;
+
+  const ordersLive = createPagedLive('orders', ORDERS_PAGE_SIZE, () => {
+    allOrders = ordersLive.items();
+    renderOrderStats(allOrders);
+    filterOrders();
+    updateLoadMoreUI('ordersLoadMoreWrap', 'btnOrdersLoadMore', ordersLive);
+  }, 'โหลดออเดอร์ไม่สำเร็จ: ');
+
+  const reviewsLive = createPagedLive('reviews', REVIEWS_PAGE_SIZE, () => {
+    allReviews = reviewsLive.items();
+    document.getElementById('statReviewsTotal').textContent = allReviews.length;
+    document.getElementById('statReviewsWithPhotos').textContent = allReviews.filter(r => (r.images || []).length > 0).length;
+    filterReviews();
+    updateLoadMoreUI('reviewsLoadMoreWrap', 'btnReviewsLoadMore', reviewsLive);
+  }, 'โหลดรีวิวไม่สำเร็จ: ');
+
+  window.loadMoreOrders = () => ordersLive.loadMore();
+  window.loadMoreReviews = () => reviewsLive.loadMore();
+
+  // ===== LAZY TAB LOADING =====
+  // Each tab loads its own data the first time it is opened (not all at
+  // login). "once" = realtime listeners (started one time and kept).
+  // "refresh" = one-off getDocs reads, re-fetched if the tab is reopened
+  // after TAB_STALE_MS, and re-fetched right after any save.
+  const TAB_STALE_MS = 60 * 1000;
+  let tabState = {};
+  const tabLoaders = {
+    ordersTab:     { once: [() => loadOrders()] },
+    categoriesTab: { refresh: [() => loadCategories(), () => loadCategoryTypes()] },
+    productsTab:   { once: [() => loadProducts()], refresh: [() => loadCategories()] },
+    mysteryTab:    { once: [() => loadMysteryNotes(), () => loadMysteryAccess(), () => loadSpinResetInfo()], refresh: [() => loadMysteryPrizes()] },
+    usersTab:      { refresh: [() => loadVipUsers()] },
+    reviewsTab:    { once: [() => loadReviews()] },
+    popupTab:      { once: [() => loadPopupSettings()] },
+    chatTab:       { once: [() => loadChats()] },
+  };
+
+  function ensureTabLoaded(tabId) {
+    const cfg = tabLoaders[tabId];
+    if (!cfg) return;
+    const now = Date.now();
+    const st = tabState[tabId];
+    if (!st) {
+      tabState[tabId] = { at: now };
+      (cfg.once || []).forEach(fn => fn());
+      (cfg.refresh || []).forEach(fn => fn());
+    } else if (cfg.refresh && now - st.at > TAB_STALE_MS) {
+      st.at = now;
+      cfg.refresh.forEach(fn => fn());
+    }
   }
 
   // ===== AUTH STATE =====
@@ -1426,34 +1549,24 @@
   });
 
   function cleanUpListeners() {
-    if (unsubsOrders) { unsubsOrders(); unsubsOrders = null; }
-    if (unsubsCategories) { unsubsCategories(); unsubsCategories = null; }
+    ordersLive.stop();
+    reviewsLive.stop();
     if (unsubsProducts) { unsubsProducts(); unsubsProducts = null; }
-    if (unsubsCategoryTypes) { unsubsCategoryTypes(); unsubsCategoryTypes = null; }
-    if (unsubsMysteryPrizes) { unsubsMysteryPrizes(); unsubsMysteryPrizes = null; }
-    if (unsubsVipUsers) { unsubsVipUsers(); unsubsVipUsers = null; }
-    if (unsubsReviews) { unsubsReviews(); unsubsReviews = null; }
     if (unsubsChats) { unsubsChats(); unsubsChats = null; }
     if (unsubsActiveMessages) { unsubsActiveMessages(); unsubsActiveMessages = null; }
     if (unsubsPopup) { unsubsPopup(); unsubsPopup = null; }
     if (unsubsMysteryNotes) { unsubsMysteryNotes(); unsubsMysteryNotes = null; }
     if (unsubsSpinReset) { unsubsSpinReset(); unsubsSpinReset = null; }
     if (unsubsMysteryAccess) { unsubsMysteryAccess(); unsubsMysteryAccess = null; }
+    tabState = {};
+    activeChatId = null;
   }
 
   function initDataListeners() {
-    loadOrders();
-    loadCategories();
-    loadProducts();
-    loadCategoryTypes();
-    loadMysteryPrizes();
-    loadVipUsers();
-    loadReviews();
-    loadChats();
-    loadPopupSettings();
-    loadMysteryNotes();
-    loadSpinResetInfo();
-    loadMysteryAccess();
+    // Lazy: only the tab that is open right now (orders) loads at login.
+    // Every other tab loads the first time it is opened (see switchTab).
+    tabState = {};
+    ensureTabLoaded('ordersTab');
   }
 
   // ===== TAB SWITCHING =====
@@ -1462,6 +1575,7 @@
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     btn.classList.add('active');
+    ensureTabLoaded(tabId);
   };
 
   // ===== MODAL & IMAGE UTILITIES =====
@@ -1583,13 +1697,7 @@
 
   // ================= 1. ORDERS MODULE =================
   window.loadOrders = function() {
-    if (unsubsOrders) unsubsOrders();
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    unsubsOrders = onSnapshot(q, snap => {
-      allOrders = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      renderOrderStats(allOrders);
-      filterOrders();
-    }, err => showToast('โหลดออเดอร์ไม่สำเร็จ: ' + err.message));
+    ordersLive.start();
   };
 
   function renderOrderStats(orders) {
@@ -1678,6 +1786,7 @@
       } else {
         await updateDoc(doc(db, 'orders', id), { status });
       }
+      ordersLive.refresh(id);
       const lbl = {paid:'ชำระแล้ว', shipped:'จัดส่งแล้ว', received:'ได้รับสินค้าแล้ว', cancelled:'ยกเลิก'}[status] || status;
       showToast('อัปเดตสถานะเป็น: ' + lbl);
     } catch(e) {
@@ -1737,6 +1846,7 @@
         trackingNumber,
         updatedAt: new Date().toISOString()
       });
+      ordersLive.refresh(id);
       showToast(trackingNumber ? '✅ บันทึกเลขพัสดุแล้ว' : '✅ ลบเลขพัสดุแล้ว');
     } catch(e) {
       showToast('❌ บันทึกเลขพัสดุไม่สำเร็จ: ' + e.message);
@@ -1747,6 +1857,7 @@
     if (!confirm('⚠️ ยืนยันการลบออเดอร์นี้? ไม่สามารถกู้คืนได้')) return;
     try {
       await deleteDoc(doc(db, 'orders', id));
+      ordersLive.remove(id);
       showToast('🗑️ ลบออเดอร์แล้ว');
     } catch(e) { showToast('❌ ลบไม่สำเร็จ: ' + e.message); }
   };
@@ -1805,6 +1916,7 @@
         trackingNumber,
         updatedAt: new Date().toISOString()
       });
+      ordersLive.refresh(id);
       showToast(trackingNumber ? '✅ บันทึกเลขพัสดุแล้ว' : '✅ ลบเลขพัสดุแล้ว');
     } catch(e) {
       showToast('❌ บันทึกเลขพัสดุไม่สำเร็จ: ' + e.message);
@@ -1812,15 +1924,17 @@
   };
 
   // ================= 2. CATEGORIES MODULE =================
-  window.loadCategories = function() {
-    if (unsubsCategories) unsubsCategories();
-    const q = query(collection(db, 'categories'), orderBy('createdAt', 'desc'));
-    unsubsCategories = onSnapshot(q, snap => {
+  window.loadCategories = async function() {
+    try {
+      const snap = await getDocs(query(collection(db, 'categories'), orderBy('createdAt', 'desc')));
       allCategories = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
       document.getElementById('statCategoriesTotal').textContent = allCategories.length;
       updateCategorySelectOptions();
       filterCategories();
-    }, err => showToast('โหลดหมวดหมู่ไม่สำเร็จ: ' + err.message));
+      filterProducts(); // product grouping/order depends on category order
+    } catch (err) {
+      showToast('โหลดหมวดหมู่ไม่สำเร็จ: ' + err.message);
+    }
   };
 
   function updateCategorySelectOptions() {
@@ -1912,6 +2026,7 @@
       });
       closeModal('addCategoryModal');
       showToast('✅ เพิ่มหมวดหมู่ "' + name + '" สำเร็จ');
+      loadCategories();
     } catch(e) {
       showToast('❌ ไม่สามารถเพิ่มหมวดหมู่ได้: ' + e.message);
     }
@@ -1959,6 +2074,7 @@
       });
       closeModal('editCategoryModal');
       showToast('✅ แก้ไขหมวดหมู่ "' + name + '" เรียบร้อย');
+      loadCategories();
     } catch(e) {
       showToast('❌ ไม่สามารถแก้ไขหมวดหมู่ได้: ' + e.message);
     }
@@ -1969,6 +2085,7 @@
     try {
       await deleteDoc(doc(db, 'categories', id));
       showToast(`🗑️ ลบหมวดหมู่ "${name}" เรียบร้อยแล้ว`);
+      loadCategories();
     } catch(e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
     }
@@ -1980,6 +2097,7 @@
     try {
       await updateDoc(doc(db, 'categories', id), { hidden: !cat.hidden, updatedAt: new Date().toISOString() });
       showToast(cat.hidden ? `👁️ แสดงหมวดหมู่ "${cat.name}" แล้ว` : `🙈 ซ่อนหมวดหมู่ "${cat.name}" แล้ว`);
+      loadCategories();
     } catch (e) {
       showToast('❌ อัปเดตไม่สำเร็จ: ' + e.message);
     }
@@ -2020,6 +2138,7 @@
         updateDoc(doc(db, 'categories', item._id), { sortOrder: i })
       ));
       showToast('✅ ย้ายลำดับเรียบร้อย');
+      loadCategories();
     } catch(e) {
       showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
@@ -2030,10 +2149,9 @@
   // Lets the admin add/remove the options shown in "ประเภทหมวดหมู่สินค้า"
   // (used by the category filter + add/edit category forms) instead of
   // them being hardcoded in the page.
-  window.loadCategoryTypes = function() {
-    if (unsubsCategoryTypes) unsubsCategoryTypes();
-    const q = query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc'));
-    unsubsCategoryTypes = onSnapshot(q, async snap => {
+  window.loadCategoryTypes = async function() {
+    try {
+      const snap = await getDocs(query(collection(db, 'categoryTypes'), orderBy('createdAt', 'asc')));
       allCategoryTypes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
 
       // First time ever loading with nothing set up yet: seed the four
@@ -2042,12 +2160,14 @@
       if (allCategoryTypes.length === 0 && !seededCategoryTypes) {
         seededCategoryTypes = true;
         await seedDefaultCategoryTypes();
-        return; // onSnapshot will fire again once the seed docs land
+        return window.loadCategoryTypes();
       }
 
       updateCategoryTypeSelectOptions();
       renderCategoryTypesManageList();
-    }, err => showToast('โหลดประเภทหมวดหมู่ไม่สำเร็จ: ' + err.message));
+    } catch (err) {
+      showToast('โหลดประเภทหมวดหมู่ไม่สำเร็จ: ' + err.message);
+    }
   };
 
   async function seedDefaultCategoryTypes() {
@@ -2122,6 +2242,7 @@
       await addDoc(collection(db, 'categoryTypes'), { name, createdAt: new Date().toISOString() });
       input.value = '';
       showToast('✅ เพิ่มประเภท "' + name + '" สำเร็จ');
+      loadCategoryTypes();
     } catch (e) {
       showToast('❌ เพิ่มไม่สำเร็จ: ' + e.message);
     }
@@ -2136,6 +2257,7 @@
     try {
       await deleteDoc(doc(db, 'categoryTypes', id));
       showToast('🗑️ ลบประเภท "' + name + '" แล้ว');
+      loadCategoryTypes();
     } catch (e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
     }
@@ -2172,6 +2294,7 @@
         updateDoc(doc(db, 'categoryTypes', item._id), { sortOrder: i })
       ));
       showToast('✅ ย้ายลำดับเรียบร้อย');
+      loadCategoryTypes();
     } catch (e) {
       showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
@@ -2184,10 +2307,9 @@
   // optional free-shipping flag, an optional physical gift item, and a
   // minimum order amount required to redeem it. The storefront reads this
   // collection directly instead of using a hardcoded prize table.
-  window.loadMysteryPrizes = function() {
-    if (unsubsMysteryPrizes) unsubsMysteryPrizes();
-    const q = query(collection(db, 'luckyDrawPrizes'), orderBy('createdAt', 'asc'));
-    unsubsMysteryPrizes = onSnapshot(q, async snap => {
+  window.loadMysteryPrizes = async function() {
+    try {
+      const snap = await getDocs(query(collection(db, 'luckyDrawPrizes'), orderBy('createdAt', 'asc')));
       allMysteryPrizes = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
 
       // First time ever loading with nothing set up yet: seed the same
@@ -2196,11 +2318,13 @@
       if (allMysteryPrizes.length === 0 && !seededMysteryPrizes) {
         seededMysteryPrizes = true;
         await seedDefaultMysteryPrizes();
-        return; // onSnapshot will fire again once the seed docs land
+        return window.loadMysteryPrizes();
       }
 
       renderMysteryPrizesTable();
-    }, err => showToast('โหลดรางวัล Mystery Box ไม่สำเร็จ: ' + err.message));
+    } catch (err) {
+      showToast('โหลดรางวัล Mystery Box ไม่สำเร็จ: ' + err.message);
+    }
   };
 
   async function seedDefaultMysteryPrizes() {
@@ -2283,13 +2407,14 @@
   // uid, the same value shown/copied from the Orders tab). For now this is
   // just a list the admin maintains manually — it doesn't gate anything on
   // the storefront yet (see note in the "ระบบ User" tab).
-  window.loadVipUsers = function() {
-    if (unsubsVipUsers) unsubsVipUsers();
-    const q = query(collection(db, 'vipUsers'), orderBy('addedAt', 'desc'));
-    unsubsVipUsers = onSnapshot(q, snap => {
+  window.loadVipUsers = async function() {
+    try {
+      const snap = await getDocs(query(collection(db, 'vipUsers'), orderBy('addedAt', 'desc')));
       allVipUsers = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
       renderVipUsersTable();
-    }, err => showToast('โหลดรายชื่อ VIP ไม่สำเร็จ: ' + err.message));
+    } catch (err) {
+      showToast('โหลดรายชื่อ VIP ไม่สำเร็จ: ' + err.message);
+    }
   };
 
   function renderVipUsersTable() {
@@ -2340,6 +2465,7 @@
       uidInput.value = '';
       labelInput.value = '';
       showToast('✅ เพิ่มเป็น VIP เรียบร้อย');
+      loadVipUsers();
     } catch (e) {
       showToast('❌ ไม่สามารถเพิ่ม VIP ได้: ' + e.message);
     }
@@ -2350,6 +2476,7 @@
     try {
       await deleteDoc(doc(db, 'vipUsers', uid));
       showToast('🗑️ ลบออกจาก VIP แล้ว');
+      loadVipUsers();
     } catch (e) {
       showToast('❌ ไม่สามารถลบได้: ' + e.message);
     }
@@ -2361,14 +2488,7 @@
   // already allows isAdmin() to delete any review doc, so this is just
   // the UI wired up to that existing permission.
   window.loadReviews = function() {
-    if (unsubsReviews) unsubsReviews();
-    const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
-    unsubsReviews = onSnapshot(q, snap => {
-      allReviews = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-      document.getElementById('statReviewsTotal').textContent = allReviews.length;
-      document.getElementById('statReviewsWithPhotos').textContent = allReviews.filter(r => (r.images || []).length > 0).length;
-      filterReviews();
-    }, err => showToast('โหลดรีวิวไม่สำเร็จ: ' + err.message));
+    reviewsLive.start();
   };
 
   window.filterReviews = function() {
@@ -2423,6 +2543,7 @@
     if (!confirm('⚠️ ยืนยันการลบรีวิวนี้?\nลูกค้าจะไม่เห็นรีวิวนี้อีก และไม่สามารถกู้คืนได้')) return;
     try {
       await deleteDoc(doc(db, 'reviews', reviewId));
+      reviewsLive.remove(reviewId);
       showToast('🗑️ ลบรีวิวเรียบร้อยแล้ว');
     } catch (e) {
       showToast('❌ ลบรีวิวไม่สำเร็จ: ' + e.message);
@@ -2457,6 +2578,7 @@
       });
       closeModal('addPrizeModal');
       showToast('✅ เพิ่มรางวัล "' + name + '" สำเร็จ');
+      loadMysteryPrizes();
     } catch (e) {
       showToast('❌ ไม่สามารถเพิ่มรางวัลได้: ' + e.message);
     }
@@ -2501,6 +2623,7 @@
       });
       closeModal('editPrizeModal');
       showToast('✅ แก้ไขรางวัล "' + name + '" เรียบร้อย');
+      loadMysteryPrizes();
     } catch (e) {
       showToast('❌ ไม่สามารถแก้ไขรางวัลได้: ' + e.message);
     }
@@ -2512,6 +2635,7 @@
     try {
       await updateDoc(doc(db, 'luckyDrawPrizes', id), { active: !(p.active !== false), updatedAt: new Date().toISOString() });
       showToast(p.active !== false ? '⏸️ ปิดใช้งานรางวัลแล้ว' : '✅ เปิดใช้งานรางวัลแล้ว');
+      loadMysteryPrizes();
     } catch (e) {
       showToast('❌ อัปเดตไม่สำเร็จ: ' + e.message);
     }
@@ -2522,6 +2646,7 @@
     try {
       await deleteDoc(doc(db, 'luckyDrawPrizes', id));
       showToast(`🗑️ ลบรางวัล "${name}" เรียบร้อยแล้ว`);
+      loadMysteryPrizes();
     } catch (e) {
       showToast('❌ ลบไม่สำเร็จ: ' + e.message);
     }
@@ -2548,6 +2673,7 @@
         updateDoc(doc(db, 'luckyDrawPrizes', item._id), { sortOrder: i })
       ));
       showToast('✅ ย้ายลำดับเรียบร้อย');
+      loadMysteryPrizes();
     } catch (e) {
       showToast('❌ ย้ายลำดับไม่สำเร็จ: ' + e.message);
     }
@@ -3254,7 +3380,8 @@
     const stream = document.getElementById('adminChatMessagesStream');
     stream.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:12px;">กำลังโหลดข้อความ...</div>';
 
-    const q = collection(db, 'chats', chatId, 'messages');
+    // newest N messages only (orderBy + limit in the query); shown oldest→newest below
+    const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'desc'), limit(CHAT_MESSAGES_LIMIT));
 
     unsubsActiveMessages = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
