@@ -1562,9 +1562,6 @@
     activeChatId = null;
   }
 
-  // ปิด listener ทั้งหมดเมื่อปิด/ออกจากหน้าแอดมิน
-  window.addEventListener('pagehide', () => { cleanUpListeners(); });
-
   function initDataListeners() {
     // Lazy: only the tab that is open right now (orders) loads at login.
     // Every other tab loads the first time it is opened (see switchTab).

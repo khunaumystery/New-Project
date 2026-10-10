@@ -2060,22 +2060,7 @@
     // ===== ADMIN SPIN RESET (settings/spinReset) =====
     // แอดมินกดรีเซ็ตจากหน้า admin → เก็บเวลาไว้ที่ settings/spinReset.resetAt
     // หน้าร้านเทียบกับเวลาสุ่มล่าสุดของลูกค้า (ใน restoreState) แล้วปลดล็อกให้
-    // อ่าน settings/spinReset เฉพาะเมื่อเครื่องนี้มีเวลารอสุ่มค้างอยู่เท่านั้น (คนที่ไม่เคยสุ่ม/หมดเวลารอแล้วไม่ต้องอ่าน)
-    // และห้ามอ่านถี่กว่า 60 วินาที ไม่ว่าจะถูกเรียกจากจุดไหน
-    let lastSpinResetCheck = 0;
-    function hasSpinCooldownSaved() {
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.indexOf('mkLastSpin_') === 0) return true;
-        }
-      } catch (e) {}
-      return false;
-    }
     async function refreshSpinReset() {
-      if (!hasSpinCooldownSaved()) return;
-      if (Date.now() - lastSpinResetCheck < 60000) return;
-      lastSpinResetCheck = Date.now();
       let resetAt = 0;
       try {
         const settingSnap = await getDoc(doc(db, 'settings', 'spinReset'));
