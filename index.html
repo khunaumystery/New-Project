@@ -1472,12 +1472,12 @@
   <div class="modal-overlay" id="oddsInfoModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:3000;padding:16px;">
     <div class="odds-modal-box">
       <div class="odds-modal-header">
-        <span class="odds-modal-title">MYSTERY BOX (รางวัลประจำเดือน)</span>
+        <span class="odds-modal-title" id="oddsModalTitle">MYSTERY BOX (รางวัลประจำเดือน)</span>
         <button type="button" class="odds-modal-close" onclick="closeOddsModal()" aria-label="ปิด">
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <p class="odds-modal-sub">สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง</p>
+      <p class="odds-modal-sub" id="oddsModalSub">สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง</p>
       <table class="odds-table">
         <thead>
           <tr>
@@ -1490,7 +1490,7 @@
           <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
         </tbody>
       </table>
-      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ
+      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ
 * บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
     </div>
   </div>
@@ -2076,8 +2076,6 @@
       if (!tbody) return;
       const isSoldOut = (p) => (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
       const active = (prizes || []).filter(p => p.active !== false);
-      // รางวัลที่หมดแล้วออกไม่ได้ จึงไม่นำน้ำหนักมาคิด % (ให้ตรงกับการสุ่มจริง)
-      const totalWeight = active.filter(p => !isSoldOut(p)).reduce((s, p) => s + (Number(p.weight) || 0), 0);
 
       if (!active.length) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
@@ -2085,10 +2083,10 @@
       }
 
       tbody.innerHTML = active.map(p => {
-        const weight = Number(p.weight) || 0;
         const soldOut = isSoldOut(p);
-        const pct = (!soldOut && totalWeight > 0) ? (weight / totalWeight) * 100 : 0;
-        const pctTxt = soldOut ? '<span style="color:#EF4444;">หมด</span>' : ((pct < 1 ? pct.toFixed(3) : pct.toFixed(2)) + '%');
+        // ข้อความโอกาสที่แสดง: แอดมินพิมพ์เองต่อรางวัล (oddsText) — ไม่คำนวณจากน้ำหนักอีกต่อไป
+        const manualOdds = String(p.oddsText || '').trim();
+        const pctTxt = soldOut ? '<span style="color:#EF4444;">หมด</span>' : (manualOdds ? escapeHtmlLocal(manualOdds) : '-');
         const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
         const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
         const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
@@ -2193,7 +2191,14 @@
         const snap = await getDocs(collection(db, 'settings'));
         const d = snap.docs.find(x => x.id === 'mysteryNotes');
         if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นใน HTML
-        const text = String(d.data().text || '').trim();
+        const data = d.data();
+        const titleEl = document.getElementById('oddsModalTitle');
+        const subEl = document.getElementById('oddsModalSub');
+        const titleTxt = String(data.title || '').trim();
+        const subTxt = String(data.subtitle || '').trim();
+        if (titleEl && titleTxt) titleEl.textContent = titleTxt;
+        if (subEl) { if (data.subtitle !== undefined) { subEl.textContent = subTxt; subEl.style.display = subTxt ? '' : 'none'; } }
+        const text = String(data.text || '').trim();
         const el = document.getElementById('oddsFootnote');
         if (!el) return;
         if (text) { el.textContent = text; el.style.display = ''; }

@@ -727,11 +727,19 @@
 
       <div class="content-card">
         <div class="card-header">
-          <h2><i class="ph ph-note-pencil"></i> ข้อความหมายเหตุใต้ตารางโอกาส (หน้าร้าน)</h2>
+          <h2><i class="ph ph-note-pencil"></i> ข้อความในหน้าต่างโอกาสรางวัล (หน้าร้าน)</h2>
         </div>
         <div style="padding:18px 20px; max-width:760px;">
           <div class="form-group">
-            <label>ข้อความ (1 บรรทัด = 1 หัวข้อ, เว้นว่างทั้งหมด = ซ่อนข้อความนี้)</label>
+            <label>หัวข้อหน้าต่าง</label>
+            <input type="text" id="mysteryTitleText" class="form-control" placeholder="เช่น MYSTERY BOX (รางวัลประจำเดือน)">
+          </div>
+          <div class="form-group">
+            <label>ข้อความใต้หัวข้อ (เว้นว่าง = ซ่อน)</label>
+            <input type="text" id="mysterySubtitleText" class="form-control" placeholder="เช่น สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง">
+          </div>
+          <div class="form-group">
+            <label>หมายเหตุใต้ตาราง (1 บรรทัด = 1 หัวข้อ, เว้นว่างทั้งหมด = ซ่อนข้อความนี้)</label>
             <textarea id="mysteryNotesText" class="form-control" rows="5" placeholder="* พิมพ์ข้อความหมายเหตุที่ต้องการให้ลูกค้าเห็นใต้ตาราง"></textarea>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1187,6 +1195,10 @@
         </div>
       </div>
       <div class="form-group">
+        <label>ข้อความ "โอกาสได้รับ" ที่แสดงให้ลูกค้าเห็น (พิมพ์เอง เช่น 1.5% หรือ โอกาสน้อยมาก)</label>
+        <input type="text" id="prizeOddsText" class="form-control" placeholder="ไม่ใส่ = แสดง -">
+      </div>
+      <div class="form-group">
         <label>ยอดสั่งซื้อขั้นต่ำที่ใช้สิทธิ์ได้ (บาท)</label>
         <input type="number" id="prizeMinOrder" class="form-control" placeholder="เช่น 200 (ไม่ใส่ = ไม่มีขั้นต่ำ)" min="0">
       </div>
@@ -1230,6 +1242,10 @@
           <label>จำนวนรางวัล (เว้นว่าง = ไม่จำกัด)</label>
           <input type="number" id="editPrizeQty" class="form-control" min="0">
         </div>
+      </div>
+      <div class="form-group">
+        <label>ข้อความ "โอกาสได้รับ" ที่แสดงให้ลูกค้าเห็น (พิมพ์เอง เช่น 1.5% หรือ โอกาสน้อยมาก)</label>
+        <input type="text" id="editPrizeOddsText" class="form-control" placeholder="ไม่ใส่ = แสดง -">
       </div>
       <div class="form-group">
         <label>ยอดสั่งซื้อขั้นต่ำที่ใช้สิทธิ์ได้ (บาท)</label>
@@ -2194,7 +2210,7 @@
         <tr>
           <td>${moveCell}</td>
           <td><strong>${escapeHtml(p.name || '-')}</strong></td>
-          <td><div style="font-weight:700;color:var(--mk-red);">${pctTxt}</div><div style="font-size:10.5px;color:var(--muted);">น้ำหนัก ${weight}</div></td>
+          <td><div style="font-weight:700;color:var(--mk-red);">${pctTxt}</div><div style="font-size:10.5px;color:var(--muted);">น้ำหนัก ${weight}</div><div style="font-size:10.5px;color:#6D28D9;margin-top:2px;">แสดงหน้าร้าน: ${p.oddsText ? escapeHtml(p.oddsText) : '-'}</div></td>
           <td>${qtyTxt}</td>
           <td>${extrasHtml}</td>
           <td>${minOrderTxt}</td>
@@ -2374,6 +2390,7 @@
     const minOrderRaw = document.getElementById('prizeMinOrder').value;
     const minOrderAmount = minOrderRaw !== '' ? Number(minOrderRaw) : 0;
     const giftItem = document.getElementById('prizeGiftItem').value.trim();
+    const oddsText = document.getElementById('prizeOddsText').value.trim();
     const freeShipping = document.getElementById('prizeFreeShipping').checked;
     const isNoPrize = document.getElementById('prizeIsNoPrize').checked;
     const active = document.getElementById('prizeActive').checked;
@@ -2381,7 +2398,7 @@
     try {
       await addDoc(collection(db, 'luckyDrawPrizes'), {
         name, weight, remainingQuantity, minOrderAmount, giftItem,
-        freeShipping, isNoPrize, active,
+        freeShipping, isNoPrize, active, oddsText,
         sortOrder: allMysteryPrizes.length,
         createdAt: new Date().toISOString()
       });
@@ -2401,6 +2418,7 @@
     document.getElementById('editPrizeQty').value = (p.remainingQuantity !== undefined && p.remainingQuantity !== null) ? p.remainingQuantity : '';
     document.getElementById('editPrizeMinOrder').value = p.minOrderAmount || '';
     document.getElementById('editPrizeGiftItem').value = p.giftItem || '';
+    document.getElementById('editPrizeOddsText').value = p.oddsText || '';
     document.getElementById('editPrizeFreeShipping').checked = !!p.freeShipping;
     document.getElementById('editPrizeIsNoPrize').checked = !!p.isNoPrize;
     document.getElementById('editPrizeActive').checked = p.active !== false;
@@ -2417,6 +2435,7 @@
     const minOrderRaw = document.getElementById('editPrizeMinOrder').value;
     const minOrderAmount = minOrderRaw !== '' ? Number(minOrderRaw) : 0;
     const giftItem = document.getElementById('editPrizeGiftItem').value.trim();
+    const oddsText = document.getElementById('editPrizeOddsText').value.trim();
     const freeShipping = document.getElementById('editPrizeFreeShipping').checked;
     const isNoPrize = document.getElementById('editPrizeIsNoPrize').checked;
     const active = document.getElementById('editPrizeActive').checked;
@@ -2424,7 +2443,7 @@
     try {
       await updateDoc(doc(db, 'luckyDrawPrizes', id), {
         name, weight, remainingQuantity, minOrderAmount, giftItem,
-        freeShipping, isNoPrize, active,
+        freeShipping, isNoPrize, active, oddsText,
         updatedAt: new Date().toISOString()
       });
       closeModal('editPrizeModal');
@@ -2832,8 +2851,10 @@
   // ================= MYSTERY BOX FOOTNOTE SETTINGS =================
   // เก็บที่ settings/mysteryNotes — หน้าร้าน (index.html) อ่านไปแสดงใต้ตารางโอกาสรางวัล
   const MYSTERY_NOTES_DEFAULT =
-    '* เปอร์เซ็นต์คำนวณจากน้ำหนักโอกาสที่แอดมินตั้งค่าไว้สำหรับรางวัลแต่ละรายการ (ปรับได้จากหลังบ้าน) โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ\n' +
+    '* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ\n' +
     '* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง';
+  const MYSTERY_TITLE_DEFAULT = 'MYSTERY BOX (รางวัลประจำเดือน)';
+  const MYSTERY_SUBTITLE_DEFAULT = 'สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง';
   let mysteryNotesFilled = false;
 
   window.loadMysteryNotes = function() {
@@ -2843,23 +2864,29 @@
       // เติมฟอร์มครั้งเดียวตอนโหลด เพื่อไม่ให้ทับสิ่งที่แอดมินกำลังพิมพ์อยู่
       if (mysteryNotesFilled) return;
       mysteryNotesFilled = true;
-      const el = document.getElementById('mysteryNotesText');
-      if (el) el.value = snap.exists() ? (snap.data().text || '') : MYSTERY_NOTES_DEFAULT;
+      const d = snap.exists() ? snap.data() : {};
+      document.getElementById('mysteryTitleText').value = d.title !== undefined ? d.title : MYSTERY_TITLE_DEFAULT;
+      document.getElementById('mysterySubtitleText').value = d.subtitle !== undefined ? d.subtitle : MYSTERY_SUBTITLE_DEFAULT;
+      document.getElementById('mysteryNotesText').value = snap.exists() && d.text !== undefined ? d.text : MYSTERY_NOTES_DEFAULT;
     }, err => showToast('โหลดข้อความหมายเหตุไม่สำเร็จ: ' + err.message));
   };
 
   window.resetMysteryNotesDefaults = function() {
+    document.getElementById('mysteryTitleText').value = MYSTERY_TITLE_DEFAULT;
+    document.getElementById('mysterySubtitleText').value = MYSTERY_SUBTITLE_DEFAULT;
     document.getElementById('mysteryNotesText').value = MYSTERY_NOTES_DEFAULT;
     showToast('↩️ ใส่ข้อความเริ่มต้นแล้ว (กด "บันทึกข้อความ" เพื่อใช้งานจริง)');
   };
 
   window.saveMysteryNotes = async function() {
+    const title = document.getElementById('mysteryTitleText').value.trim();
+    const subtitle = document.getElementById('mysterySubtitleText').value.trim();
     const text = document.getElementById('mysteryNotesText').value.trim();
     try {
       await setDoc(doc(db, 'settings', 'mysteryNotes'), {
-        text, updatedAt: new Date().toISOString()
+        title, subtitle, text, updatedAt: new Date().toISOString()
       });
-      showToast(text ? '✅ บันทึกข้อความหมายเหตุเรียบร้อย' : '✅ บันทึกแล้ว (ข้อความถูกซ่อนที่หน้าร้าน)');
+      showToast(text ? '✅ บันทึกข้อความเรียบร้อย' : '✅ บันทึกแล้ว (หมายเหตุใต้ตารางถูกซ่อนที่หน้าร้าน)');
     } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
