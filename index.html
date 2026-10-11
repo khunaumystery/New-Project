@@ -424,6 +424,12 @@
       line-height: 1.5;
     }
 
+    .odds-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .odds-table th { text-align:left; color:var(--gold); font-weight:700; padding:8px 6px; border-bottom:1px solid rgba(245,200,66,0.3); }
+    .odds-table td { padding:9px 6px; color:#F0F0F0; border-bottom:1px solid rgba(255,255,255,0.06); word-break:break-word; }
+    .odds-table tr:last-child td { border-bottom:none; }
+    .odds-table th:nth-child(2), .odds-table td:nth-child(2) { text-align:center; color:var(--gold); font-weight:700; }
+    .odds-table th:last-child, .odds-table td:last-child { text-align:right; }
     .odds-prize-text {
       font-size: 13px;
       color: #F0F0F0;
@@ -2342,7 +2348,18 @@
         const subTxt = String(data.subtitle || '').trim();
         if (titleEl && titleTxt) titleEl.textContent = titleTxt;
         if (subEl && data.subtitle !== undefined) { subEl.textContent = subTxt; subEl.style.display = subTxt ? '' : 'none'; }
-        if (prizeEl) prizeEl.textContent = String(data.prizeText || '').trim() || 'ยังไม่มีรายละเอียดของรางวัล';
+        if (prizeEl) {
+          const rows = Array.isArray(data.prizeRows) ? data.prizeRows.filter(r => r && (r.name || r.odds || r.min)) : [];
+          if (rows.length) {
+            prizeEl.style.whiteSpace = 'normal';
+            prizeEl.innerHTML = '<table class="odds-table"><thead><tr><th>รางวัล</th><th>โอกาส</th><th>ขั้นต่ำสั่งซื้อ</th></tr></thead><tbody>' +
+              rows.map(r => '<tr><td>' + escapeHtmlLocal(r.name) + '</td><td>' + escapeHtmlLocal(r.odds || '-') + '</td><td>' + escapeHtmlLocal(r.min || '-') + '</td></tr>').join('') +
+              '</tbody></table>';
+          } else {
+            prizeEl.style.whiteSpace = '';
+            prizeEl.textContent = String(data.prizeText || '').trim() || 'ยังไม่มีรายละเอียดของรางวัล';
+          }
+        }
         if (footEl && data.text !== undefined) {
           const t = String(data.text || '').trim();
           if (t) { footEl.textContent = t; footEl.style.display = ''; } else { footEl.style.display = 'none'; }

@@ -740,8 +740,12 @@
             <input type="text" id="mysterySubtitleText" class="form-control" placeholder="เช่น สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง">
           </div>
           <div class="form-group">
-            <label>รายละเอียดรายการของรางวัล (พิมพ์เองอิสระ ขึ้นบรรทัดใหม่ได้ — แสดงที่หน้าร้านแทนตารางรางวัล)</label>
-            <textarea id="mysteryPrizeText" class="form-control" rows="8" placeholder="เช่น&#10;🥇 DX Two Side Driver — 1 ชิ้น (ยอดขั้นต่ำ 500฿)&#10;🥈 DX Kiramai Changer — 2 ชิ้น&#10;🚚 ส่งฟรี — โอกาสสูง"></textarea>
+            <label>รายการของรางวัล (พิมพ์เองอิสระ — แสดงเป็นตารางที่หน้าร้าน)</label>
+            <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr 34px; gap:6px; font-size:11.5px; font-weight:700; color:var(--muted); margin-bottom:4px;">
+              <div>ช่อง 1: รางวัล</div><div>ช่อง 2: โอกาส</div><div>ช่อง 3: ขั้นต่ำสั่งซื้อ</div><div></div>
+            </div>
+            <div id="mysteryPrizeRows"></div>
+            <button type="button" class="btn-primary" style="background:#6D28D9; margin-top:6px;" onclick="addMysteryPrizeRow()"><i class="ph ph-plus"></i> เพิ่มแถวรางวัล</button>
           </div>
           <div class="form-group">
             <label>หมายเหตุ (ข้อความเล็กด้านล่าง 1 บรรทัด = 1 หัวข้อ, เว้นว่าง = ซ่อน)</label>
@@ -3180,13 +3184,38 @@
   const MYSTERY_SUBTITLE_DEFAULT = 'สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง';
   let mysteryNotesFilled = false;
 
+  function mysteryRowHtml(r) {
+    const v = (x) => escapeHtml(x || '').replace(/<br>/g, ' ');
+    return '<div class="mystery-prize-row" style="display:grid; grid-template-columns:1.6fr 1fr 1fr 34px; gap:6px; margin-bottom:6px;">' +
+      '<input type="text" class="form-control mp-name" placeholder="เช่น DX Kiramai Changer" value="' + v(r.name) + '">' +
+      '<input type="text" class="form-control mp-odds" placeholder="เช่น 1.5%" value="' + v(r.odds) + '">' +
+      '<input type="text" class="form-control mp-min" placeholder="เช่น ฿200" value="' + v(r.min) + '">' +
+      '<button type="button" class="action-btn btn-delete" style="margin:0;justify-content:center;" onclick="this.parentElement.remove()" title="ลบแถว"><i class="ph ph-trash"></i></button></div>';
+  }
+  function renderMysteryPrizeRows(rows) {
+    const box = document.getElementById('mysteryPrizeRows');
+    if (!box) return;
+    box.innerHTML = (rows && rows.length ? rows : [{}]).map(mysteryRowHtml).join('');
+  }
+  window.addMysteryPrizeRow = function() {
+    const box = document.getElementById('mysteryPrizeRows');
+    if (box) box.insertAdjacentHTML('beforeend', mysteryRowHtml({}));
+  };
+  function collectMysteryPrizeRows() {
+    return Array.from(document.querySelectorAll('#mysteryPrizeRows .mystery-prize-row')).map(r => ({
+      name: r.querySelector('.mp-name').value.trim(),
+      odds: r.querySelector('.mp-odds').value.trim(),
+      min: r.querySelector('.mp-min').value.trim()
+    })).filter(r => r.name || r.odds || r.min);
+  }
+
   window.loadMysteryNotes = async function() {
     try {
       const snap = await getDoc(doc(db, 'settings', 'mysteryNotes'));
       const d = snap.exists() ? snap.data() : {};
       document.getElementById('mysteryTitleText').value = d.title !== undefined ? d.title : MYSTERY_TITLE_DEFAULT;
       document.getElementById('mysterySubtitleText').value = d.subtitle !== undefined ? d.subtitle : MYSTERY_SUBTITLE_DEFAULT;
-      document.getElementById('mysteryPrizeText').value = d.prizeText !== undefined ? d.prizeText : '';
+      renderMysteryPrizeRows(Array.isArray(d.prizeRows) ? d.prizeRows : []);
       document.getElementById('mysteryNotesText').value = snap.exists() && d.text !== undefined ? d.text : MYSTERY_NOTES_DEFAULT;
     } catch (err) {
       showToast('โหลดข้อความหมายเหตุไม่สำเร็จ: ' + err.message);
@@ -3196,7 +3225,7 @@
   window.resetMysteryNotesDefaults = function() {
     document.getElementById('mysteryTitleText').value = MYSTERY_TITLE_DEFAULT;
     document.getElementById('mysterySubtitleText').value = MYSTERY_SUBTITLE_DEFAULT;
-    document.getElementById('mysteryPrizeText').value = '';
+    renderMysteryPrizeRows([]);
     document.getElementById('mysteryNotesText').value = MYSTERY_NOTES_DEFAULT;
     showToast('↩️ ใส่ข้อความเริ่มต้นแล้ว (กด "บันทึกข้อความ" เพื่อใช้งานจริง)');
   };
@@ -3204,11 +3233,11 @@
   window.saveMysteryNotes = async function() {
     const title = document.getElementById('mysteryTitleText').value.trim();
     const subtitle = document.getElementById('mysterySubtitleText').value.trim();
-    const prizeText = document.getElementById('mysteryPrizeText').value.trim();
+    const prizeRows = collectMysteryPrizeRows();
     const text = document.getElementById('mysteryNotesText').value.trim();
     try {
       await setDoc(doc(db, 'settings', 'mysteryNotes'), {
-        title, subtitle, prizeText, text, updatedAt: new Date().toISOString()
+        title, subtitle, prizeRows, text, updatedAt: new Date().toISOString()
       });
       showToast(text ? '✅ บันทึกข้อความเรียบร้อย' : '✅ บันทึกแล้ว (หมายเหตุใต้ตารางถูกซ่อนที่หน้าร้าน)');
     } catch (e) {
