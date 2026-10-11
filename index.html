@@ -424,41 +424,15 @@
       line-height: 1.5;
     }
 
-    .odds-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-    }
-
-    .odds-table th {
-      text-align: left;
-      color: var(--gold);
-      font-weight: 700;
-      padding: 8px 6px;
-      border-bottom: 1px solid rgba(245, 200, 66, 0.3);
-    }
-
-    .odds-table th:last-child,
-    .odds-table td:last-child {
-      text-align: right;
-    }
-
-    .odds-table td {
-      padding: 9px 6px;
+    .odds-prize-text {
+      font-size: 13px;
       color: #F0F0F0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .odds-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .odds-table tr.sold-out td { opacity: 0.55; }
-    .odds-table tr.sold-out .prize-name-text { text-decoration: line-through; }
-    .sold-out-badge { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:10px; background:#DC2626; color:#fff; font-size:10.5px; font-weight:800; text-decoration:none; }
-    .odds-table td.odds-value {
-      font-weight: 700;
-      color: var(--gold);
+      line-height: 1.7;
+      white-space: pre-line;
+      word-break: break-word;
+      padding: 10px 4px;
+      border-top: 1px solid rgba(245, 200, 66, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .odds-modal-footnote {
@@ -1520,20 +1494,8 @@
         </button>
       </div>
       <p class="odds-modal-sub" id="oddsModalSub">สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง</p>
-      <table class="odds-table">
-        <thead>
-          <tr>
-            <th>รายการรางวัล</th>
-            <th>โอกาสได้รับ</th>
-            <th>ขั้นต่ำสั่งซื้อ</th>
-          </tr>
-        </thead>
-        <tbody id="oddsTableBody">
-          <tr><td colspan="3" style="text-align:center;color:#9CA3AF;">กำลังโหลด...</td></tr>
-        </tbody>
-      </table>
-      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ
-* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง</p>
+      <div class="odds-prize-text" id="oddsPrizeText">กำลังโหลด...</div>
+      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ</p>
     </div>
   </div>
 
@@ -1735,7 +1697,7 @@
         giftBox.classList.remove('popping');
         giftBox.classList.add('floating');
         resetSpinUI();
-        showToast('⚠️ ระบบขัดข้อง ยังไม่ได้ใช้สิทธิ์สุ่มของคุณ กรุณากดสุ่มใหม่อีกครั้ง');
+        showToast('⚠️ ระบบขัดข้อง (' + (window.MK_LAST_CLAIM_ERROR || 'unknown') + ') ยังไม่ได้ใช้สิทธิ์สุ่ม กรุณากดสุ่มใหม่');
         return;
       }
 
@@ -2268,34 +2230,6 @@
         storeMysteryPrizes = [];
       }
       window.MK_PRIZES = storeMysteryPrizes;
-      renderOddsTable(storeMysteryPrizes);
-    }
-
-    function renderOddsTable(prizes) {
-      const tbody = document.getElementById('oddsTableBody');
-      if (!tbody) return;
-      const isSoldOut = (p) => (p.remainingQuantity !== undefined && p.remainingQuantity !== null && Number(p.remainingQuantity) <= 0);
-      const active = (prizes || []).filter(p => p.active !== false);
-
-      if (!active.length) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted, #999);">ยังไม่มีรางวัลเปิดใช้งาน</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = active.map(p => {
-        const soldOut = isSoldOut(p);
-        // ข้อความโอกาสที่แสดง: แอดมินพิมพ์เองต่อรางวัล (oddsText) — ไม่คำนวณจากน้ำหนักอีกต่อไป
-        const manualOdds = String(p.oddsText || '').trim();
-        const pctTxt = soldOut ? '<span style="color:#EF4444;">หมด</span>' : (manualOdds ? escapeHtmlLocal(manualOdds) : '-');
-        const imgHtml = p.image ? `<img src="${p.image}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;">` : '';
-        const nameLabel = p.isNoPrize ? '❌ ' : (p.giftItem ? '🎁 ' : '🚚 ');
-        const minTxt = (p.minOrderAmount && Number(p.minOrderAmount) > 0) ? `฿${Number(p.minOrderAmount).toLocaleString()}` : '-';
-        return `<tr class="${soldOut ? 'sold-out' : ''}">
-          <td>${imgHtml}<span class="prize-name-text">${nameLabel}${p.name || 'รางวัล'}</span>${soldOut ? '<span class="sold-out-badge">หมด</span>' : ''}</td>
-          <td class="odds-value">${pctTxt}</td>
-          <td>${minTxt}</td>
-        </tr>`;
-      }).join('');
     }
 
     // Weighted random pick over currently-eligible prizes (active + in
@@ -2334,7 +2268,7 @@
         if (claimed === 'soldout') {
           // Someone else grabbed the last one between the pick and now —
           // fail safely to "no prize" for this spin rather than error out.
-          loadMysteryPrizesOnce(); // รีเฟรชรายการ/ตารางโอกาสให้ตรงกับของจริง
+          loadMysteryPrizesOnce(); // รีเฟรชรายการรางวัลให้ตรงกับของจริง
           return { isNoPrize: true, name: 'ไม่ได้รับโค้ด', soldOutRace: true };
         }
         chosen = { ...chosen, remainingQuantity: Number(chosen.remainingQuantity) - 1 };
@@ -2343,7 +2277,6 @@
         if (localIdx !== -1) {
           storeMysteryPrizes[localIdx] = { ...storeMysteryPrizes[localIdx], remainingQuantity: chosen.remainingQuantity };
           window.MK_PRIZES = storeMysteryPrizes;
-          renderOddsTable(storeMysteryPrizes);
         }
       }
       return chosen;
@@ -2363,7 +2296,8 @@
         return 'ok';
       } catch (e) {
         if (e && e.message === 'MK_SOLD_OUT') return 'soldout';
-        console.error('claimLimitedPrize failed:', e);
+        console.error('claimLimitedPrize failed:', e && e.code, e && e.message);
+        window.MK_LAST_CLAIM_ERROR = (e && (e.code || e.message)) || 'unknown';
         return 'error';
       }
     }
@@ -2394,35 +2328,39 @@
     }
 
     // ===== MYSTERY BOX FOOTNOTE (settings/mysteryNotes — แก้ได้จากหน้า admin) =====
+    let oddsNotesLoadedAt = 0;
     async function loadOddsNotesOnce() {
+      oddsNotesLoadedAt = Date.now();
       try {
         const settingSnap = await getDoc(doc(db, 'settings', 'mysteryNotes'));
-        const d = settingSnap.exists() ? settingSnap : null;
-        if (!d) return; // ไม่มีการตั้งค่า — ใช้ข้อความเริ่มต้นใน HTML
-        const data = d.data();
+        const data = settingSnap.exists() ? settingSnap.data() : {};
         const titleEl = document.getElementById('oddsModalTitle');
         const subEl = document.getElementById('oddsModalSub');
+        const prizeEl = document.getElementById('oddsPrizeText');
+        const footEl = document.getElementById('oddsFootnote');
         const titleTxt = String(data.title || '').trim();
         const subTxt = String(data.subtitle || '').trim();
         if (titleEl && titleTxt) titleEl.textContent = titleTxt;
-        if (subEl) { if (data.subtitle !== undefined) { subEl.textContent = subTxt; subEl.style.display = subTxt ? '' : 'none'; } }
-        const text = String(data.text || '').trim();
-        const el = document.getElementById('oddsFootnote');
-        if (!el) return;
-        if (text) { el.textContent = text; el.style.display = ''; }
-        else { el.style.display = 'none'; }
+        if (subEl && data.subtitle !== undefined) { subEl.textContent = subTxt; subEl.style.display = subTxt ? '' : 'none'; }
+        if (prizeEl) prizeEl.textContent = String(data.prizeText || '').trim() || 'ยังไม่มีรายละเอียดของรางวัล';
+        if (footEl && data.text !== undefined) {
+          const t = String(data.text || '').trim();
+          if (t) { footEl.textContent = t; footEl.style.display = ''; } else { footEl.style.display = 'none'; }
+        }
       } catch (err) {
         console.warn('Error loading mystery notes:', err);
+        oddsNotesLoadedAt = 0;
+        const prizeEl = document.getElementById('oddsPrizeText');
+        if (prizeEl) prizeEl.textContent = 'โหลดรายละเอียดไม่สำเร็จ ลองใหม่อีกครั้ง';
       }
     }
-    // เปิดหน้าต่าง "ดูเปอร์เซ็นต์" ทีไรให้ดึงข้อมูลล่าสุด (จำนวนคงเหลือ + ข้อความหมายเหตุ)
+    // เปิดหน้าต่างครั้งแรกค่อยโหลด และแคช 5 นาที (ประหยัดการอ่าน Firestore)
     window.MK_REFRESH_ODDS = function () {
-      loadMysteryPrizesOnce();
+      if (Date.now() - oddsNotesLoadedAt < 5 * 60 * 1000) return;
       loadOddsNotesOnce();
     };
 
     // Kick all off in parallel rather than waiting on each other.
-    loadOddsNotesOnce();
     loadWelcomePopupOnce();
     loadCategoriesOnce();
     loadCategoryTypesOnce();
