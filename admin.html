@@ -1158,7 +1158,7 @@
 <div class="modal-overlay" id="editProductModal">
   <div class="modal-box">
     <h3><i class="ph ph-pencil-simple"></i> แก้ไขข้อมูลสินค้า</h3>
-    <form id="editProductForm" onsubmit="event.preventDefault(); submitEditProduct();">
+    <form id="editProductForm" onsubmit="event.preventDefault();" oninput="stageEditProduct()" onchange="stageEditProduct()">
       <input type="hidden" id="editProdId">
       <div class="form-group">
         <label>ชื่อสินค้า *</label>
@@ -1208,8 +1208,8 @@
         <label>รายละเอียดสินค้า</label>
         <textarea id="editProdDesc" class="form-control" rows="2"></textarea>
       </div>
-      <button type="submit" class="btn-submit" style="background:#2563EB;"><i class="ph ph-floppy-disk"></i> บันทึกการแก้ไข</button>
-      <button type="button" class="btn-close-modal" onclick="closeModal('editProductModal')">ยกเลิก</button>
+      <div style="font-size:12px; color:var(--muted); margin:4px 0 10px;"><i class="ph ph-info"></i> การแก้ไขจะถูกบันทึกเมื่อกดปุ่ม "บันทึกทั้งหมด" ที่หน้ารายการสินค้า</div>
+      <button type="button" class="btn-close-modal" onclick="closeModal('editProductModal')">ปิด</button>
     </form>
   </div>
 </div>
@@ -1822,6 +1822,7 @@
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
         document.getElementById(targetInputId).value = dataUrl;
+        document.getElementById(targetInputId).dispatchEvent(new Event('input', { bubbles: true }));
         
         // Show live preview
         const previewBox = document.getElementById(previewBoxId);
@@ -2985,28 +2986,60 @@
     document.getElementById('editProductModal').classList.add('active');
   };
 
-  window.submitEditProduct = async function() {
-    const id            = document.getElementById('editProdId').value;
-    const name          = document.getElementById('editProdName').value.trim();
-    const category      = document.getElementById('editProdCategory').value;
-    const price         = Number(document.getElementById('editProdPrice').value);
-    const originalPrice = document.getElementById('editProdOriginalPrice').value ? Number(document.getElementById('editProdOriginalPrice').value) : null;
-    const stockQty      = document.getElementById('editProdStockQty').value !== '' ? Number(document.getElementById('editProdStockQty').value) : null;
-    const image         = document.getElementById('editProdImage').value.trim();
-    const desc          = document.getElementById('editProdDesc').value.trim();
-    const inStock       = document.getElementById('editProdInStock').value === 'true';
+  // แก้ไขในโมดัลจะถูกเก็บไว้ชั่วคราว (staged) — ยังไม่เขียนลง Firestore
+  // จนกว่าจะกดปุ่ม "บันทึกทั้งหมด"
+  let _stageEditRenderTimer = null;
+  window.stageEditProduct = function() {
+    const id = document.getElementById('editProdId').value;
+    const p = allProducts.find(x => x._id === id);
+    if (!p) return;
 
-    try {
-      await updateDoc(doc(db, 'products', id), {
-        name, category, price, originalPrice, stockQty, image, desc, inStock,
-        updatedAt: new Date().toISOString()
-      });
-      closeModal('editProductModal');
-      showToast('✅ แก้ไขสินค้า "' + name + '" เรียบร้อย');
-      loadProducts();
-    } catch(e) {
-      showToast('❌ ไม่สามารถแก้ไขสินค้าได้: ' + e.message);
+    const stageIfChanged = (field, value, current) => {
+      const alreadyStaged = staged.products[id] && (field in staged.products[id].vals);
+      if (current === value && !alreadyStaged) return;
+      stageField(staged.products, p, field, value);
+    };
+
+    const name     = document.getElementById('editProdName').value.trim();
+    const category = document.getElementById('editProdCategory').value;
+    const priceRaw = document.getElementById('editProdPrice').value;
+    const origRaw  = document.getElementById('editProdOriginalPrice').value;
+    const qtyRaw   = document.getElementById('editProdStockQty').value;
+    const image    = document.getElementById('editProdImage').value.trim();
+    const desc     = document.getElementById('editProdDesc').value.trim();
+    const inStock  = document.getElementById('editProdInStock').value === 'true';
+
+    // ช่องที่จำเป็น (*) ถ้าว่าง/ไม่ถูกต้อง จะไม่ถูกเก็บค่า เพื่อไม่ให้บันทึกข้อมูลเสีย
+    if (name)     stageIfChanged('name', name, p.name || '');
+    if (category) stageIfChanged('category', category, p.category || '');
+    if (priceRaw !== '' && !isNaN(Number(priceRaw)) && Number(priceRaw) >= 0) {
+      stageIfChanged('price', Number(priceRaw), Number(p.price || 0));
     }
+    const origVal = (origRaw !== '' && !isNaN(Number(origRaw))) ? Number(origRaw) : null;
+    stageIfChanged('originalPrice', origVal, (p.originalPrice === undefined || p.originalPrice === '') ? null : p.originalPrice);
+
+    const curQty = (p.stockQty === undefined || p.stockQty === '') ? null : p.stockQty;
+    if (qtyRaw === '') {
+      stageIfChanged('stockQty', null, curQty);
+      delete stockDrafts[id];
+    } else if (!isNaN(Number(qtyRaw)) && Number(qtyRaw) >= 0) {
+      stageIfChanged('stockQty', Number(qtyRaw), curQty);
+      delete stockDrafts[id];
+    }
+
+    if (image) stageIfChanged('image', image, p.image || '');
+    stageIfChanged('desc', desc, p.desc || '');
+    stageIfChanged('inStock', inStock, (p.inStock === true || p.inStock === 'true'));
+
+    updatePendingBar();
+
+    // อัปเดตตารางด้านหลังโมดัล (หน่วงเล็กน้อยเพื่อไม่ให้หน่วงตอนพิมพ์)
+    clearTimeout(_stageEditRenderTimer);
+    _stageEditRenderTimer = setTimeout(() => {
+      document.getElementById('statProductsInStock').textContent =
+        allProducts.filter(x => x.inStock === true || x.inStock === 'true').length;
+      filterProducts();
+    }, 300);
   };
 
   window.deleteProduct = async function(id, name) {
@@ -3043,8 +3076,9 @@
     draftStock(id, next);
   };
 
-  // บันทึกจำนวนสต็อกของทุกรายการที่แสดงอยู่ในตารางพร้อมกัน
-  // (เฉพาะรายการที่ค่าเปลี่ยนไปจากที่บันทึกไว้ — ไม่แตะรายการที่ไม่ได้แก้)
+  // ปุ่ม "บันทึกทั้งหมด" ในหน้าจัดการสินค้า:
+  // บันทึกทั้ง (1) การแก้ไขข้อมูลสินค้าจากโมดัล "แก้ไขข้อมูลสินค้า" และ
+  // (2) จำนวนสต็อกที่แก้ในตาราง — เฉพาะรายการที่ค่าเปลี่ยนไปจากที่บันทึกไว้
   window.saveAllStockQty = async function(skipConfirm) {
     const btn = document.getElementById('btnSaveAllStock');
     const changes = [];
@@ -3062,32 +3096,45 @@
 
     if (invalid > 0) { showToast(`⚠️ มี ${invalid} รายการที่จำนวนสต็อกไม่ถูกต้อง (ต้องเป็น 0 ขึ้นไป)`); return; }
 
-    // สินค้าที่มีสต็อก > 0 แต่สถานะยังเป็น "หมด" (ไม่รวมรายการที่กำลังจะถูกบันทึกจำนวนใหม่ในรอบนี้)
-    const changedIds = new Set(changes.map(c => c.id));
+    // การแก้ไขข้อมูลสินค้าที่รอบันทึก (จากโมดัลแก้ไข / การจัดลำดับ)
+    const stagedIds = Object.keys(staged.products);
+
+    // สินค้าที่มีสต็อก > 0 แต่สถานะยังเป็น "หมด" (ไม่รวมรายการที่กำลังจะถูกบันทึกในรอบนี้)
+    const changedIds = new Set([...changes.map(c => c.id), ...stagedIds]);
     const mismatches = allProducts.filter(p => {
       const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
       const inStock = (p.inStock === true || p.inStock === 'true');
       return hasQty && Number(p.stockQty) > 0 && !inStock && !changedIds.has(p._id);
     });
 
-    if (!changes.length && !mismatches.length) { showToast('ℹ️ ไม่มีรายการที่เปลี่ยนแปลง'); return; }
+    if (!changes.length && !stagedIds.length && !mismatches.length) { showToast('ℹ️ ไม่มีรายการที่เปลี่ยนแปลง'); return; }
 
-    if (changes.length) {
-      if (!skipConfirm && !confirm(`บันทึกจำนวนสต็อกที่แก้ไข ${changes.length} รายการ?`)) return;
+    const total = changes.length + stagedIds.length;
+    if (total) {
+      if (!skipConfirm && !confirm(`บันทึกการเปลี่ยนแปลงสินค้า ${total} รายการ?`)) return;
 
       if (btn) btn.disabled = true;
       try {
         const now = new Date().toISOString();
-        const results = await Promise.allSettled(changes.map(c =>
+
+        // 1) ข้อมูลสินค้าที่แก้ไข
+        const editResults = await Promise.allSettled(stagedIds.map(id =>
+          updateDoc(doc(db, 'products', id), { ...staged.products[id].vals, updatedAt: now })
+        ));
+        editResults.forEach((r, k) => { if (r.status === 'fulfilled') delete staged.products[stagedIds[k]]; });
+
+        // 2) จำนวนสต็อกที่แก้ในตาราง
+        const stockResults = await Promise.allSettled(changes.map(c =>
           updateDoc(doc(db, 'products', c.id), { stockQty: c.val, inStock: c.val > 0, updatedAt: now })
         ));
-        const failed = results.filter(r => r.status === 'rejected').length;
-        results.forEach((r, k) => { if (r.status === 'fulfilled') delete stockDrafts[changes[k].id]; });
+        stockResults.forEach((r, k) => { if (r.status === 'fulfilled') delete stockDrafts[changes[k].id]; });
+
+        const failed = editResults.concat(stockResults).filter(r => r.status === 'rejected').length;
         await loadProducts();
         updatePendingBar();
         showToast(failed
-          ? `⚠️ บันทึกสำเร็จ ${changes.length - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
-          : `✅ บันทึกทั้งหมด ${changes.length} รายการเรียบร้อย`);
+          ? `⚠️ บันทึกสำเร็จ ${total - failed} รายการ, ไม่สำเร็จ ${failed} รายการ`
+          : `✅ บันทึกทั้งหมด ${total} รายการเรียบร้อย`);
       } catch (e) {
         showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
       } finally {
