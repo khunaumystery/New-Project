@@ -2270,14 +2270,59 @@
     const desc     = document.getElementById('editCatDesc').value.trim();
     const hidden   = document.getElementById('editCatHidden').checked;
 
+    const oldCat  = allCategories.find(c => c._id === id);
+    const oldName = oldCat ? (oldCat.name || '') : '';
+    const renamed = !!oldName && oldName !== name;
+
+    if (renamed && allCategories.some(c => c._id !== id && (c.name || '') === name)) {
+      showToast('❌ มีหมวดหมู่ชื่อ "' + name + '" อยู่แล้ว กรุณาใช้ชื่ออื่น');
+      return;
+    }
+
     try {
+      // สินค้าเก็บชื่อหมวดหมู่เป็นข้อความ จึงต้องย้ายสินค้าในหมวดเดิมไปชื่อใหม่ด้วย
+      // ไม่เช่นนั้นสินค้าจะ "หาย" จากหมวดหมู่ที่เปลี่ยนชื่อ
+      let movedProducts = [];
+      if (renamed) {
+        const snap = await getDocs(query(collection(db, 'products'), where('category', '==', oldName)));
+        movedProducts = snap.docs.map(d => d.id);
+        if (movedProducts.length &&
+            !confirm('เปลี่ยนชื่อหมวดหมู่จาก "' + oldName + '" เป็น "' + name + '"\nสินค้า ' + movedProducts.length + ' รายการ จะถูกย้ายมาอยู่หมวดชื่อใหม่ด้วย ดำเนินการต่อ?')) {
+          return;
+        }
+        const now0 = new Date().toISOString();
+        const res = await Promise.allSettled(movedProducts.map(pid =>
+          updateDoc(doc(db, 'products', pid), { category: name, updatedAt: now0 })
+        ));
+        const failedCount = res.filter(r => r.status === 'rejected').length;
+        if (failedCount) {
+          // ย้อนกลับรายการที่ย้ายสำเร็จแล้ว เพื่อไม่ให้ข้อมูลค้างครึ่งๆ กลางๆ
+          await Promise.allSettled(res.map((r, k) => r.status === 'fulfilled'
+            ? updateDoc(doc(db, 'products', movedProducts[k]), { category: oldName })
+            : null).filter(Boolean));
+          showToast('❌ ย้ายสินค้าไม่สำเร็จ ' + failedCount + ' รายการ ยังไม่ได้เปลี่ยนชื่อหมวดหมู่');
+          return;
+        }
+      }
+
       await updateDoc(doc(db, 'categories', id), {
         name, slug, categoryType, image, pageLink, desc, hidden,
         updatedAt: new Date().toISOString()
       });
       closeModal('editCategoryModal');
-      showToast('✅ แก้ไขหมวดหมู่ "' + name + '" เรียบร้อย');
-      loadCategories();
+      showToast('✅ แก้ไขหมวดหมู่ "' + name + '" เรียบร้อย' + (movedProducts.length ? ' (ย้ายสินค้า ' + movedProducts.length + ' รายการ)' : ''));
+
+      if (renamed) {
+        // ล้างแคชสินค้า แล้วถ้ากำลังดูหมวดนี้อยู่ให้ตามไปหมวดชื่อใหม่
+        const filterEl = document.getElementById('productCategoryFilter');
+        const wasViewing = filterEl && filterEl.value === oldName;
+        allProducts = allProducts.filter(p => p.category !== oldName && p.category !== name);
+        loadedProductCategories = new Set();
+        await loadCategories();
+        if (wasViewing && filterEl) { filterEl.value = name; loadProducts(); }
+      } else {
+        loadCategories();
+      }
     } catch(e) {
       showToast('❌ ไม่สามารถแก้ไขหมวดหมู่ได้: ' + e.message);
     }
