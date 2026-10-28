@@ -575,6 +575,81 @@
       cursor: not-allowed;
       pointer-events: none;
     }
+    /* Payment method switcher + TrueMoney box */
+    .pay-method-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .pay-method-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .pay-method-btn.active {
+      border-color: #F97316;
+      background: #FFF7ED;
+      color: #C2410C;
+    }
+    .pay-method-btn.active.pp {
+      border-color: #2563EB;
+      background: #EFF6FF;
+      color: #1D4ED8;
+    }
+    .tm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F97316;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .tm-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #C2410C;
+      margin: 2px 0 6px;
+    }
+    .tm-copy-btn {
+      border: 1px solid #FDBA74;
+      background: #FFFFFF;
+      color: #C2410C;
+      border-radius: 8px;
+      padding: 4px 9px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tm-steps {
+      text-align: left;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
     /* Toast */
     .toast-msg {
       position: fixed;
@@ -843,6 +918,7 @@
 
       // PromptPay payment QR config
       const PROMPTPAY_ID = '0867852708';
+      const TRUEMONEY_WALLET_NUMBER = '0867852708'; // เบอร์ TrueMoney Wallet สำหรับรับโอน
       const QR_EXPIRY_MS = 10 * 60 * 1000; // QR มีอายุ 10 นาที
 
       // ---------- PromptPay EMVCo QR payload generator ----------
@@ -910,6 +986,7 @@
       let paymentTimerInterval = null;
       let pendingOrderData = null;
       let qrExpiresAt = null;
+      let paymentMethod = 'promptpay'; // 'promptpay' | 'truemoney'
 
       // ---------- Storage helpers ----------
       function getCartKey() {
@@ -1563,6 +1640,7 @@
 
       function openPaymentModal(orderData) {
         pendingOrderData = orderData;
+        paymentMethod = 'promptpay';
         qrExpiresAt = Date.now() + QR_EXPIRY_MS;
         const modal = document.getElementById('paymentModal');
         if (modal) modal.classList.add('active');
@@ -1570,22 +1648,90 @@
         startPaymentCountdown();
       }
 
+      function formatPhoneDisplay(num) {
+        const d = String(num).replace(/[^0-9]/g, '');
+        return d.length === 10 ? d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6) : d;
+      }
+
+      function copyText(text, label) {
+        const done = function () { showToast('📋 คัดลอก' + label + 'แล้ว'); };
+        const fallback = function () {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) { showToast('⚠️ คัดลอกไม่สำเร็จ กรุณาจดเบอร์เอง'); }
+          document.body.removeChild(ta);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(fallback);
+        } else {
+          fallback();
+        }
+      }
+
+      function copyWalletNumber() { copyText(TRUEMONEY_WALLET_NUMBER, 'เบอร์ TrueMoney Wallet'); }
+      function copyPayAmount() {
+        const amount = pendingOrderData ? (Number(pendingOrderData.grandTotal) || 0) : 0;
+        copyText(String(amount), 'ยอดเงิน');
+      }
+
+      // สลับวิธีชำระเงิน (ไม่รีเซ็ตเวลานับถอยหลัง)
+      function setPaymentMethod(method) {
+        if (method !== 'promptpay' && method !== 'truemoney') return;
+        if (!pendingOrderData || paymentMethod === method) return;
+        paymentMethod = method;
+        renderPaymentQrState(pendingOrderData);
+      }
+
       function renderPaymentQrState(orderData) {
         const body = document.getElementById('paymentModalBody');
         if (!body) return;
         const amount = Number(orderData.grandTotal) || 0;
-        const qrSrc = buildPromptPayQrImageUrl(PROMPTPAY_ID, amount);
+        const isTM = paymentMethod === 'truemoney';
+
+        const tabs =
+          '<div class="pay-method-tabs">' +
+            '<button type="button" class="pay-method-btn pp' + (!isTM ? ' active' : '') + '" onclick="MK.setPaymentMethod(\'promptpay\')"><i class="ph ph-qr-code"></i> PromptPay</button>' +
+            '<button type="button" class="pay-method-btn' + (isTM ? ' active' : '') + '" onclick="MK.setPaymentMethod(\'truemoney\')"><i class="ph ph-wallet"></i> TrueMoney Wallet</button>' +
+          '</div>';
+
+        let payBox;
+        if (isTM) {
+          payBox =
+            '<div class="qr-box" style="background:#FFF7ED; border-color:#FDBA74;">' +
+              '<span class="tm-badge"><i class="ph ph-wallet"></i> TrueMoney Wallet</span>' +
+              '<div class="qr-amount-label" style="margin-top:0;">โอนเข้าเบอร์ TrueMoney Wallet</div>' +
+              '<div class="tm-number"><span>' + escapeAttr(formatPhoneDisplay(TRUEMONEY_WALLET_NUMBER)) + '</span>' +
+                '<button type="button" class="tm-copy-btn" onclick="MK.copyWalletNumber()"><i class="ph ph-copy"></i> คัดลอก</button></div>' +
+              '<div class="qr-amount-label">ยอดที่ต้องชำระ</div>' +
+              '<div class="qr-amount-value">฿' + amount.toLocaleString() + '</div>' +
+              '<button type="button" class="tm-copy-btn" style="margin-top:6px;" onclick="MK.copyPayAmount()"><i class="ph ph-copy"></i> คัดลอกยอดเงิน</button>' +
+              '<ol class="tm-steps">' +
+                '<li>เปิดแอป TrueMoney Wallet แล้วเลือก "โอนเงิน"</li>' +
+                '<li>ใส่เบอร์ด้านบน และกรอกยอดให้ตรงกับยอดที่ต้องชำระ</li>' +
+                '<li>แคปหน้าจอสลิปหลังโอนสำเร็จ แล้วอัพโหลดด้านล่าง</li>' +
+              '</ol>' +
+            '</div>';
+        } else {
+          const qrSrc = buildPromptPayQrImageUrl(PROMPTPAY_ID, amount);
+          payBox =
+            '<div class="qr-box">' +
+              '<img class="promptpay-logo" src="PromptPay_logo.png" alt="PromptPay" onerror="this.style.display=\'none\';">' +
+              '<img src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาลองใหม่\');">' +
+              '<div class="qr-amount-label">ยอดที่ต้องชำระ</div>' +
+              '<div class="qr-amount-value">฿' + amount.toLocaleString() + '</div>' +
+            '</div>';
+        }
 
         body.innerHTML =
-          '<div class="modal-icon" style="background:#EFF6FF; color:#2563EB;"><i class="ph ph-qr-code"></i></div>' +
-          '<h3 class="modal-title">สแกน QR เพื่อชำระเงิน</h3>' +
+          '<div class="modal-icon" style="' + (isTM ? 'background:#FFF7ED; color:#F97316;' : 'background:#EFF6FF; color:#2563EB;') + '"><i class="ph ' + (isTM ? 'ph-wallet' : 'ph-qr-code') + '"></i></div>' +
+          '<h3 class="modal-title">' + (isTM ? 'โอนเงินผ่าน TrueMoney Wallet' : 'สแกน QR เพื่อชำระเงิน') + '</h3>' +
           '<p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">หมายเลขออเดอร์ <strong style="color:var(--mk-red);">' + escapeAttr(orderData.orderId) + '</strong></p>' +
-          '<div class="qr-box">' +
-            '<img class="promptpay-logo" src="PromptPay_logo.png" alt="PromptPay" onerror="this.style.display=\'none\';">' +
-            '<img src="' + qrSrc + '" alt="PromptPay QR Code" onerror="this.style.display=\'none\'; MK.showToast(\'⚠️ โหลด QR ไม่สำเร็จ กรุณาลองใหม่\');">' +
-            '<div class="qr-amount-label">ยอดที่ต้องชำระ</div>' +
-            '<div class="qr-amount-value">฿' + amount.toLocaleString() + '</div>' +
-          '</div>' +
+          tabs +
+          payBox +
           '<div id="qrTimerArea"></div>' +
           '<div style="margin-top:16px;">' +
             '<label class="upload-slip-label" id="uploadSlipLabel" for="slipFileInput">' +
@@ -1604,12 +1750,12 @@
         if (!area) return;
         const remaining = qrExpiresAt - Date.now();
         if (remaining > 0) {
-          area.innerHTML = '<span class="qr-timer-badge"><i class="ph ph-hourglass-medium"></i> QR หมดอายุใน <strong id="qrTimerText">' + formatQrTime(remaining) + '</strong></span>';
+          area.innerHTML = '<span class="qr-timer-badge"><i class="ph ph-hourglass-medium"></i> ' + (paymentMethod === 'truemoney' ? 'กรุณาชำระภายใน' : 'QR หมดอายุใน') + ' <strong id="qrTimerText">' + formatQrTime(remaining) + '</strong></span>';
         } else {
           area.innerHTML =
             '<div class="qr-expired-badge">' +
-              '<span><i class="ph ph-x-circle"></i> QR หมดอายุแล้ว (เกิน 10 นาที)</span>' +
-              '<button type="button" class="btn-regenerate-qr" onclick="MK.regenerateQR()"><i class="ph ph-arrows-clockwise"></i> สร้าง QR ใหม่</button>' +
+              '<span><i class="ph ph-x-circle"></i> ' + (paymentMethod === 'truemoney' ? 'หมดเวลาชำระเงินแล้ว (เกิน 10 นาที)' : 'QR หมดอายุแล้ว (เกิน 10 นาที)') + '</span>' +
+              '<button type="button" class="btn-regenerate-qr" onclick="MK.regenerateQR()"><i class="ph ph-arrows-clockwise"></i> ' + (paymentMethod === 'truemoney' ? 'เริ่มใหม่' : 'สร้าง QR ใหม่') + '</button>' +
             '</div>';
           setUploadSlipEnabled(false);
         }
@@ -1686,7 +1832,9 @@
         if (errEl) errEl.style.display = 'none';
 
         if (!qrExpiresAt || Date.now() > qrExpiresAt) {
-          showSlipError('⚠️ QR หมดอายุแล้ว กรุณากด "สร้าง QR ใหม่" ก่อนอัพโหลดสลิป');
+          showSlipError(paymentMethod === 'truemoney'
+            ? '⚠️ หมดเวลาชำระเงินแล้ว กรุณากด "เริ่มใหม่" ก่อนอัพโหลดสลิป'
+            : '⚠️ QR หมดอายุแล้ว กรุณากด "สร้าง QR ใหม่" ก่อนอัพโหลดสลิป');
           input.value = '';
           return;
         }
@@ -1776,6 +1924,8 @@
         }
 
         orderData.status = 'pending';
+        orderData.paymentMethod = paymentMethod;
+        orderData.paymentMethodLabel = paymentMethod === 'truemoney' ? 'TrueMoney Wallet' : 'PromptPay';
         orderData.slipImage = slipDataUrl;
         orderData.slipUploadedAt = new Date().toISOString();
 
@@ -1860,6 +2010,9 @@
         renderCart,
         checkLatestCode,
         regenerateQR,
+        setPaymentMethod,
+        copyWalletNumber,
+        copyPayAmount,
         cancelPayment,
         handleSlipFileChange,
         closePaymentModal,
