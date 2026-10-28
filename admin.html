@@ -697,11 +697,19 @@
           <h2><i class="ph ph-package"></i> รายการสินค้า</h2>
           <span style="font-size:12px;color:var(--muted);" id="productsCount">0 รายการ</span>
         </div>
+        <div id="bulkMoveBar" style="display:none; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 16px; background:#FFFBEB; border-bottom:1px solid #FDE68A;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; cursor:pointer;">
+            <input type="checkbox" id="prodSelectAll" style="width:16px;height:16px;" onchange="toggleSelectAllProducts(this.checked)"> เลือกทั้งหมด
+          </label>
+          <span id="bulkSelectedCount" style="font-size:12.5px; color:var(--muted);">เลือกแล้ว 0 รายการ</span>
+          <select class="filter-select" id="bulkMoveCategory" style="min-width:200px;"></select>
+          <button class="btn-primary" id="btnBulkMove" onclick="bulkMoveProducts()"><i class="ph ph-arrow-bend-down-right"></i> ย้ายเข้าหมวดหมู่นี้</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>ลำดับ</th><th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จำนวนสต็อก</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
+                <th id="productsFirstTh">ลำดับ</th><th>รูปสินค้า</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จำนวนสต็อก</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="productsTableBody">
@@ -2876,6 +2884,7 @@
   // เรียกจาก dropdown หมวดหมู่ — โหลดใหม่เฉพาะเมื่อยังไม่เคยโหลดหมวดนี้
   window.onProductCategoryChange = function() {
     const cat = currentProductCategory();
+    selectedProductIds.clear();
     if (!cat || loadedProductCategories.has(cat)) { filterProducts(); return; }
     loadProducts(true);
   };
@@ -2922,6 +2931,87 @@
   // Sorting is scoped PER CATEGORY: sortOrder only needs to be unique/meaningful
   // among products that share the same category. Products are only loaded for the
   // selected category, so the table is always a single flat, fully-reorderable list.
+  // ===== เลือกหลายรายการ + ย้ายเข้าหมวดหมู่ในครั้งเดียว (ใช้ในมุมมอง "ไม่มีหมวดหมู่") =====
+  let selectedProductIds = new Set();
+  let displayedProductIds = [];
+
+  function updateBulkCount() {
+    const n = selectedProductIds.size;
+    const cntEl = document.getElementById('bulkSelectedCount');
+    if (cntEl) cntEl.textContent = 'เลือกแล้ว ' + n + ' รายการ';
+    const all = document.getElementById('prodSelectAll');
+    if (all) {
+      const shown = displayedProductIds.filter(id => selectedProductIds.has(id)).length;
+      all.checked = displayedProductIds.length > 0 && shown === displayedProductIds.length;
+      all.indeterminate = shown > 0 && shown < displayedProductIds.length;
+    }
+  }
+
+  function renderBulkBar(show) {
+    const bar = document.getElementById('bulkMoveBar');
+    const th = document.getElementById('productsFirstTh');
+    if (th) th.textContent = show ? 'เลือก' : 'ลำดับ';
+    if (!bar) return;
+    bar.style.display = show ? 'flex' : 'none';
+    if (!show) return;
+    const sel = document.getElementById('bulkMoveCategory');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">-- เลือกหมวดหมู่ปลายทาง --</option>' +
+      allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    sel.value = prev;
+    updateBulkCount();
+  }
+
+  window.onProductSelectChange = function(cb) {
+    if (cb.checked) selectedProductIds.add(cb.value); else selectedProductIds.delete(cb.value);
+    updateBulkCount();
+  };
+
+  window.toggleSelectAllProducts = function(checked) {
+    displayedProductIds.forEach(id => { if (checked) selectedProductIds.add(id); else selectedProductIds.delete(id); });
+    document.querySelectorAll('#productsTableBody .prod-select-cb').forEach(cb => { cb.checked = checked; });
+    updateBulkCount();
+  };
+
+  window.bulkMoveProducts = async function() {
+    const target = document.getElementById('bulkMoveCategory').value;
+    const ids = Array.from(selectedProductIds);
+    if (!ids.length) { showToast('⚠️ กรุณาติ๊กเลือกสินค้าอย่างน้อย 1 รายการ'); return; }
+    if (!target) { showToast('⚠️ กรุณาเลือกหมวดหมู่ปลายทาง'); return; }
+    if (!confirm('ย้ายสินค้า ' + ids.length + ' รายการ เข้าหมวดหมู่ "' + target + '" ?')) return;
+
+    const btn = document.getElementById('btnBulkMove');
+    if (btn) btn.disabled = true;
+    try {
+      const now = new Date().toISOString();
+      const res = await Promise.allSettled(ids.map(id =>
+        updateDoc(doc(db, 'products', id), { category: target, updatedAt: now })
+      ));
+      const failedIds = [];
+      res.forEach((r, k) => {
+        if (r.status === 'fulfilled') {
+          selectedProductIds.delete(ids[k]);
+          // ล้างค่าหมวดหมู่ที่ค้างรอบันทึกของสินค้านี้ (ถ้ามี) เพราะเพิ่งตั้งค่าใหม่แล้ว
+          const st = staged.products[ids[k]];
+          if (st) {
+            delete st.vals.category; delete st.orig.category;
+            if (!Object.keys(st.vals).length) delete staged.products[ids[k]];
+          }
+        } else failedIds.push(ids[k]);
+      });
+      const ok = ids.length - failedIds.length;
+      showToast(failedIds.length
+        ? '⚠️ ย้ายสำเร็จ ' + ok + ' รายการ, ไม่สำเร็จ ' + failedIds.length + ' รายการ'
+        : '✅ ย้ายสินค้า ' + ok + ' รายการ เข้าหมวดหมู่ "' + target + '" เรียบร้อย');
+      updatePendingBar();
+      await loadProducts();
+    } catch (e) {
+      showToast('❌ ย้ายสินค้าไม่สำเร็จ: ' + e.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
+
   window.filterProducts = function() {
     const search   = document.getElementById('searchProductsBox').value.toLowerCase().trim();
     const category = currentProductCategory();
@@ -2940,6 +3030,13 @@
       );
     }
     document.getElementById('productsCount').textContent = f.length + ' รายการ';
+    displayedProductIds = f.map(p => p._id);
+    renderBulkBar(category === NO_CATEGORY);
+    if (category === NO_CATEGORY && !f.length) {
+      document.getElementById('productsTableBody').innerHTML =
+        '<tr><td colspan="9"><div class="empty-state"><i class="ph ph-check-circle"></i>ไม่พบสินค้าที่ไม่มีหมวดหมู่ 🎉</div></td></tr>';
+      return;
+    }
 
     // ขณะค้นหาจะล็อกการจัดลำดับ (แสดงเพียงบางรายการ) — ล้างช่องค้นหาแล้วจัดลำดับได้
     // มุมมอง "ไม่มีหมวดหมู่" ไม่ใช่ลำดับของหมวดจริง จึงล็อกการจัดลำดับไว้
@@ -2956,7 +3053,9 @@
       ? `<span class="status-badge active">✅ พร้อมขาย</span>`
       : '<span class="status-badge out">❌ หมด</span>';
     const origPriceTxt = p.originalPrice ? `<span style="font-size:11px;color:var(--muted);text-decoration:line-through;">฿${Number(p.originalPrice).toLocaleString()}</span> ` : '';
-    const moveCell = reorderLocked
+    const moveCell = (currentProductCategory() === NO_CATEGORY)
+      ? `<input type="checkbox" class="prod-select-cb" style="width:17px;height:17px;cursor:pointer;" value="${p._id}" ${selectedProductIds.has(p._id) ? 'checked' : ''} onchange="onProductSelectChange(this)">`
+      : reorderLocked
       ? '<div style="font-size:10px;color:var(--muted);text-align:center;">ล้างค้นหา<br>ก่อนจัดเรียง</div>'
       : `<input type="number" class="order-num-input" value="${positionInGroup}" min="1" max="${groupSize}"
            onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();}"
