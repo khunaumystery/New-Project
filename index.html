@@ -205,6 +205,24 @@
       transition: transform 0.4s ease;
     }
 
+    /* Hero banner loading spinner */
+    .hero-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border: 4px solid rgba(245, 200, 66, 0.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: heroSpin 0.8s linear infinite;
+      display: none;
+    }
+    .hero-banner-card.hero-loading .hero-spinner { display: block; }
+    .hero-banner-card.hero-loading .hero-overlay { display: none; }
+    @keyframes heroSpin { to { transform: rotate(360deg); } }
+
     .hero-overlay {
       position: absolute;
       bottom: 0;
@@ -1250,7 +1268,8 @@
   <main class="main-content">
 
     <!-- 1. Hero Promotion Banner -->
-    <section class="hero-banner-card" id="heroBannerSection" style="aspect-ratio:7/4;">
+    <section class="hero-banner-card hero-loading" id="heroBannerSection" style="aspect-ratio:7/4;">
+      <div class="hero-spinner" role="status" aria-label="กำลังโหลดแบนเนอร์"></div>
       <img id="heroBannerImg" alt="KHUN AU Promotion Banner" fetchpriority="high">
       <div class="hero-overlay">
         <div class="hero-text">
@@ -2320,7 +2339,7 @@
         const src = snap.exists() ? String(snap.data().image || '').trim() : '';
         if (!src || !img) { hide(); return; }
         const probe = new Image();
-        probe.onload = () => { img.src = src; if (section) section.style.aspectRatio = ''; };
+        probe.onload = () => { img.src = src; if (section) { section.style.aspectRatio = ''; section.classList.remove('hero-loading'); } };
         probe.onerror = () => { console.warn('Hero banner image failed to load'); hide(); };
         probe.src = src;
       } catch (err) {
