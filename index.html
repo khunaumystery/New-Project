@@ -1251,7 +1251,7 @@
 
     <!-- 1. Hero Promotion Banner -->
     <section class="hero-banner-card">
-      <img src="Banner_item.jpg" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
+      <img id="heroBannerImg" src="Banner_item.jpg" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
       <div class="hero-overlay">
         <div class="hero-text">
           <h2>ลุ้นรับรางวัลใหญ่‼️</h2>
@@ -2308,6 +2308,24 @@
       }
     }
 
+    // ===== HERO BANNER IMAGE (settings/heroBanner — อัพโหลดได้จากหน้า admin แท็บ Mystery Box) =====
+    // แสดง Banner_item.jpg ก่อนทันที แล้วค่อยสลับเป็นรูปที่แอดมินอัพโหลด (ถ้ามีและโหลดได้)
+    async function loadHeroBannerOnce() {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'heroBanner'));
+        if (!snap.exists()) return;
+        const src = String(snap.data().image || '').trim();
+        const img = document.getElementById('heroBannerImg');
+        if (!src || !img) return;
+        const probe = new Image();
+        probe.onload = () => { img.removeAttribute('width'); img.removeAttribute('height'); img.src = src; };
+        probe.onerror = () => console.warn('Hero banner image failed to load, keeping default');
+        probe.src = src;
+      } catch (err) {
+        console.warn('Error loading hero banner:', err);
+      }
+    }
+
     // ===== WELCOME POPUP SETTINGS (settings/welcomePopup) =====
     async function loadWelcomePopupOnce() {
       try {
@@ -2379,6 +2397,7 @@
 
     // Kick all off in parallel rather than waiting on each other.
     loadWelcomePopupOnce();
+    loadHeroBannerOnce();
     loadCategoriesOnce();
     loadCategoryTypesOnce();
     loadProductsOnce();
