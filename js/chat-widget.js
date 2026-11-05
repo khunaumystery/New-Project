@@ -13,10 +13,21 @@ import {
   orderBy, 
   increment 
 } from "./firebase-config.js";
+import { limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Read-saving design (Firestore Spark plan = 50K reads/day):
+//  - On every page only ONE tiny listener runs: the customer's chat doc,
+//    just to show the unread badge (1 read + 1 per change).
+//  - The full message listener runs ONLY while the chat drawer is open,
+//    and only loads the newest CHAT_MESSAGES_LIMIT messages.
+//  - Nothing is written to Firestore just because a page was opened.
+const CHAT_MESSAGES_LIMIT = 50;
 
 let currentAuthUser = null;
 let currentChatId = null;
 let unsubsMessages = null;
+let unsubsChatDoc = null;
+let lastUnreadByUser = 0;
 let isChatOpen = false;
 
 // Generate or restore Guest ID if not logged in
@@ -533,28 +544,39 @@ function toggleChat() {
     clearCustomerUnreadBadge();
   } else {
     drawer.classList.remove('active');
+    if (unsubsMessages) { unsubsMessages(); unsubsMessages = null; }
+    clearCustomerUnreadBadge(); // replies that arrived while it was open
   }
 }
 
 // Initialize Chat Conversation in Firestore
-async function initChatConversation() {
+function initChatConversation() {
   const userId = getActiveUserId();
   currentChatId = `chat_${userId}`;
-
-  // Ensure parent conversation document exists
-  const chatRef = doc(db, 'chats', currentChatId);
-  try {
-    await setDoc(chatRef, {
-      userId: userId,
-      userName: getActiveUserName(),
-      userEmail: getActiveUserEmail(),
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
-  } catch (err) {
-    console.warn("Init chat error:", err);
-  }
-
+  // The chat document is created by the first sendCustomerChatMessage()
+  // (setDoc with merge), so opening a page/drawer needs no write.
   listenToMessages();
+}
+
+// Lightweight unread-badge listener: watches ONLY the chat document
+// (admin increments chats/{id}.unreadByUser when replying).
+function listenToChatBadge() {
+  if (unsubsChatDoc) { unsubsChatDoc(); unsubsChatDoc = null; }
+  if (!currentChatId) return;
+  unsubsChatDoc = onSnapshot(doc(db, 'chats', currentChatId), (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    lastUnreadByUser = Number(data.unreadByUser) || 0;
+    const badge = document.getElementById('chatBubbleUnreadBadge');
+    if (!badge) return;
+    if (lastUnreadByUser > 0 && !isChatOpen) {
+      badge.textContent = lastUnreadByUser;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }, (err) => {
+    console.warn("Chat badge sync error:", err);
+  });
 }
 
 // Listen to messages in Firestore
@@ -564,14 +586,14 @@ function listenToMessages() {
 
   const msgsQuery = query(
     collection(db, 'chats', currentChatId, 'messages'),
-    orderBy('createdAt', 'asc')
+    orderBy('createdAt', 'desc'),
+    limit(CHAT_MESSAGES_LIMIT)
   );
 
   unsubsMessages = onSnapshot(msgsQuery, (snapshot) => {
     const container = document.getElementById('chatMessagesContainer');
     if (!container) return;
 
-    let unreadCount = 0;
     let html = `
       <div class="chat-bubble-row admin">
         <span class="chat-sender-name">แอดมิน</span>
@@ -582,15 +604,12 @@ function listenToMessages() {
       </div>
     `;
 
-    snapshot.docs.forEach(docSnap => {
+    // newest-first query -> show oldest-to-newest
+    snapshot.docs.slice().reverse().forEach(docSnap => {
       const msg = docSnap.data();
       const isCustomer = (msg.senderRole === 'user');
       const timeStr = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
       
-      if (!isCustomer && !msg.read) {
-        unreadCount++;
-      }
-
       html += `
         <div class="chat-bubble-row ${isCustomer ? 'customer' : 'admin'}">
           <span class="chat-sender-name">${isCustomer ? 'ฉัน' : 'แอดมิน'}</span>
@@ -602,17 +621,6 @@ function listenToMessages() {
 
     container.innerHTML = html;
     container.scrollTop = container.scrollHeight;
-
-    // Update unread badge on floating button
-    const badge = document.getElementById('chatBubbleUnreadBadge');
-    if (badge) {
-      if (unreadCount > 0 && !isChatOpen) {
-        badge.textContent = unreadCount;
-        badge.style.display = 'flex';
-      } else {
-        badge.style.display = 'none';
-      }
-    }
   }, (err) => {
     console.warn("Message sync error:", err);
   });
@@ -677,7 +685,8 @@ async function clearCustomerUnreadBadge() {
   const badge = document.getElementById('chatBubbleUnreadBadge');
   if (badge) badge.style.display = 'none';
 
-  if (!currentChatId) return;
+  if (!currentChatId || lastUnreadByUser <= 0) return;
+  lastUnreadByUser = 0;
   try {
     await updateDoc(doc(db, 'chats', currentChatId), {
       unreadByUser: 0
@@ -704,13 +713,16 @@ function initChatWidget() {
     currentAuthUser = user;
     if (user) {
       currentChatId = `chat_${user.uid}`;
-      initChatConversation();
+      listenToChatBadge(); // badge only; full messages load when drawer opens
+      if (isChatOpen) listenToMessages();
     } else {
       // Guests aren't allowed to chat (Firestore rules also reject reads/
       // writes from signed-out users), so no chat doc is created and no
       // message listener is attached for them.
       currentChatId = null;
       if (unsubsMessages) { unsubsMessages(); unsubsMessages = null; }
+      if (unsubsChatDoc) { unsubsChatDoc(); unsubsChatDoc = null; }
+      lastUnreadByUser = 0;
       if (isChatOpen) {
         const drawer = document.getElementById('customerChatDrawer');
         if (drawer) drawer.classList.remove('active');
