@@ -737,6 +737,31 @@
 
       <div class="content-card">
         <div class="card-header">
+          <h2><i class="ph ph-image"></i> รูปแบนเนอร์หน้าแรก</h2>
+        </div>
+        <div style="padding:18px 20px; max-width:760px;">
+          <div class="form-group">
+            <label>อัพโหลดรูปแบนเนอร์ (ภาพแนวนอน แนะนำสัดส่วน 7:4 เช่น 980×560 px)</label>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <input type="file" id="heroBannerFileInput" accept="image/*" class="form-control" style="padding:6px; cursor:pointer;" onchange="handleImageUpload(this, 'heroBannerImage', 'heroBannerPreview', 1200)">
+              <input type="text" id="heroBannerImage" class="form-control" placeholder="หรือกรอก URL รูปภาพ (เว้นว่าง = ซ่อนแบนเนอร์)" oninput="updatePreview('heroBannerImage', 'heroBannerPreview')">
+            </div>
+            <div id="heroBannerPreview" style="display:none; margin-top:8px; align-items:center; gap:8px; flex-wrap:wrap;">
+              <img id="heroBannerPreviewImg" src="" style="width:240px; max-width:100%; height:auto; border-radius:10px; border:1.5px solid var(--border);" alt="Preview">
+              <button type="button" class="action-btn btn-delete" onclick="clearHeroBannerImage()"><i class="ph ph-trash"></i> ลบรูป</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-primary" style="background:#059669;" onclick="saveHeroBanner()"><i class="ph ph-floppy-disk"></i> บันทึกรูปแบนเนอร์</button>
+          </div>
+          <div style="margin-top:10px; font-size:11.5px; color:var(--muted); line-height:1.5;">
+            รูปนี้จะแสดงที่แบนเนอร์ด้านบนสุดของหน้าแรก (เหนือกล่อง MYSTERY BOX) ถ้ายังไม่ได้อัพโหลด หรือกด "ลบรูป" แล้วบันทึก หน้าแรกจะซ่อนส่วนแบนเนอร์
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
           <h2><i class="ph ph-note-pencil"></i> ข้อความในหน้าต่างโอกาสรางวัล (หน้าร้าน)</h2>
         </div>
         <div style="padding:18px 20px; max-width:760px;">
@@ -1516,7 +1541,7 @@
     ordersTab:     { once: [() => loadOrders()] },
     categoriesTab: { refresh: [() => loadCategories(), () => loadCategoryTypes()] },
     productsTab:   { refresh: [() => loadCategories(), () => loadProducts()] },
-    mysteryTab:    { once: [() => loadMysteryNotes(), () => loadMysteryAccess(), () => loadSpinResetInfo()], refresh: [() => loadMysteryPrizes()] },
+    mysteryTab:    { once: [() => loadHeroBanner(), () => loadMysteryNotes(), () => loadMysteryAccess(), () => loadSpinResetInfo()], refresh: [() => loadMysteryPrizes()] },
     usersTab:      { refresh: [() => loadVipUsers()] },
     reviewsTab:    { once: [() => loadReviews()] },
     popupTab:      { once: [() => loadPopupSettings()] },
@@ -1794,7 +1819,7 @@
   };
 
   // Image Upload and Automatic Optimization
-  window.handleImageUpload = function(inputEl, targetInputId, previewBoxId) {
+  window.handleImageUpload = function(inputEl, targetInputId, previewBoxId, maxDimOverride) {
     const file = inputEl.files && inputEl.files[0];
     if (!file) return;
 
@@ -1811,7 +1836,7 @@
       const img = new Image();
       img.onload = function() {
         // Resize & compress to max 600px width/height for fast loading
-        const maxDim = 600;
+        const maxDim = maxDimOverride || 600;
         let w = img.width;
         let h = img.height;
         if (w > maxDim || h > maxDim) {
@@ -2192,7 +2217,7 @@
     }
     tbody.innerHTML = categories.map((c, i) => {
       const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('th-TH') : '-';
-      const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.src='Banner_item.jpg'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
+      const imgTag = c.image ? `<img src="${c.image}" class="table-thumb" onerror="this.onerror=null;this.src='logo_khunau.png'">` : '<div class="table-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ph ph-folder" style="font-size:20px;color:var(--muted);"></i></div>';
       const pageLink = c.pageLink ? `<a href="${c.pageLink}" target="_blank" style="color:var(--mk-red);text-decoration:underline;">${c.pageLink}</a>` : '-';
       const typeBadge = c.categoryType
         ? `<span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${c.categoryType}</span>`
@@ -3425,6 +3450,40 @@
       loadProducts();
       showToast(`✅ บันทึกจำนวนสต็อก: ${val} ชิ้น`);
     } catch(e) {
+      showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    }
+  };
+
+  // ================= HERO BANNER IMAGE (หน้าแรก) =================
+  // เก็บที่ settings/heroBanner { image } — index.html อ่านไปแสดงเป็นแบนเนอร์หน้าแรก
+  // ถ้าไม่มีเอกสาร/ไม่มีรูป หน้าร้านจะซ่อนส่วนแบนเนอร์
+  window.loadHeroBanner = async function() {
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'heroBanner'));
+      const d = snap.exists() ? snap.data() : {};
+      document.getElementById('heroBannerImage').value = d.image || '';
+      updatePreview('heroBannerImage', 'heroBannerPreview');
+    } catch (err) {
+      showToast('โหลดรูปแบนเนอร์ไม่สำเร็จ: ' + err.message);
+    }
+  };
+
+  window.clearHeroBannerImage = function() {
+    document.getElementById('heroBannerImage').value = '';
+    document.getElementById('heroBannerFileInput').value = '';
+    updatePreview('heroBannerImage', 'heroBannerPreview');
+  };
+
+  window.saveHeroBanner = async function() {
+    const image = document.getElementById('heroBannerImage').value.trim();
+    // เอกสาร Firestore จำกัด ~1MB — รูปที่ย่อแล้วปกติเล็กกว่านี้มาก แต่กันไว้ก่อน
+    if (image.length > 900000) { showToast('⚠️ รูปใหญ่เกินไป กรุณาเลือกรูปที่เล็กลง'); return; }
+    try {
+      await setDoc(doc(db, 'settings', 'heroBanner'), {
+        image, updatedAt: new Date().toISOString()
+      });
+      showToast(image ? '✅ บันทึกรูปแบนเนอร์เรียบร้อย' : '✅ บันทึกแล้ว (หน้าร้านจะซ่อนแบนเนอร์)');
+    } catch (e) {
       showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
     }
   };

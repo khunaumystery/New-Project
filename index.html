@@ -205,6 +205,24 @@
       transition: transform 0.4s ease;
     }
 
+    /* Hero banner loading spinner */
+    .hero-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border: 4px solid rgba(245, 200, 66, 0.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: heroSpin 0.8s linear infinite;
+      display: none;
+    }
+    .hero-banner-card.hero-loading .hero-spinner { display: block; }
+    .hero-banner-card.hero-loading .hero-overlay { display: none; }
+    @keyframes heroSpin { to { transform: rotate(360deg); } }
+
     .hero-overlay {
       position: absolute;
       bottom: 0;
@@ -1250,8 +1268,9 @@
   <main class="main-content">
 
     <!-- 1. Hero Promotion Banner -->
-    <section class="hero-banner-card">
-      <img src="Banner_item.jpg" alt="KHUN AU Promotion Banner" width="600" height="300" fetchpriority="high">
+    <section class="hero-banner-card hero-loading" id="heroBannerSection" style="aspect-ratio:7/4;">
+      <div class="hero-spinner" role="status" aria-label="กำลังโหลดแบนเนอร์"></div>
+      <img id="heroBannerImg" alt="KHUN AU Promotion Banner" fetchpriority="high">
       <div class="hero-overlay">
         <div class="hero-text">
           <h2>ลุ้นรับรางวัลใหญ่‼️</h2>
@@ -2308,6 +2327,27 @@
       }
     }
 
+    // ===== HERO BANNER IMAGE (settings/heroBanner — อัพโหลดได้จากหน้า admin แท็บ Mystery Box) =====
+    // ไม่มีรูปเริ่มต้นในโค้ด: จองพื้นที่ไว้ก่อน แล้วแสดงรูปที่แอดมินอัพโหลดเมื่อโหลดเสร็จ
+    // ถ้ายังไม่ได้อัพโหลดรูป หรือโหลดไม่ได้ จะซ่อนส่วนแบนเนอร์ทั้งหมด
+    async function loadHeroBannerOnce() {
+      const section = document.getElementById('heroBannerSection');
+      const img = document.getElementById('heroBannerImg');
+      const hide = () => { if (section) section.style.display = 'none'; };
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'heroBanner'));
+        const src = snap.exists() ? String(snap.data().image || '').trim() : '';
+        if (!src || !img) { hide(); return; }
+        const probe = new Image();
+        probe.onload = () => { img.src = src; if (section) { section.style.aspectRatio = ''; section.classList.remove('hero-loading'); } };
+        probe.onerror = () => { console.warn('Hero banner image failed to load'); hide(); };
+        probe.src = src;
+      } catch (err) {
+        console.warn('Error loading hero banner:', err);
+        hide();
+      }
+    }
+
     // ===== WELCOME POPUP SETTINGS (settings/welcomePopup) =====
     async function loadWelcomePopupOnce() {
       try {
@@ -2379,6 +2419,7 @@
 
     // Kick all off in parallel rather than waiting on each other.
     loadWelcomePopupOnce();
+    loadHeroBannerOnce();
     loadCategoriesOnce();
     loadCategoryTypesOnce();
     loadProductsOnce();
@@ -2416,7 +2457,7 @@
       const container = document.getElementById('categoryBannersContainer');
       if (!container) return;
       container.innerHTML = categories.map(c => {
-        const imgPath = c.image || 'Banner_item.jpg';
+        const imgPath = c.image || 'logo_khunau.png';
         const badgeHtml = c.desc ? `<span class="cat-tag-mini">${c.desc}</span>` : '';
         const clickAction = c.pageLink
           ? `onclick="window.location.href='${c.pageLink}'"`
@@ -2425,7 +2466,7 @@
         return `
           <div class="cat-item-card" ${clickAction} title="${c.name}">
             <div class="cat-thumb-box">
-              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.src='Banner_item.jpg'">
+              <img src="${imgPath}" alt="${c.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='logo_khunau.png'">
               ${badgeHtml}
             </div>
             <span class="cat-item-name">${c.name}</span>
