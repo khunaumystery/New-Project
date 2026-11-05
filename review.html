@@ -555,8 +555,13 @@
       const byUid = query(collection(db, 'orders'), where('userId', '==', user.uid));
       let snap = await getDocs(byUid);
       if (snap.empty && user.email) {
-        const byEmail = query(collection(db, 'orders'), where('userEmail', '==', user.email));
-        snap = await getDocs(byEmail);
+        try {
+          const byEmail = query(collection(db, 'orders'), where('userEmail', '==', user.email));
+          snap = await getDocs(byEmail);
+        } catch (legacyErr) {
+          // Legacy lookup is only allowed for verified emails; ignore if denied.
+          console.warn('Legacy email order lookup skipped:', legacyErr);
+        }
       }
       myOrders = snap.docs
         .map(d => ({ _id: d.id, ...d.data() }))

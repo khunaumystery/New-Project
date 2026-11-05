@@ -435,8 +435,13 @@
 
         // รองรับออเดอร์เก่าที่อาจเก็บอีเมลแทน userId
         if (snapshot.empty && user.email) {
-          const emailQuery = query(collection(db, 'orders'), where('customerEmail', '==', user.email));
-          snapshot = await getDocs(emailQuery);
+          try {
+            const emailQuery = query(collection(db, 'orders'), where('customerEmail', '==', user.email));
+            snapshot = await getDocs(emailQuery);
+          } catch (legacyErr) {
+            // Legacy lookup is only allowed for verified emails; ignore if denied.
+            console.warn('Legacy email order lookup skipped:', legacyErr);
+          }
         }
 
         const orders = snapshot.docs
