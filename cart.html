@@ -1844,7 +1844,12 @@
             canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            // Slip is stored inside the order document (Firestore limit 1 MiB),
+            // so step the quality down until it is safely under ~700 KB.
+            let dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            [0.6, 0.45, 0.3].forEach(function (q) {
+              if (dataUrl.length > 700000) dataUrl = canvas.toDataURL('image/jpeg', q);
+            });
             finishOnce(() => finalizeOrderWithSlip(pendingOrderData, dataUrl));
           };
           img.onerror = function () {
@@ -1882,14 +1887,32 @@
 
         let savedOnline = false;
         let stockShortages = null;
+        let failReason = 'generic'; // 'generic' | 'quota' | 'timeout'
         try {
           if (typeof window.MK_SUBMIT_ORDER !== 'function') {
             throw new Error('Firebase order submission is unavailable');
           }
-          await window.MK_SUBMIT_ORDER(orderData);
+          // Without a timeout the modal can spin forever when Firestore
+          // is rejecting/queuing writes (e.g. daily quota exceeded).
+          let timer;
+          const timeoutPromise = new Promise(function (_, reject) {
+            timer = setTimeout(function () { reject(new Error('SUBMIT_TIMEOUT')); }, 25000);
+          });
+          try {
+            await Promise.race([window.MK_SUBMIT_ORDER(orderData), timeoutPromise]);
+          } finally {
+            clearTimeout(timer);
+          }
           savedOnline = true;
         } catch (err) {
           console.error('Order submit error:', err);
+          const errCode = String((err && err.code) || '');
+          const errMsg = String((err && err.message) || '');
+          if (errCode === 'resource-exhausted' || /quota|resource-exhausted|usage limit/i.test(errMsg)) {
+            failReason = 'quota';
+          } else if (errMsg === 'SUBMIT_TIMEOUT') {
+            failReason = 'timeout';
+          }
           if (typeof err.message === 'string' && err.message.indexOf('STOCK_INSUFFICIENT::') === 0) {
             try {
               stockShortages = JSON.parse(err.message.slice('STOCK_INSUFFICIENT::'.length));
@@ -1904,9 +1927,18 @@
         }
 
         if (!savedOnline) {
-          showToast('❌ บันทึกคำสั่งซื้อไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          delete orderData.slipImage; // don't keep the big image in memory for retry
+          let failMsg = '❌ บันทึกไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง';
+          if (failReason === 'quota') {
+            failMsg = '⚠️ ระบบรับออเดอร์เต็มโควต้ารายวันชั่วคราว กรุณาลองใหม่ภายหลัง ' +
+              'หากโอนเงินแล้ว โปรดเก็บสลิปไว้และแจ้งร้านพร้อมเลขออเดอร์ ' + orderData.orderId;
+          } else if (failReason === 'timeout') {
+            failMsg = '⚠️ เชื่อมต่อเซิร์ฟเวอร์ช้า/ไม่ตอบสนอง กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอัพโหลดสลิปอีกครั้ง ' +
+              '(หากโอนเงินแล้ว ให้เก็บสลิปไว้และแจ้งร้านพร้อมเลขออเดอร์ ' + orderData.orderId + ')';
+          }
+          showToast('❌ บันทึกคำสั่งซื้อไม่สำเร็จ');
           renderPaymentQrState(orderData);
-          showSlipError('❌ บันทึกไม่สำเร็จ กรุณาลองอัพโหลดสลิปอีกครั้ง');
+          showSlipError(failMsg);
           return;
         }
 
