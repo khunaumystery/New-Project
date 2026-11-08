@@ -876,7 +876,7 @@
       'use strict';
 
       const DEFAULT_SHIPPING = 50;
-      const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+      const CODE_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 ชั่วโมง
 
       // Minimum order subtotal is no longer a hardcoded per-prize-type
       // table — each code now carries its own `minOrderAmount` (set by
@@ -1342,7 +1342,7 @@
 
           if (expiresAt && now > expiresAt) {
             if (errorMsg && errorText) {
-              errorText.textContent = '❌ โค้ด "' + code + '" หมดอายุการใช้งานแล้ว (มีอายุ 30 นาทีหลังจากได้รับ)';
+              errorText.textContent = '❌ โค้ด "' + code + '" หมดอายุการใช้งานแล้ว (มีอายุ 2 ชั่วโมงหลังจากได้รับ)';
               errorMsg.style.display = 'block';
             }
             showToast('❌ โค้ด "' + code + '" หมดอายุแล้ว');

@@ -1236,7 +1236,7 @@
         const totalCart = cart.reduce((sum, i) => sum + i.quantity, 0);
         document.getElementById('statCartCount').textContent = totalCart;
 
-        const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+        const CODE_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 ชั่วโมง
         const now = Date.now();
         const codesKey = uid ? ('mkValidCodes_' + uid) : 'mkValidCodes_guest';
         const codes = JSON.parse(localStorage.getItem(codesKey) || '[]');

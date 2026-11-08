@@ -746,7 +746,7 @@
           </div>
           <div class="form-group">
             <label>ข้อความใต้หัวข้อ (เว้นว่าง = ซ่อน)</label>
-            <input type="text" id="mysterySubtitleText" class="form-control" placeholder="เช่น สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง">
+            <input type="text" id="mysterySubtitleText" class="form-control" placeholder="เช่น สุ่มได้ 1 ครั้งต่อรอบ — 05:00 / 11:00 / 15:00 / 20:00 น.">
           </div>
           <div class="form-group">
             <label>รายการของรางวัล (พิมพ์เองอิสระ — แสดงเป็นตารางที่หน้าร้าน)</label>
@@ -792,7 +792,7 @@
         </div>
         <div style="padding:18px 20px; max-width:760px;">
           <div style="font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
-            กดแล้วลูกค้าทุกคนที่ติดเวลารอ 5 ชั่วโมงจะกดสุ่มได้ใหม่ทันที — คนที่เปิดหน้าเว็บค้างอยู่จะปลดล็อกภายในประมาณ 1 นาที ส่วนคนที่เปิดหน้าใหม่หรือรีเฟรชจะปลดล็อกทันที โค้ดรางวัลที่ได้ไปแล้วยังใช้งานได้ตามเดิม
+            กดแล้วลูกค้าทุกคนที่สุ่มไปแล้วในรอบนี้จะกดสุ่มได้ใหม่ทันที — คนที่เปิดหน้าเว็บค้างอยู่จะปลดล็อกภายในประมาณ 1 นาที ส่วนคนที่เปิดหน้าใหม่หรือรีเฟรชจะปลดล็อกทันที โค้ดรางวัลที่ได้ไปแล้วยังใช้งานได้ตามเดิม
           </div>
           <button type="button" class="btn-primary" style="background:#DC2626;" onclick="resetAllSpinCooldowns()"><i class="ph ph-arrow-counter-clockwise"></i> รีเซ็ตเวลาให้ทุกคนสุ่มได้ใหม่ทันที</button>
           <div id="spinResetLastInfo" style="margin-top:10px; font-size:11.5px; color:var(--muted);">รีเซ็ตล่าสุด: -</div>
@@ -3432,10 +3432,10 @@
   // ================= MYSTERY BOX FOOTNOTE SETTINGS =================
   // เก็บที่ settings/mysteryNotes — หน้าร้าน (index.html) อ่านไปแสดงใต้ตารางโอกาสรางวัล
   const MYSTERY_NOTES_DEFAULT =
-    '* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ\n' +
+    '* โค้ดที่ได้รับมีอายุการใช้งาน 2 ชั่วโมง นับจากเวลาที่ได้รับ\n' +
     '* บางรางวัลมีจำนวนจำกัดและมีเงื่อนไขยอดสั่งซื้อขั้นต่ำตามที่ระบุในตาราง';
   const MYSTERY_TITLE_DEFAULT = 'MYSTERY BOX (รางวัลประจำเดือน)';
-  const MYSTERY_SUBTITLE_DEFAULT = 'สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง';
+  const MYSTERY_SUBTITLE_DEFAULT = 'สุ่มได้ 1 ครั้งต่อรอบ — 05:00 / 11:00 / 15:00 / 20:00 น.';
   let mysteryNotesFilled = false;
 
   function mysteryRowHtml(r) {

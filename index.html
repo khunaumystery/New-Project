@@ -1271,7 +1271,7 @@
             <i class="ph ph-question"></i>
           </button>
         </h3>
-        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ทุก 5 ชั่วโมง)</p>
+        <p class="lucky-card-desc">สุ่มรับโค้ดส่งฟรี & ลุ้นรับฟรีไอเทมพรีเมียม (สุ่มได้ 1 ครั้งต่อรอบ เวลา 05:00 / 11:00 / 15:00 / 20:00 น.)</p>
       </div>
 
       <!-- 3D Interactive Gift Box Scene -->
@@ -1499,9 +1499,9 @@
           <i class="ph ph-x"></i>
         </button>
       </div>
-      <p class="odds-modal-sub" id="oddsModalSub">สุ่มได้ 1 ครั้ง — ทุก 5 ชั่วโมง</p>
+      <p class="odds-modal-sub" id="oddsModalSub">สุ่มได้ 1 ครั้งต่อรอบ — 05:00 / 11:00 / 15:00 / 20:00 น.</p>
       <div class="odds-prize-text" id="oddsPrizeText">กำลังโหลด...</div>
-      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* โค้ดที่ได้รับมีอายุการใช้งาน 30 นาที นับจากเวลาที่ได้รับ</p>
+      <p class="odds-modal-footnote" id="oddsFootnote" style="white-space:pre-line;">* โค้ดที่ได้รับมีอายุการใช้งาน 2 ชั่วโมง นับจากเวลาที่ได้รับ</p>
     </div>
   </div>
 
@@ -1520,8 +1520,41 @@
 
   <!-- Lucky Draw Scripts -->
   <script>
-    const COOLDOWN_MS = 5 * 60 * 60 * 1000; // 5 ชั่วโมง (18,000,000 ms)
-    const TOTAL_SECS = 18000; // 18000 วินาที (5 ชั่วโมง)
+    // ===== รอบเวลาสุ่ม (ทุกคนสุ่มได้พร้อมกัน ตามเวลาประเทศไทย UTC+7) =====
+    // แต่ละรอบสุ่มได้ 1 ครั้ง — รอบใหม่เริ่มที่ 05:00, 11:00, 15:00, 20:00 น.
+    const SPIN_SLOT_HOURS = [5, 11, 15, 20];
+    const TH_OFFSET_MS = 7 * 60 * 60 * 1000;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    // เวลาเริ่มของรอบปัจจุบัน (ms, UTC epoch)
+    function getCurrentSlotStart(nowMs) {
+      const th = nowMs + TH_OFFSET_MS;
+      const dayStart = Math.floor(th / DAY_MS) * DAY_MS;
+      const msOfDay = th - dayStart;
+      let startTh = null;
+      for (let i = SPIN_SLOT_HOURS.length - 1; i >= 0; i--) {
+        const t = SPIN_SLOT_HOURS[i] * 3600000;
+        if (msOfDay >= t) { startTh = dayStart + t; break; }
+      }
+      // ก่อน 05:00 → ยังอยู่ในรอบ 20:00 ของเมื่อวาน
+      if (startTh === null) startTh = dayStart - DAY_MS + SPIN_SLOT_HOURS[SPIN_SLOT_HOURS.length - 1] * 3600000;
+      return startTh - TH_OFFSET_MS;
+    }
+    // เวลาเริ่มของรอบถัดไป
+    function getNextSlotStart(nowMs) {
+      const th = nowMs + TH_OFFSET_MS;
+      const dayStart = Math.floor(th / DAY_MS) * DAY_MS;
+      const msOfDay = th - dayStart;
+      for (let i = 0; i < SPIN_SLOT_HOURS.length; i++) {
+        const t = SPIN_SLOT_HOURS[i] * 3600000;
+        if (msOfDay < t) return dayStart + t - TH_OFFSET_MS;
+      }
+      return dayStart + DAY_MS + SPIN_SLOT_HOURS[0] * 3600000 - TH_OFFSET_MS;
+    }
+    // สุ่มไปแล้วในรอบนี้หรือยัง (สุ่มครั้งล่าสุดอยู่ในรอบปัจจุบัน = ถูกล็อกจนกว่าจะถึงรอบถัดไป)
+    function isSpinLockedNow(lastSpinMs) {
+      return !!lastSpinMs && lastSpinMs >= getCurrentSlotStart(Date.now());
+    }
     let timerInterval = null;
     let currentCode = '';
     let lastSpinTime = null;
@@ -1816,7 +1849,7 @@
     }
 
     // ===== 30-MINUTE CODE EXPIRY COUNTDOWN =====
-    const CODE_EXPIRY_MS = 30 * 60 * 1000; // 30 นาที
+    const CODE_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 ชั่วโมง
     let codeExpiryInterval = null;
 
     function startCodeExpiryCountdown(expiresAt) {
@@ -1827,9 +1860,10 @@
         const remainingMs = Math.max(0, expiresAt - now);
         const remainingSecs = Math.floor(remainingMs / 1000);
 
-        const mins = Math.floor(remainingSecs / 60).toString().padStart(2, '0');
+        const expHours = Math.floor(remainingSecs / 3600);
+        const mins = Math.floor((remainingSecs % 3600) / 60).toString().padStart(2, '0');
         const secs = (remainingSecs % 60).toString().padStart(2, '0');
-        const timeStr = `${mins}:${secs}`;
+        const timeStr = expHours > 0 ? `${expHours.toString().padStart(2, '0')}:${mins}:${secs}` : `${mins}:${secs}`;
 
         // 1. Update Active Code Expiry Bar (in Lucky Card)
         const expiryBar = document.getElementById('activeCodeExpiryBar');
@@ -1858,7 +1892,7 @@
           const prizeBadge = document.getElementById('prizeBadge');
           if (prizeBadge && document.getElementById('luckyResultContent').classList.contains('visible')) {
             prizeBadge.className = 'prize-badge no-prize';
-            prizeBadge.innerHTML = '❌ โค้ดหมดอายุการใช้งานแล้ว (เกิน 30 นาที)';
+            prizeBadge.innerHTML = '❌ โค้ดหมดอายุการใช้งานแล้ว (เกิน 2 ชั่วโมง)';
           }
           localStorage.removeItem(getCurrentPromoKey());
           localStorage.removeItem(getCurrentPrizeKey());
@@ -1879,8 +1913,9 @@
 
       function updateTimer() {
         const now = Date.now();
-        const elapsed = Math.floor((now - lastSpinTime) / 1000);
-        const remaining = Math.max(0, TOTAL_SECS - elapsed);
+        const remaining = isSpinLockedNow(lastSpinTime)
+          ? Math.max(0, Math.ceil((getNextSlotStart(now) - now) / 1000))
+          : 0;
         
         const hours = Math.floor(remaining / 3600);
         const mins = Math.floor((remaining % 3600) / 60).toString().padStart(2, '0');
@@ -1906,15 +1941,15 @@
       const saved = localStorage.getItem(key);
       if (saved) {
         lastSpinTime = parseInt(saved);
-        const elapsed = Date.now() - lastSpinTime;
+        const stillLocked = isSpinLockedNow(lastSpinTime);
         const adminResetAt = Number(window.MK_SPIN_RESET_AT) || 0;
-        if (adminResetAt && lastSpinTime < adminResetAt && elapsed < COOLDOWN_MS) {
+        if (adminResetAt && lastSpinTime < adminResetAt && stillLocked) {
           // แอดมินกดรีเซ็ตเวลาสุ่มหลังจากที่ลูกค้าสุ่มครั้งล่าสุด → ปลดล็อกให้สุ่มได้ทันที
           localStorage.removeItem(key);
           lastSpinTime = null;
           resetSpinUI();
           showToast('🎉 แอดมินรีเซ็ตเวลาให้แล้ว กดสุ่มได้อีกครั้ง!');
-        } else if (elapsed < COOLDOWN_MS) {
+        } else if (stillLocked) {
           const spinBtn = document.getElementById('spinBtn');
           if (spinBtn) {
             spinBtn.disabled = true;
