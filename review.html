@@ -610,7 +610,7 @@
         if (reviewed) {
           actionBtn = `<button type="button" class="btn-review done" disabled><i class="ph ph-check"></i> รีวิวแล้ว</button>`;
         } else if (order.status === 'received') {
-          actionBtn = `<button type="button" class="btn-review" onclick="openReviewModal('${order._id}')">เขียนรีวิว</button>`;
+          actionBtn = `<button type="button" class="btn-review" onclick="openReviewModal('${escapeHtml(order._id)}')">เขียนรีวิว</button>`;
         } else if (order.status === 'cancelled') {
           actionBtn = `<button type="button" class="btn-review done" disabled>ยกเลิกแล้ว</button>`;
         } else {
@@ -645,7 +645,7 @@
             </div>
           </div>
           <div class="review-text">${escapeHtml(r.reviewText || '')}</div>
-          ${(r.images && r.images.length) ? `<div class="review-photos">${r.images.map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
+          ${(r.images && r.images.length) ? `<div class="review-photos">${r.images.map(u => `<img src="${escapeHtml(u)}" alt="">`).join('')}</div>` : ''}
         </div>
       `).join('');
     }

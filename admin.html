@@ -2033,12 +2033,12 @@
     tbody.innerHTML = orders.map(o => {
       const draftStatus = orderStatusDrafts[o._id];
       const st = draftStatus || o.status;
-      const items   = (o.items || []).map(i => i.name + ' x' + i.qty).join(', ');
+      const items   = (o.items || []).map(i => escapeHtml(i.name) + ' x' + escapeHtml(i.qty)).join(', ');
       const prize   = o.giftItem
                       ? '<span class="prize-chip">🎁 ' + escapeHtml(o.giftItem) + '</span>'
                       : (o.prizeType ? '<span class="prize-chip">🚚 ' + escapeHtml(o.prizeType) + '</span>' : '');
       const date    = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH',{year:'2-digit',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
-      const badge   = (statusMap[st] || '<span class="status-badge">' + st + '</span>') +
+      const badge   = (statusMap[st] || '<span class="status-badge">' + escapeHtml(st) + '</span>') +
                       (draftStatus ? ' <span class="prize-chip" style="background:#FEF3C7;color:#92400E;">รอบันทึก</span>' : '');
       const tracking = escapeHtml(trackingDrafts[o._id] !== undefined ? trackingDrafts[o._id] : (o.trackingNumber || ''));
       const userIdCell = o.userId
@@ -2050,23 +2050,23 @@
         : '') + (o.paymentMethod
         ? '<div style="margin-top:4px;"><span class="prize-chip" style="' + (o.paymentMethod === 'truemoney' ? 'background:#FFEDD5;color:#C2410C;' : 'background:#E0E7FF;color:#3730A3;') + '"><i class="ph ph-wallet"></i> ' + escapeHtml(o.paymentMethodLabel || o.paymentMethod) + '</span></div>'
         : '');
-      let btns = '<button class="action-btn btn-detail" onclick="showDetail(\'' + o._id + '\')"><i class="ph ph-eye"></i> ดู</button>';
-      if (st === 'pending')   btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + o._id + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
-      if (st === 'paid')      btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + o._id + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
+      let btns = '<button class="action-btn btn-detail" onclick="showDetail(\'' + escapeJsAttr(o._id) + '\')"><i class="ph ph-eye"></i> ดู</button>';
+      if (st === 'pending')   btns += '<button class="action-btn btn-paid"    onclick="changeStatus(\'' + escapeJsAttr(o._id) + '\',\'paid\')"><i class="ph ph-check"></i> ชำระแล้ว</button>';
+      if (st === 'paid')      btns += '<button class="action-btn btn-shipped" onclick="changeStatus(\'' + escapeJsAttr(o._id) + '\',\'shipped\')"><i class="ph ph-truck"></i> จัดส่งแล้ว</button>';
       // Step 3 is done by the CUSTOMER (tracking.html), not the admin.
       if (st === 'shipped')   btns += '<span class="action-btn" style="background:#FEF3C7;color:#92400E;cursor:default;"><i class="ph ph-hourglass-medium"></i> รอลูกค้ากดยืนยันรับสินค้า</span>';
       if (st === 'received')  btns += '<span class="action-btn" style="background:#EDE9FE;color:#5B21B6;cursor:default;"><i class="ph ph-check-circle"></i> ลูกค้ายืนยันรับสินค้าแล้ว</span>';
-      if (st !== 'cancelled' && st !== 'received') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + o._id + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
-      if (draftStatus) btns += '<button class="action-btn btn-cancel" onclick="undoStatusDraft(\'' + o._id + '\')"><i class="ph ph-arrow-counter-clockwise"></i> ย้อนสถานะ</button>';
-      btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + o._id + '\')"><i class="ph ph-trash"></i> ลบ</button>';
-      return '<tr><td><div class="order-id">' + (o.orderId || '-') + '</div>' + slipBadge + '</td>' +
-             '<td><div class="cus-name">' + (o.customerName || '-') + '</div><div class="cus-phone">' + (o.phone || '') + '</div></td>' +
+      if (st !== 'cancelled' && st !== 'received') btns += '<button class="action-btn btn-cancel" onclick="changeStatus(\'' + escapeJsAttr(o._id) + '\',\'cancelled\')"><i class="ph ph-x"></i> ยกเลิก</button>';
+      if (draftStatus) btns += '<button class="action-btn btn-cancel" onclick="undoStatusDraft(\'' + escapeJsAttr(o._id) + '\')"><i class="ph ph-arrow-counter-clockwise"></i> ย้อนสถานะ</button>';
+      btns += '<button class="action-btn btn-delete" onclick="deleteOrder(\'' + escapeJsAttr(o._id) + '\')"><i class="ph ph-trash"></i> ลบ</button>';
+      return '<tr><td><div class="order-id">' + escapeHtml(o.orderId || '-') + '</div>' + slipBadge + '</td>' +
+             '<td><div class="cus-name">' + escapeHtml(o.customerName || '-') + '</div><div class="cus-phone">' + escapeHtml(o.phone || '') + '</div></td>' +
              '<td>' + userIdCell + '</td>' +
              '<td><div class="item-list">' + items + '</div>' + prize + '</td>' +
              '<td><span class="total-amt">฿' + (o.grandTotal || 0).toLocaleString() + '</span></td>' +
              '<td>' + badge + '</td>' +
-             '<td class="tracking-cell"><input type="text" class="tracking-input" id="trackingInput_' + o._id + '" value="' + tracking + '" placeholder="เช่น TH123456789" aria-label="เลขพัสดุ" oninput="draftTracking(\'' + o._id + '\', this.value)">' +
-             '<button class="btn-tracking" onclick="saveTrackingNumber(\'' + o._id + '\')"><i class="ph ph-floppy-disk"></i> บันทึก</button></td>' +
+             '<td class="tracking-cell"><input type="text" class="tracking-input" id="trackingInput_' + escapeHtml(o._id) + '" value="' + tracking + '" placeholder="เช่น TH123456789" aria-label="เลขพัสดุ" oninput="draftTracking(\'' + escapeJsAttr(o._id) + '\', this.value)">' +
+             '<button class="btn-tracking" onclick="saveTrackingNumber(\'' + escapeJsAttr(o._id) + '\')"><i class="ph ph-floppy-disk"></i> บันทึก</button></td>' +
              '<td><span class="date-txt">' + date + '</span></td>' +
              '<td>' + btns + '</td></tr>';
     }).join('');
@@ -2168,19 +2168,19 @@
     const o = allOrders.find(x => x._id === id);
     if (!o) return;
     const addr = o.address || {};
-    const full = [addr.street, addr.subdistrict, addr.district, addr.province, addr.postcode].filter(Boolean).join(' ');
+    const full = [addr.street, addr.subdistrict, addr.district, addr.province, addr.postcode].filter(Boolean).map(String).join(' ');
     const date = o.createdAt ? new Date(o.createdAt).toLocaleString('th-TH') : '-';
-    const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + i.name + ' x' + i.qty + '</span><span>฿' + (i.price * i.qty).toLocaleString() + '</span></div>').join('');
+    const items = (o.items || []).map(i => '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F3F4F6;"><span>' + escapeHtml(i.name) + ' x' + escapeHtml(i.qty) + '</span><span>฿' + ((Number(i.price) || 0) * (Number(i.qty) || 0)).toLocaleString() + '</span></div>').join('');
     document.getElementById('detailModalContent').innerHTML =
-      '<h3>📋 รายละเอียดออเดอร์ ' + (o.orderId || '') + '</h3>' +
-      '<div class="detail-row"><span class="detail-label">ชื่อลูกค้า</span><span class="detail-value">' + (o.customerName || '-') + '</span></div>' +
-      '<div class="detail-row"><span class="detail-label">เบอร์โทร</span><span class="detail-value">' + (o.phone || '-') + '</span></div>' +
-      '<div class="detail-row"><span class="detail-label">ที่อยู่</span><span class="detail-value" style="max-width:260px;">' + (full || '-') + '</span></div>' +
-      '<div class="detail-row"><span class="detail-label">หมายเหตุ</span><span class="detail-value">' + (o.note || '-') + '</span></div>' +
+      '<h3>📋 รายละเอียดออเดอร์ ' + escapeHtml(o.orderId || '') + '</h3>' +
+      '<div class="detail-row"><span class="detail-label">ชื่อลูกค้า</span><span class="detail-value">' + escapeHtml(o.customerName || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">เบอร์โทร</span><span class="detail-value">' + escapeHtml(o.phone || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">ที่อยู่</span><span class="detail-value" style="max-width:260px;">' + escapeHtml(full || '-') + '</span></div>' +
+      '<div class="detail-row"><span class="detail-label">หมายเหตุ</span><span class="detail-value">' + escapeHtml(o.note || '-') + '</span></div>' +
       '<div class="detail-row"><span class="detail-label">วิธีชำระเงิน</span><span class="detail-value">' + escapeHtml(o.paymentMethodLabel || (o.paymentMethod === 'truemoney' ? 'TrueMoney Wallet' : (o.paymentMethod ? 'PromptPay' : '-'))) + '</span></div>' +
       '<div style="margin:14px 0 6px;font-size:12px;font-weight:700;color:var(--muted);">📎 สลิปการโอนเงิน</div>' +
       (o.slipImage
-        ? '<img src="' + o.slipImage + '" alt="สลิปการโอนเงิน" onclick="openSlipLightbox(\'' + (o._id) + '\')" style="width:100%; max-width:280px; display:block; margin:0 auto; border-radius:12px; border:1.5px solid var(--border); cursor:zoom-in;">' +
+        ? '<img src="' + escapeHtml(o.slipImage) + '" alt="สลิปการโอนเงิน" onclick="openSlipLightbox(\'' + escapeJsAttr(o._id) + '\')" style="width:100%; max-width:280px; display:block; margin:0 auto; border-radius:12px; border:1.5px solid var(--border); cursor:zoom-in;">' +
           '<div style="text-align:center; margin-top:6px; font-size:11px; color:var(--muted);">แตะที่รูปเพื่อดูขนาดเต็ม' + (o.slipUploadedAt ? ' • อัพโหลดเมื่อ ' + new Date(o.slipUploadedAt).toLocaleString('th-TH') : '') + '</div>'
         : '<div style="padding:14px; text-align:center; background:#FEF2F2; border:1px dashed #FCA5A5; border-radius:12px; color:#B91C1C; font-size:12.5px;"><i class="ph ph-warning-circle"></i> ลูกค้ายังไม่ได้แนบสลิปมากับออเดอร์นี้</div>') +
       '<div style="margin:14px 0 0;font-size:12px;font-weight:700;color:var(--muted);">รายการสินค้า</div>' + items +
@@ -2189,8 +2189,8 @@
       '<div class="detail-row"><span class="detail-label">ส่วนลด</span><span class="detail-value">-฿' + (o.discount || 0).toLocaleString() + '</span></div>' +
       '<div class="detail-row"><span class="detail-label" style="font-weight:800;">ยอดรวมสุทธิ</span><span class="detail-value" style="color:var(--mk-red);font-size:16px;">฿' + (o.grandTotal || 0).toLocaleString() + '</span></div>' +
       (o.couponCode ? '<div class="detail-row"><span class="detail-label">โค้ดที่ใช้</span><span class="detail-value">' + escapeHtml(o.couponCode) + ' — ' + escapeHtml(o.prizeType || '') + (o.giftItem ? ' + ' + escapeHtml(o.giftItem) : '') + '</span></div>' : '') +
-      '<div class="detail-row"><span class="detail-label">สถานะ</span><span class="detail-value">' + (o.status || '-') + '</span></div>' +
-       '<div class="form-group" style="margin-top:14px;"><label for="trackingDetailInput">เลขพัสดุ</label><div style="display:flex;gap:6px;"><input type="text" id="trackingDetailInput" class="form-control" value="' + escapeHtml(o.trackingNumber || '') + '" placeholder="เช่น TH123456789"><button type="button" class="btn-tracking" style="margin-left:0;padding:0 12px;" onclick="saveTrackingNumberFromDetail(\'' + o._id + '\')"><i class="ph ph-floppy-disk"></i> บันทึก</button></div></div>' +
+      '<div class="detail-row"><span class="detail-label">สถานะ</span><span class="detail-value">' + escapeHtml(o.status || '-') + '</span></div>' +
+       '<div class="form-group" style="margin-top:14px;"><label for="trackingDetailInput">เลขพัสดุ</label><div style="display:flex;gap:6px;"><input type="text" id="trackingDetailInput" class="form-control" value="' + escapeHtml(o.trackingNumber || '') + '" placeholder="เช่น TH123456789"><button type="button" class="btn-tracking" style="margin-left:0;padding:0 12px;" onclick="saveTrackingNumberFromDetail(\'' + escapeJsAttr(o._id) + '\')"><i class="ph ph-floppy-disk"></i> บันทึก</button></div></div>' +
       '<div class="detail-row"><span class="detail-label">วันที่สั่ง</span><span class="detail-value">' + date + '</span></div>' +
       '<button class="btn-submit" style="margin-top:16px;" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')">ปิด</button>';
     document.getElementById('detailModal').classList.add('active');
@@ -2253,8 +2253,8 @@
     let formOptions = '<option value="">-- เลือกหมวดหมู่ --</option>';
 
     allCategories.forEach(cat => {
-      filterOptions += `<option value="${cat.name}">${cat.name}</option>`;
-      formOptions += `<option value="${cat.name}">${cat.name}</option>`;
+      filterOptions += `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`;
+      formOptions += `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`;
     });
 
     if (filterEl) { filterEl.innerHTML = filterOptions; filterEl.value = prevFilterVal; }
@@ -2301,7 +2301,7 @@
         <tr style="${c.hidden ? 'opacity:0.55;' : ''}">
           <td>${moveCell}</td>
           <td>${imgTag}</td>
-          <td><strong>${c.name || '-'}</strong>${hiddenBadge}<div style="font-size:11px;color:var(--muted);">${c.desc || ''}</div></td>
+          <td><strong>${escapeHtml(c.name || '-')}</strong>${hiddenBadge}<div style="font-size:11px;color:var(--muted);">${escapeHtml(c.desc || '')}</div></td>
           <td>${typeBadge}</td>
           <td><code>${c.slug || '-'}</code></td>
           <td>${pageLink}</td>
@@ -2311,7 +2311,7 @@
             <button class="action-btn ${c.hidden ? 'btn-paid' : 'btn-cancel'}" onclick="toggleCategoryHidden('${c._id}')">
               <i class="ph ${c.hidden ? 'ph-eye' : 'ph-eye-slash'}"></i> ${c.hidden ? 'แสดง' : 'ซ่อน'}
             </button>
-            <button class="action-btn btn-delete" onclick="deleteCategory('${c._id}', '${c.name}')"><i class="ph ph-trash"></i> ลบ</button>
+            <button class="action-btn btn-delete" onclick="deleteCategory('${escapeJsAttr(c._id)}', '${escapeJsAttr(c.name)}')"><i class="ph ph-trash"></i> ลบ</button>
           </td>
         </tr>
       `;
@@ -2512,8 +2512,8 @@
     let filterOptions = '<option value="">ประเภทหมวดหมู่สินค้าทั้งหมด</option>';
     let formOptions = '<option value="">-- เลือกประเภท --</option>';
     sortByOrder(allCategoryTypes).forEach(t => {
-      filterOptions += `<option value="${t.name}">${t.name}</option>`;
-      formOptions += `<option value="${t.name}">${t.name}</option>`;
+      filterOptions += `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`;
+      formOptions += `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`;
     });
 
     if (filterEl) { filterEl.innerHTML = filterOptions; filterEl.value = filterPrev; }
@@ -3051,7 +3051,7 @@
     const sel = document.getElementById('bulkMoveCategory');
     const prev = sel.value;
     sel.innerHTML = '<option value="">-- เลือกหมวดหมู่ปลายทาง --</option>' +
-      allCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      allCategories.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
     sel.value = prev;
     updateBulkCount();
   }
@@ -3139,7 +3139,7 @@
 
   function renderProductRow(p, positionInGroup, groupSize, reorderLocked) {
     const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-';
-    const imgTag = p.image ? `<img src="${p.image}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
+    const imgTag = p.image ? `<img src="${escapeHtml(p.image)}" class="table-thumb" onerror="this.src='Payment.jpg'">` : '<div class="table-thumb"></div>';
     const inStock = (p.inStock === true || p.inStock === 'true');
     const hasQty = (p.stockQty !== undefined && p.stockQty !== null && p.stockQty !== '');
     const qtyVal = hasQty ? Number(p.stockQty) : 0;
@@ -3172,10 +3172,10 @@
         <td>${moveCell}</td>
         <td>${imgTag}</td>
         <td>
-          <strong>${p.name || '-'}</strong>
-          <div style="font-size:11px;color:var(--muted);">${p.desc || ''}</div>
+          <strong>${escapeHtml(p.name || '-')}</strong>
+          <div style="font-size:11px;color:var(--muted);">${escapeHtml(p.desc || '')}</div>
         </td>
-        <td><span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${p.category || '-'}</span></td>
+        <td><span class="status-badge" style="background:#EDE9FE;color:#6D28D9;">${escapeHtml(p.category || '-')}</span></td>
         <td>
           ${origPriceTxt}
           <span class="total-amt">฿${Number(p.price || 0).toLocaleString()}</span>
@@ -3185,7 +3185,7 @@
         <td><span class="date-txt">${date}</span></td>
         <td>
           <button class="action-btn btn-detail" onclick="openEditProductModal('${p._id}')"><i class="ph ph-pencil-simple"></i> แก้ไข</button>
-          <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}', '${p.name}')"><i class="ph ph-trash"></i> ลบ</button>
+          <button class="action-btn btn-delete" onclick="deleteProduct('${escapeJsAttr(p._id)}', '${escapeJsAttr(p.name)}')"><i class="ph ph-trash"></i> ลบ</button>
         </td>
       </tr>
     `;
@@ -3966,7 +3966,7 @@
   };
 
   function escapeHtml(text) {
-    return (text || '')
+    return String(text ?? '')
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -3980,7 +3980,7 @@
   // attribute — prevents backslashes/quotes in category/product names from
   // breaking the generated markup or the click handler silently.
   function escapeJsAttr(text) {
-    return (text || '')
+    return String(text ?? '')
       .replace(/\\/g, '\\\\')
       .replace(/'/g, "\\'")
       .replace(/"/g, '&quot;')
